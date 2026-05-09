@@ -1,0 +1,61 @@
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kobi_api
+    volumes:
+      - ./backend/app:/app/app        # Kod değişikliği anında yansır (hot reload)
+      - ./backend/alembic:/app/alembic
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://kobi_user:kobi_pass@db:5432/kobi_db
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy     # DB tamamen hazır olmadan başlama
+      redis:
+        condition: service_started
+    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    networks:
+      - kobi_network
+
+  db:
+    image: postgres:16-alpine
+    container_name: kobi_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: kobi_db
+      POSTGRES_USER: kobi_user
+      POSTGRES_PASSWORD: kobi_pass
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kobi_user -d kobi_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kobi_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: kobi_redis
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - kobi_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  kobi_network:
+    driver: bridge

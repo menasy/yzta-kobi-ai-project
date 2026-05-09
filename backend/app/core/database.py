@@ -1,32 +1,9 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
-from app.core.config import get_settings
+# core/database.py
+# Geriye dönük uyumluluk katmanı.
+# Asıl altyapı db/base.py ve db/session.py içindedir.
+# Bu dosya re-export sağlar; circular import oluşturmaz.
 
-settings = get_settings()
+from app.db.base import Base
+from app.db.session import close_db_connections, get_db_session
 
-# veritabanı motoru (engine) 
-# echo=True yaparsak arka planda dönen SQL sorgularını terminalde görebiliriz
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=False,
-    future=True
-)
-
-# veritabanı oturumu (session) fabrikası
-SessionLocal = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False
-)
-
-# tablolarımızın miras alacağı ana sınıf (Base)
-class Base(DeclarativeBase):
-    pass
-
-# veritabanı bağlantısını güvenli bir şekilde açıp kapatan yardımcı fonksiyon
-async def get_db():
-    async with SessionLocal() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
+__all__ = ["Base", "get_db_session", "close_db_connections"]

@@ -1,31 +1,113 @@
-from typing import Any, Dict, Optional
-from fastapi import HTTPException, status
+# core/exceptions.py
+# Tüm uygulama exception'ları buradan türetilir.
+# Service katmanı HTTPException fırlatmaz; bu sınıfları kullanır.
+# Global exception handler bu exception'ları yakalayarak standart response formatına dönüştürür.
 
-class BaseAppException(HTTPException):
-    """Tüm uygulama içi özel hataların atası"""
+from typing import Any
+
+
+class AppException(Exception):
+    """Tüm uygulama exception'larının base class'ı."""
+
+    status_code: int = 500
+    key: str = "INTERNAL_ERROR"
+    message: str = "Beklenmeyen bir hata oluştu."
+
     def __init__(
         self,
-        status_code: int,
-        key: str,
-        message: str,
-        data: Optional[Any] = None
-    ):
-        super().__init__(status_code=status_code, detail=message)
-        self.key = key
-        self.message = message
-        self.data = data
+        message: str | None = None,
+        errors: list[Any] | None = None,
+    ) -> None:
+        self.message = message or self.__class__.message
+        self.errors = errors
+        super().__init__(self.message)
 
-class NotFoundException(BaseAppException):
-    """Veri bulunamadığında fırlatılır (HTTP 404)"""
-    def __init__(self, message: str = "Kaynak bulunamadı", data: Optional[Any] = None):
-        super().__init__(status.HTTP_404_NOT_FOUND, "NOT_FOUND", message, data)
+    def to_dict(self) -> dict[str, Any]:
+        """Global response sistemine aktarılabilecek dict formatı."""
+        return {
+            "statusCode": self.status_code,
+            "key": self.key,
+            "message": self.message,
+            "data": None,
+            "errors": self.errors,
+        }
 
-class ValidationException(BaseAppException):
-    """Veri doğrulama hatalarında fırlatılır (HTTP 400)"""
-    def __init__(self, message: str = "Geçersiz veri", data: Optional[Any] = None):
-        super().__init__(status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR", message, data)
 
-class UnauthorizedException(BaseAppException):
-    """Yetkisiz erişim denemelerinde fırlatılır (HTTP 401)"""
-    def __init__(self, message: str = "Yetkisiz erişim"):
-        super().__init__(status.HTTP_401_UNAUTHORIZED, "UNAUTHORIZED", message)
+class BadRequestError(AppException):
+    """Geçersiz istek — 400."""
+
+    status_code = 400
+    key = "BAD_REQUEST"
+    message = "İstek geçersiz."
+
+
+class NotFoundError(AppException):
+    """Kayıt bulunamadı — 404."""
+
+    status_code = 404
+    key = "NOT_FOUND"
+    message = "Kayıt bulunamadı."
+
+
+class ValidationError(AppException):
+    """İstek verisi geçersiz — 422."""
+
+    status_code = 422
+    key = "VALIDATION_ERROR"
+    message = "İstek verisi geçersiz."
+
+
+class UnauthorizedError(AppException):
+    """Kimlik doğrulama başarısız — 401."""
+
+    status_code = 401
+    key = "UNAUTHORIZED"
+    message = "Kimlik doğrulama başarısız."
+
+
+class ForbiddenError(AppException):
+    """Yetki yok — 403."""
+
+    status_code = 403
+    key = "FORBIDDEN"
+    message = "Bu işlem için yetkiniz yok."
+
+
+class ConflictError(AppException):
+    """Kayıt zaten mevcut — 409."""
+
+    status_code = 409
+    key = "CONFLICT"
+    message = "Kayıt zaten mevcut."
+
+
+class InsufficientStockError(AppException):
+    """Yetersiz stok — 409."""
+
+    status_code = 409
+    key = "INSUFFICIENT_STOCK"
+    message = "Yeterli stok bulunmamaktadır."
+
+
+class ExternalServiceError(AppException):
+    """Harici servis yanıt vermedi — 502."""
+
+    status_code = 502
+    key = "EXTERNAL_SERVICE_ERROR"
+    message = "Harici servis yanıt vermedi."
+
+
+class DatabaseError(AppException):
+    """Veritabanı işlemi sırasında hata — 500."""
+
+    status_code = 500
+    key = "DATABASE_ERROR"
+    message = "Veritabanı işlemi sırasında bir hata oluştu."
+
+
+class RateLimitError(AppException):
+    """İstek sınırı aşıldı — 429."""
+
+    status_code = 429
+    key = "RATE_LIMIT_EXCEEDED"
+    message = "İstek sınırı aşıldı. Lütfen biraz bekleyip tekrar deneyin."

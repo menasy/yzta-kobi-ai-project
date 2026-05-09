@@ -216,3 +216,17 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Docker
+docker-compose.override.yml
+postgres_data/
+redis_data/
+
+# Poetry (lock dosyası commit edilebilir, ama local geliştirmede oluşur)
+# poetry.lock
+
+# IDE
+.idea/
+.vscode/
+RULE.md
+.env
