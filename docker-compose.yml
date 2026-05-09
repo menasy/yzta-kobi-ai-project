@@ -7,6 +7,7 @@ services:
     volumes:
       - ./backend/app:/app/app        # Kod değişikliği anında yansır (hot reload)
       - ./backend/alembic:/app/alembic
+      - ./backend/scripts:/app/scripts # Seed data script'i
     ports:
       - "8000:8000"
     env_file:

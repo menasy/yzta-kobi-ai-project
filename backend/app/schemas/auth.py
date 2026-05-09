@@ -4,7 +4,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .common import USER_ROLES, validate_sanitized_field, validate_status
 
@@ -15,14 +15,26 @@ from .common import USER_ROLES, validate_sanitized_field, validate_status
 class LoginRequest(BaseModel):
     """POST /auth/login isteği."""
 
-    email: EmailStr = Field(..., description="Kullanıcı e-posta adresi")
+    email: str = Field(
+        ...,
+        min_length=5,
+        max_length=255,
+        pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+        description="Kullanıcı e-posta adresi",
+    )
     password: str = Field(..., min_length=6, max_length=128, description="Kullanıcı şifresi")
 
 
 class UserCreate(BaseModel):
     """POST /auth/register isteği."""
 
-    email: EmailStr = Field(..., description="Benzersiz e-posta adresi")
+    email: str = Field(
+        ...,
+        min_length=5,
+        max_length=255,
+        pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+        description="Benzersiz e-posta adresi",
+    )
     password: str = Field(
         ...,
         min_length=8,
@@ -46,7 +58,11 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     """PUT /auth/users/{id} isteği — tüm alanlar opsiyonel."""
 
-    email: EmailStr | None = None
+    email: str | None = Field(
+        default=None,
+        max_length=255,
+        pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+    )
     full_name: str | None = Field(default=None, max_length=255)
     password: str | None = Field(default=None, min_length=8, max_length=128)
     role: str | None = Field(default=None, max_length=50)

@@ -4,17 +4,16 @@
 # Endpoint'ler repository veya DB session'ı doğrudan kullanmaz;
 # bu dependency katmanından servis alır.
 
-from collections.abc import AsyncGenerator
 from typing import Annotated
 
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
 from app.core.exceptions import ForbiddenError, UnauthorizedError
 from app.core.logger import get_logger
+from app.core.security import decode_access_token
 from app.db.session import get_db_session
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
@@ -63,17 +62,12 @@ async def get_current_user(
 
     token = credentials.credentials
 
-    try:
-        payload = jwt.decode(
-            token,
-            settings.SECRET_KEY,
-            algorithms=[settings.JWT_ALGORITHM],
-        )
-        user_id: int | None = payload.get("sub")
-        if user_id is None:
-            raise UnauthorizedError(message="Token payload geçersiz.")
-    except JWTError:
-        raise UnauthorizedError(message="Token geçersiz veya süresi dolmuş.")
+    # decode_access_token invalid/expired durumda UnauthorizedError fırlatır
+    payload = decode_access_token(token)
+    user_id: int | None = payload.get("sub")
+
+    if user_id is None:
+        raise UnauthorizedError(message="Token payload geçersiz.")
 
     user_repo = UserRepository(db)
     user = await user_repo.get(int(user_id))
@@ -108,20 +102,19 @@ AdminUser = Annotated[User, Depends(get_admin_user)]
 
 
 # ── Service Factory Dependencies ─────────────────────────
-# Service sınıfları henüz yazılmadı.
-# Aşağıdaki dependency'ler service katmanı oluşturulduktan sonra aktif edilecek.
-# Şu an import hatası oluşturmazlar.
 
 
-# TODO: Service katmanı oluşturulduktan sonra aşağıdaki dependency'ler aktif edilecek.
-#
-# async def get_auth_service(db: DBSession) -> "AuthService":
-#     from app.services.auth_service import AuthService
-#     return AuthService(
-#         user_repo=UserRepository(db),
-#         settings=get_settings(),
-#     )
-#
+async def get_auth_service(db: DBSession) -> "AuthService":
+    """AuthService dependency — UserRepository ve Settings ile oluşturulur."""
+    from app.services.auth_service import AuthService
+
+    return AuthService(
+        user_repo=UserRepository(db),
+        settings=get_settings(),
+    )
+
+
+# ── İleride aktif edilecek service dependency'leri ────────
 #
 # async def get_product_service(db: DBSession) -> "ProductService":
 #     from app.services.product_service import ProductService
