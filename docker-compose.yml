@@ -11,12 +11,11 @@ services:
       - "8000:8000"
     env_file:
       - .env
-    environment:
-      DATABASE_URL: postgresql+asyncpg://kobi_user:kobi_pass@db:5432/kobi_db
-      REDIS_URL: redis://redis:6379/0
+    # NOT: DATABASE_URL ve REDIS_URL doğrudan .env içinden alınacak.
+    # Docker içinden bağlantı için .env'de host 'db' ve 'redis' olarak ayarlanmalıdır.
     depends_on:
       db:
-        condition: service_healthy     # DB tamamen hazır olmadan başlama
+        condition: service_healthy
       redis:
         condition: service_started
     command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
@@ -29,13 +28,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: kobi_db
-      POSTGRES_USER: kobi_user
-      POSTGRES_PASSWORD: kobi_pass
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5433:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kobi_user -d kobi_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -48,7 +47,7 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "6380:6379"
+      - "${REDIS_PORT:-6380}:6379"
     networks:
       - kobi_network
 

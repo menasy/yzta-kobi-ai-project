@@ -86,15 +86,24 @@ docker compose logs -f api
 docker compose logs -f db
 ```
 
-### 7. Veritabanı İşlemleri
+### 8. Veritabanı ve Redis Bağlantısı
 
-```bash
-# Migration uygulama
-docker compose exec api alembic upgrade head
+Geliştirme sırasında veritabanına ve Redis'e iki farklı şekilde bağlanılabilir:
 
-# Örnek veri yükleme
-docker compose exec api python scripts/seed_data.py
-```
+*   **Docker İçinden (Backend -> DB):**
+    *   **Host:** `db` (PostgreSQL), `redis` (Redis)
+    *   **Port:** `5432`, `6379`
+    *   **Config:** `.env` içindeki `DATABASE_URL` ve `REDIS_URL` bu hostları kullanır.
+
+*   **Dışarıdan (DBeaver, pgAdmin -> Docker):**
+    *   **Host:** `localhost`
+    *   **PostgreSQL Port:** `.env` içindeki `POSTGRES_PORT` (Varsayılan: `5433`)
+    *   **Redis Port:** `.env` içindeki `REDIS_PORT` (Varsayılan: `6380`)
+
+**Bağlantı Örneği:**
+*   **Host:** `localhost` | **Port:** `5433` | **User:** `kobi_user` | **Pass:** `kobi_pass`
+
+---
 
 ## Sistem Mimarisi
 
