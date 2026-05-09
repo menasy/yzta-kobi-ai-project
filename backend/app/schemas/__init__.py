@@ -1,0 +1,106 @@
+# schemas/__init__.py
+# Tüm Pydantic schema'larını merkezi olarak export eder.
+# Endpoint'ler ve service'ler bu dosyadan import yapabilir.
+
+from .auth import (
+    ChangePasswordRequest,
+    LoginRequest,
+    TokenResponse,
+    UserCreate,
+    UserResponse,
+    UserUpdate,
+)
+from .chat import (
+    ChatMessageRequest,
+    ChatResponse,
+    ConversationListResponse,
+    ConversationResponse,
+)
+from .common import (
+    IdResponse,
+    MessageResponse,
+    PaginationParams,
+    TimestampResponseMixin,
+    sanitize_html,
+)
+from .inventory import (
+    InventoryMovementCreate,
+    InventoryMovementResponse,
+    InventoryResponse,
+    InventoryUpdate,
+    InventoryWithProductResponse,
+    LowStockAlertResponse,
+)
+from .order import (
+    CustomerBriefResponse,
+    OrderCreate,
+    OrderItemCreate,
+    OrderItemResponse,
+    OrderListResponse,
+    OrderResponse,
+    OrderStatusHistoryResponse,
+    OrderStatusUpdate,
+    OrderSummaryResponse,
+)
+from .product import (
+    ProductCreate,
+    ProductResponse,
+    ProductUpdate,
+)
+from .shipment import (
+    ShipmentCreate,
+    ShipmentEventCreate,
+    ShipmentEventResponse,
+    ShipmentListResponse,
+    ShipmentResponse,
+    ShipmentStatusUpdate,
+)
+
+__all__ = [
+    # Auth
+    "LoginRequest",
+    "TokenResponse",
+    "UserCreate",
+    "UserUpdate",
+    "UserResponse",
+    "ChangePasswordRequest",
+    # Product
+    "ProductCreate",
+    "ProductUpdate",
+    "ProductResponse",
+    # Order
+    "OrderItemCreate",
+    "OrderCreate",
+    "OrderStatusUpdate",
+    "OrderItemResponse",
+    "CustomerBriefResponse",
+    "OrderResponse",
+    "OrderListResponse",
+    "OrderStatusHistoryResponse",
+    "OrderSummaryResponse",
+    # Inventory
+    "InventoryUpdate",
+    "InventoryMovementCreate",
+    "InventoryResponse",
+    "InventoryWithProductResponse",
+    "InventoryMovementResponse",
+    "LowStockAlertResponse",
+    # Shipment
+    "ShipmentCreate",
+    "ShipmentStatusUpdate",
+    "ShipmentEventCreate",
+    "ShipmentEventResponse",
+    "ShipmentResponse",
+    "ShipmentListResponse",
+    # Chat
+    "ChatMessageRequest",
+    "ChatResponse",
+    "ConversationResponse",
+    "ConversationListResponse",
+    # Common
+    "PaginationParams",
+    "TimestampResponseMixin",
+    "IdResponse",
+    "MessageResponse",
+    "sanitize_html",
+]
