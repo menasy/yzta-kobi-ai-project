@@ -1,4 +1,4 @@
-fastapi
+fastapi[all]
 uvicorn
 python-multipart
 pydantic
@@ -6,3 +6,8 @@ requests
 openai
 langchain
 python-dotenv
+pydantic-settings
+loguru
+sqlalchemy
+asyncpg
+email-validator
