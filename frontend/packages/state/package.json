@@ -10,9 +10,11 @@
     "./query/client": "./query/client.ts",
     "./query/keys": "./query/keys.ts",
     "./query/provider": "./query/provider.tsx",
-    "./stores/auth": "./stores/auth/auth.store.ts",
-    "./stores/chat": "./stores/chat/chat.store.ts",
-    "./stores/ui": "./stores/ui/ui.store.ts"
+    "./stores": "./stores/index.ts",
+    "./stores/auth": "./stores/auth/index.ts",
+    "./stores/chat": "./stores/chat/index.ts",
+    "./stores/theme": "./stores/theme/theme.store.ts",
+    "./stores/ui": "./stores/ui/index.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.0",

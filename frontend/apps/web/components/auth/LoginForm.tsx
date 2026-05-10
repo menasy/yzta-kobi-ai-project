@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, useLogin, type LoginFormValues } from "@repo/domain/auth";
+import { useAuthActions } from "@repo/state/stores/auth";
 import {
   Button,
   Form,
@@ -18,9 +19,22 @@ import { useForm } from "react-hook-form";
 
 export function LoginForm() {
   const router = useRouter();
+  const { clearAuth, setAuth, setSessionLoading } = useAuthActions();
   const { error, isPending, login } = useLogin({
-    onSuccess: () => {
+    onSuccess: (response) => {
+      if (response.data) {
+        setAuth(response.data);
+      } else {
+        clearAuth();
+      }
+
       router.push("/dashboard");
+    },
+    onError: () => {
+      clearAuth();
+    },
+    onSettled: () => {
+      setSessionLoading(false);
     },
   });
 
@@ -33,6 +47,7 @@ export function LoginForm() {
   });
 
   function onSubmit(data: LoginFormValues) {
+    setSessionLoading(true);
     login({
       email: data.email,
       password: data.password,

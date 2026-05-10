@@ -1,6 +1,11 @@
 "use client";
 
-import { QueryProvider } from "@repo/state";
+import {
+  AuthStoreProvider,
+  ChatStoreProvider,
+  QueryProvider,
+  UIStoreProvider,
+} from "@repo/state";
 import type { ReactNode } from "react";
 
 import { ThemeProvider } from "./theme-provider";
@@ -15,7 +20,11 @@ export function Providers({ children }: { children: ReactNode }) {
       disableTransitionOnChange
     >
       <QueryProvider>
-        {children}
+        <AuthStoreProvider>
+          <UIStoreProvider>
+            <ChatStoreProvider>{children}</ChatStoreProvider>
+          </UIStoreProvider>
+        </AuthStoreProvider>
       </QueryProvider>
     </ThemeProvider>
   );
