@@ -4,36 +4,32 @@ import type { ApiError } from "@repo/core";
 import { queryKeys } from "@repo/state/query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { createProduct } from "../api/products.api";
+import { deleteProduct } from "../api/products.api";
 import type {
-  CreateProductResponse,
-  ProductCreateRequest,
+  DeleteProductResponse,
+  ProductId,
 } from "../types/products.types";
 
-interface UseCreateProductOptions {
-  onSuccess?: (
-    data: CreateProductResponse,
-    variables: ProductCreateRequest,
-  ) => void;
-  onError?: (error: ApiError, variables: ProductCreateRequest) => void;
+interface UseDeleteProductOptions {
+  onSuccess?: (data: DeleteProductResponse, variables: ProductId) => void;
+  onError?: (error: ApiError, variables: ProductId) => void;
   onSettled?: (
-    data: CreateProductResponse | undefined,
+    data: DeleteProductResponse | undefined,
     error: ApiError | null,
-    variables: ProductCreateRequest,
+    variables: ProductId,
   ) => void;
 }
 
-export function useCreateProduct(options: UseCreateProductOptions = {}) {
+export function useDeleteProduct(options: UseDeleteProductOptions = {}) {
   const queryClient = useQueryClient();
-  const mutation = useMutation<
-    CreateProductResponse,
-    ApiError,
-    ProductCreateRequest
-  >({
-    mutationKey: [...queryKeys.products.all, "create"] as const,
-    mutationFn: createProduct,
+  const mutation = useMutation<DeleteProductResponse, ApiError, ProductId>({
+    mutationKey: [...queryKeys.products.all, "delete"] as const,
+    mutationFn: deleteProduct,
     onSuccess: (data, variables) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+      void queryClient.removeQueries({
+        queryKey: queryKeys.products.detail(variables),
+      });
       options.onSuccess?.(data, variables);
     },
     onError: (error, variables) => {
@@ -45,8 +41,8 @@ export function useCreateProduct(options: UseCreateProductOptions = {}) {
   });
 
   return {
-    createProduct: mutation.mutate,
-    createProductAsync: mutation.mutateAsync,
+    deleteProduct: mutation.mutate,
+    deleteProductAsync: mutation.mutateAsync,
     isPending: mutation.isPending,
     isSuccess: mutation.isSuccess,
     error: mutation.error ?? null,

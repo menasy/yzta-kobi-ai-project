@@ -1,7 +1,16 @@
-// Chat domain public API
-// export type { ChatMessage, ChatResponse, MessageRole } from "./types/chat.types";
-// export { sendMessage, getChatHistory, clearHistory } from "./api/chat.api";
-// export { useSendMessage } from "./hooks/useSendMessage";
-// export { useChatHistory } from "./hooks/useChatHistory";
+export type {
+  ChatHistoryResponse,
+  ChatMessage,
+  MessageRole,
+  SendMessageData,
+  SendMessageRequest,
+  SendMessageResponse,
+} from "./types/chat.types";
 
-export {};
+export {
+  getChatHistory,
+  sendMessage,
+} from "./api/chat.api";
+
+export { useChatHistory } from "./hooks/useChatHistory";
+export { useSendMessage } from "./hooks/useSendMessage";

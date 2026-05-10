@@ -1,36 +1,32 @@
 "use client";
 
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
-
 import {
+  registerSchema,
+  useRegister,
+  type RegisterFormValues,
+} from "@repo/domain/auth";
+import {
+  Button,
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-  Button,
   Input,
 } from "@repo/ui";
-
-const registerSchema = z.object({
-  fullName: z.string().min(2, { message: "Ad soyad en az 2 karakter olmalıdır." }),
-  email: z.string().email({ message: "Geçerli bir e-posta adresi giriniz." }),
-  password: z.string().min(8, { message: "Şifre en az 8 karakter olmalıdır." }),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Şifreler eşleşmiyor.",
-  path: ["confirmPassword"],
-});
-
-type RegisterFormValues = z.infer<typeof registerSchema>;
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
 
 export function RegisterForm() {
-  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { error, isPending, register } = useRegister({
+    onSuccess: () => {
+      router.push("/auth/login");
+    },
+  });
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -42,19 +38,23 @@ export function RegisterForm() {
     },
   });
 
-  async function onSubmit(data: RegisterFormValues) {
-    setIsLoading(true);
-    console.log("Register data:", data);
-    
-    // Simüle edilmiş kayıt süreci
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    setIsLoading(false);
+  function onSubmit(data: RegisterFormValues) {
+    register({
+      email: data.email,
+      password: data.password,
+      full_name: data.fullName,
+      role: "admin",
+    });
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={(e) => { void form.handleSubmit(onSubmit)(e); }} className="space-y-4">
+      <form
+        onSubmit={(event) => {
+          void form.handleSubmit(onSubmit)(event);
+        }}
+        className="space-y-4"
+      >
         <FormField
           control={form.control}
           name="fullName"
@@ -62,10 +62,10 @@ export function RegisterForm() {
             <FormItem>
               <FormLabel>Ad Soyad</FormLabel>
               <FormControl>
-                <Input 
-                  placeholder="Ahmet Yılmaz" 
-                  disabled={isLoading} 
-                  {...field} 
+                <Input
+                  placeholder="Ahmet Yılmaz"
+                  disabled={isPending}
+                  {...field}
                 />
               </FormControl>
               <FormMessage />
@@ -79,11 +79,11 @@ export function RegisterForm() {
             <FormItem>
               <FormLabel>E-posta</FormLabel>
               <FormControl>
-                <Input 
+                <Input
                   type="email"
-                  placeholder="ahmet@sirket.com" 
-                  disabled={isLoading} 
-                  {...field} 
+                  placeholder="ahmet@sirket.com"
+                  disabled={isPending}
+                  {...field}
                 />
               </FormControl>
               <FormMessage />
@@ -97,11 +97,11 @@ export function RegisterForm() {
             <FormItem>
               <FormLabel>Şifre</FormLabel>
               <FormControl>
-                <Input 
-                  type="password" 
-                  placeholder="••••••••" 
-                  disabled={isLoading} 
-                  {...field} 
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  disabled={isPending}
+                  {...field}
                 />
               </FormControl>
               <FormMessage />
@@ -115,19 +115,22 @@ export function RegisterForm() {
             <FormItem>
               <FormLabel>Şifre Tekrar</FormLabel>
               <FormControl>
-                <Input 
-                  type="password" 
-                  placeholder="••••••••" 
-                  disabled={isLoading} 
-                  {...field} 
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  disabled={isPending}
+                  {...field}
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? (
+        {error ? (
+          <p className="text-sm text-destructive">{error.message}</p>
+        ) : null}
+        <Button type="submit" className="w-full" disabled={isPending}>
+          {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Hesap Oluşturuluyor...

@@ -4,30 +4,26 @@ import type { ApiError } from "@repo/core";
 import { queryKeys } from "@repo/state/query";
 import { useQuery } from "@tanstack/react-query";
 
-import { getOrders } from "../api/orders.api";
-import type {
-  OrderListParams,
-  OrdersResponse,
-} from "../types/orders.types";
+import { getLowStockProducts } from "../api/products.api";
+import type { LowStockProductsResponse } from "../types/products.types";
 
-interface UseOrdersOptions {
+interface UseLowStockProductsOptions {
   enabled?: boolean;
   refetchInterval?: number | false;
 }
 
-export function useOrders(
-  params?: OrderListParams,
-  options: UseOrdersOptions = {},
+export function useLowStockProducts(
+  options: UseLowStockProductsOptions = {},
 ) {
-  const query = useQuery<OrdersResponse, ApiError>({
-    queryKey: queryKeys.orders.list(params),
-    queryFn: () => getOrders(params),
+  const query = useQuery<LowStockProductsResponse, ApiError>({
+    queryKey: queryKeys.products.lowStock(),
+    queryFn: getLowStockProducts,
     enabled: options.enabled,
     refetchInterval: options.refetchInterval,
   });
 
   return {
-    orders: query.data?.data ?? [],
+    products: query.data?.data ?? [],
     data: query.data,
     refetch: query.refetch,
     isLoading: query.isLoading,

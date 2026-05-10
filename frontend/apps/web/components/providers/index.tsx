@@ -1,9 +1,11 @@
-"use client"
+"use client";
 
-import { QueryProvider } from "@repo/state"
-import { ThemeProvider } from "./theme-provider"
+import { QueryProvider } from "@repo/state";
+import type { ReactNode } from "react";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+import { ThemeProvider } from "./theme-provider";
+
+export function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider
       attribute="class"
@@ -16,5 +18,5 @@ export function Providers({ children }: { children: React.ReactNode }) {
         {children}
       </QueryProvider>
     </ThemeProvider>
-  )
+  );
 }

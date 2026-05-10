@@ -4,36 +4,36 @@ import type { ApiError } from "@repo/core";
 import { queryKeys } from "@repo/state/query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { createProduct } from "../api/products.api";
+import { createShipment } from "../api/shipments.api";
 import type {
-  CreateProductResponse,
-  ProductCreateRequest,
-} from "../types/products.types";
+  CreateShipmentRequest,
+  CreateShipmentResponse,
+} from "../types/shipments.types";
 
-interface UseCreateProductOptions {
+interface UseCreateShipmentOptions {
   onSuccess?: (
-    data: CreateProductResponse,
-    variables: ProductCreateRequest,
+    data: CreateShipmentResponse,
+    variables: CreateShipmentRequest,
   ) => void;
-  onError?: (error: ApiError, variables: ProductCreateRequest) => void;
+  onError?: (error: ApiError, variables: CreateShipmentRequest) => void;
   onSettled?: (
-    data: CreateProductResponse | undefined,
+    data: CreateShipmentResponse | undefined,
     error: ApiError | null,
-    variables: ProductCreateRequest,
+    variables: CreateShipmentRequest,
   ) => void;
 }
 
-export function useCreateProduct(options: UseCreateProductOptions = {}) {
+export function useCreateShipment(options: UseCreateShipmentOptions = {}) {
   const queryClient = useQueryClient();
   const mutation = useMutation<
-    CreateProductResponse,
+    CreateShipmentResponse,
     ApiError,
-    ProductCreateRequest
+    CreateShipmentRequest
   >({
-    mutationKey: [...queryKeys.products.all, "create"] as const,
-    mutationFn: createProduct,
+    mutationKey: [...queryKeys.shipments.all, "create"] as const,
+    mutationFn: createShipment,
     onSuccess: (data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.shipments.all });
       options.onSuccess?.(data, variables);
     },
     onError: (error, variables) => {
@@ -45,8 +45,8 @@ export function useCreateProduct(options: UseCreateProductOptions = {}) {
   });
 
   return {
-    createProduct: mutation.mutate,
-    createProductAsync: mutation.mutateAsync,
+    createShipment: mutation.mutate,
+    createShipmentAsync: mutation.mutateAsync,
     isPending: mutation.isPending,
     isSuccess: mutation.isSuccess,
     error: mutation.error ?? null,

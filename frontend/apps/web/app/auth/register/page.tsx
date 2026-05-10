@@ -1,13 +1,13 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui";
 import type { Metadata } from "next";
+
+import { RegisterForm } from "@/components/auth/RegisterForm";
+import { Logo } from "@/components/brand/logo";
 
 export const metadata: Metadata = {
   title: "Kayıt Ol | KOBİ AI",
   description: "KOBİ AI platformuna yeni hesap oluşturun.",
 };
-
-import { RegisterForm } from "@/components/auth/RegisterForm";
-import { Logo } from "@/components/brand/logo";
-import { Card, CardHeader, CardContent, CardDescription, CardTitle } from "@repo/ui";
 
 export default function RegisterPage() {
   return (

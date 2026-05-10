@@ -1,6 +1,6 @@
-import Link from "next/link";
-
 import { cn } from "@repo/core/utils/cn";
+import Image from "next/image";
+import Link from "next/link";
 
 type LogoVariant = "header" | "footer" | "icon";
 type LogoTone = "light" | "dark";
@@ -50,7 +50,7 @@ export function Logo({
 
   return (
     <Link href="/" className="inline-flex items-center" aria-label="KobiAi">
-      <img
+      <Image
         src={src}
         alt="KobiAi"
         width={width}
@@ -60,10 +60,9 @@ export function Logo({
           variant === "header" && "w-[130px] sm:w-[145px] md:w-[160px]",
           variant === "footer" && "w-[120px] sm:w-[130px]",
           variant === "icon" && "h-8 w-8",
-          className
+          className,
         )}
-        loading={priority ? "eager" : "lazy"}
-        decoding="async"
+        priority={priority}
       />
     </Link>
   );

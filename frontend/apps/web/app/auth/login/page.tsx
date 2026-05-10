@@ -1,13 +1,13 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui";
 import type { Metadata } from "next";
+
+import { LoginForm } from "@/components/auth/LoginForm";
+import { Logo } from "@/components/brand/logo";
 
 export const metadata: Metadata = {
   title: "Giriş | KOBİ AI",
   description: "KOBİ AI yönetici paneline giriş yapın.",
 };
-
-import { LoginForm } from "@/components/auth/LoginForm";
-import { Logo } from "@/components/brand/logo";
-import { Card, CardHeader, CardContent, CardDescription, CardTitle } from "@repo/ui";
 
 export default function LoginPage() {
   return (

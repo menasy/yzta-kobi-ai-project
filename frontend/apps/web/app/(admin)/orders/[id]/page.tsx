@@ -4,12 +4,20 @@ export const metadata: Metadata = {
   title: "Sipariş Detayı | KOBİ AI",
 };
 
-export default function OrderDetailPage({ params }: { params: { id: string } }) {
+interface OrderDetailPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function OrderDetailPage({
+  params,
+}: OrderDetailPageProps) {
+  const { id } = await params;
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Sipariş #{params.id}
+          Sipariş #{id}
         </h1>
         <p className="text-sm text-muted-foreground">
           Sipariş detayları ve geçmişi

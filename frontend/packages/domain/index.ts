@@ -8,6 +8,9 @@
 // Auth domain
 export * from "./auth/index";
 
+// AI domain
+export * from "./ai/index";
+
 // Chat domain
 export * from "./chat/index";
 
