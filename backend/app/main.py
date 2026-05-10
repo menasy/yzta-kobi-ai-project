@@ -89,13 +89,22 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         if request.url.path.startswith("/docs") or request.url.path.startswith(
             "/redoc"
         ):
+            """
             response.headers["Content-Security-Policy"] = (
                 "default-src 'self'; "
                 "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
                 "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
                 "img-src 'self' data: https://fastapi.tiangolo.com; "
                 "font-src 'self' data: https://cdn.jsdelivr.net"
+                )
+                """
+            response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; " \
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " \
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " \
+            "img-src 'self' data: https://fastapi.tiangolo.com;"
             )
+            
         else:
             response.headers["Content-Security-Policy"] = "default-src 'self'"
         return response
