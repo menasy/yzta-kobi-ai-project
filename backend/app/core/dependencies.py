@@ -149,11 +149,17 @@ async def get_auth_service(db: DBSession) -> "AuthService":
 #         event_repo=ShipmentEventRepository(db),
 #         order_repo=OrderRepository(db),
 #     )
-#
-#
-# async def get_agent_orchestrator(db: DBSession) -> "AgentOrchestrator":
-#     from app.agent.orchestrator import AgentOrchestrator
-#     return AgentOrchestrator(
-#         settings=get_settings(),
-#         db_session=db,
-#     )
+
+
+# ── Agent Orchestrator Dependency ────────────────────────
+
+
+async def get_agent_orchestrator(db: DBSession) -> "AgentOrchestrator":
+    """
+    AgentOrchestrator dependency.
+    Her request için DB session ile yeni orchestrator oluşturur.
+    Tool'lar bu session üzerinden service katmanına erişir.
+    """
+    from app.agent.orchestrator import AgentOrchestrator
+
+    return AgentOrchestrator(db=db, settings=get_settings())

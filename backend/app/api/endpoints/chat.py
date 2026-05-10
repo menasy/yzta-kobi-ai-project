@@ -1,43 +1,118 @@
-from fastapi import APIRouter, Header
-from app.services.chat_history_service import chat_history
-from app.services.gemini_service import gemini_service # Gemini servisini ekledik
-from app.core.responses import ApiResponse
+# api/endpoints/chat.py
+# AI Agent chat endpointleri.
+# Orchestrator üzerinden agent'a mesaj gönderir.
+# ConversationMemory üzerinden geçmiş yönetir.
+# Business logic içermez — sadece request alır, dependency ile servis alır, response döner.
+
+from fastapi import APIRouter, Depends
+
+from app.agent.memory import ConversationMemory
+from app.agent.orchestrator import AgentOrchestrator
+from app.core.dependencies import CurrentUser, get_agent_orchestrator
+from app.core.response_builder import success_response
+from app.schemas.chat import ChatMessageRequest, ChatResponse
 
 router = APIRouter()
 
-def success_response(data: any, message: str, status_code: int = 200):
-    return ApiResponse(
-        statusCode=status_code,
-        key="SUCCESS",
-        message=message,
-        data=data
+
+# ── Dependency Factories ─────────────────────────────────
+
+
+def _get_memory() -> ConversationMemory:
+    """ConversationMemory dependency."""
+    return ConversationMemory()
+
+
+# ── Endpoints ────────────────────────────────────────────
+
+
+@router.post(
+    "/message",
+    summary="Agent'a mesaj gönder",
+    description="Kullanıcı mesajını AI agent'a iletir ve yanıt alır.",
+    responses={
+        200: {
+            "description": "Agent yanıtı başarıyla oluşturuldu.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "statusCode": 200,
+                        "key": "SUCCESS",
+                        "message": "Agent yanıtı alındı.",
+                        "data": {
+                            "reply": "Siparişiniz kargoda, şu an Ankara'da.",
+                            "session_id": "abc123",
+                        },
+                        "errors": None,
+                    }
+                }
+            },
+        },
+    },
+)
+async def send_message(
+    payload: ChatMessageRequest,
+    current_user: CurrentUser,
+    orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator),
+):
+    """
+    POST /api/chat/message
+
+    Kullanıcı mesajını orchestrator'a iletir.
+    Orchestrator ReAct döngüsüyle tool'ları çağırır ve final yanıt üretir.
+    """
+    reply = await orchestrator.run(
+        message=payload.content,
+        session_id=payload.session_id,
     )
 
-@router.post("/message")
-async def send_message(content: str, session_id: str = Header(default="default-session")):
-    # 1. Önce Redis'ten geçmişi çek (Gemini kiminle konuştuğunu bilsin)
-    full_history = await chat_history.get_history(session_id)
-    
-    # 2. GEMINI'ye sor (Mesajı ve geçmişi paketleyip gönderiyoruz)
-    # Not: gemini_service.py dosyasını oluşturduysan bu çalışacaktır.
-    ai_reply = await gemini_service.get_response(content, history=full_history)
-    
-    # 3. Hafızayı Güncelle: Kullanıcının yeni mesajını kaydet
-    await chat_history.add_message(session_id, "user", content)
-    
-    # 4. Hafızayı Güncelle: AI'ın verdiği gerçek cevabı kaydet
-    await chat_history.add_message(session_id, "assistant", ai_reply)
-    
     return success_response(
-        data={"reply": ai_reply, "session_id": session_id}, 
-        message="AI cevap üretti."
+        data=ChatResponse(reply=reply, session_id=payload.session_id).model_dump(),
+        message="Agent yanıtı alındı.",
     )
 
-@router.get("/history")
-async def get_history(session_id: str = Header(default="default-session")):
-    history = await chat_history.get_history(session_id)
-    
+
+@router.get(
+    "/history/{session_id}",
+    summary="Konuşma geçmişini getir",
+    description="Belirtilen oturum ID'sine ait konuşma geçmişini Redis'ten getirir.",
+)
+async def get_history(
+    session_id: str,
+    current_user: CurrentUser,
+    memory: ConversationMemory = Depends(_get_memory),
+):
+    """
+    GET /api/chat/history/{session_id}
+
+    Redis memory'den konuşma geçmişini getirir.
+    """
+    history = await memory.get_history(session_id)
+
     return success_response(
-        data=history, 
-        message="Geçmiş başarıyla getirildi."
+        data={"session_id": session_id, "messages": history},
+        message="Konuşma geçmişi başarıyla getirildi.",
+    )
+
+
+@router.delete(
+    "/history/{session_id}",
+    summary="Konuşma geçmişini temizle",
+    description="Belirtilen oturum ID'sine ait konuşma geçmişini Redis'ten siler.",
+)
+async def clear_history(
+    session_id: str,
+    current_user: CurrentUser,
+    memory: ConversationMemory = Depends(_get_memory),
+):
+    """
+    DELETE /api/chat/history/{session_id}
+
+    Redis memory'den konuşma geçmişini siler.
+    """
+    await memory.clear(session_id)
+
+    return success_response(
+        data={"session_id": session_id},
+        message="Konuşma geçmişi başarıyla temizlendi.",
     )
