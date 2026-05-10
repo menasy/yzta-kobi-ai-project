@@ -1,0 +1,64 @@
+# dependencies
+node_modules
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# next.js
+.next
+out
+build
+dist
+
+# turbo
+.turbo
+
+# production
+.vercel
+
+# env
+.env
+.env.*
+!.env.example
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# testing
+coverage
+.nyc_output
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# cache
+.cache
+.eslintcache
+.stylelintcache
+
+# os
+.DS_Store
+Thumbs.db
+
+# ide/editors
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+*.swp
+*.swo
+
+# local generated files
+*.local
+
+# package manager
+package-lock.json
+yarn.lock
+
+# keep pnpm lockfile
+!pnpm-lock.yaml
