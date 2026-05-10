@@ -11,13 +11,45 @@ from app.core.cookie import clear_auth_cookies, set_auth_cookies
 from app.core.dependencies import CurrentUser, get_auth_service
 from app.core.exceptions import UnauthorizedError
 from app.core.response_builder import success_response
-from app.schemas.auth import LoginRequest, UserCreate
+from app.core import openapi_examples
+from app.schemas.auth import LoginRequest, UserCreate, UserResponse
 from app.services.auth_service import AuthService
 
 router = APIRouter()
 
 
-@router.post("/register")
+@router.post(
+    "/register",
+    status_code=201,
+    response_model=None,
+    responses={
+        201: {
+            "description": "Kullanıcı başarıyla oluşturuldu.",
+            "content": {
+                "application/json": {
+                    "example": openapi_examples.get_api_response_example(
+                        data=openapi_examples.USER_EXAMPLE,
+                        message="Kullanıcı başarıyla oluşturuldu.",
+                        status_code=201
+                    )
+                }
+            }
+        },
+        409: {
+            "description": "Email zaten kayıtlı.",
+            "content": {
+                "application/json": {
+                    "example": openapi_examples.get_api_response_example(
+                        status_code=409,
+                        key="CONFLICT",
+                        message="'user@kobi.ai' adresi zaten kayıtlı."
+                    )
+                }
+            }
+        },
+        422: {"description": "Validasyon hatası.", "content": {"application/json": {"example": openapi_examples.VALIDATION_ERROR_RESPONSE}}}
+    }
+)
 async def register(
     payload: UserCreate,
     auth_service: AuthService = Depends(get_auth_service),
@@ -37,7 +69,22 @@ async def register(
     )
 
 
-@router.post("/login")
+@router.post(
+    "/login",
+    responses={
+        200: {
+            "description": "Giriş başarılı. HttpOnly cookie'ler set edildi.",
+            "content": {
+                "application/json": {
+                    "example": openapi_examples.get_api_response_example(
+                        message="Giriş başarılı."
+                    )
+                }
+            }
+        },
+        401: {"description": "Hatalı şifre veya email.", "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}}}
+    }
+)
 async def login(
     payload: LoginRequest,
     response: Response,
@@ -95,7 +142,24 @@ async def logout(
     )
 
 
-@router.get("/me")
+@router.get(
+    "/me",
+    response_model=None,
+    responses={
+        200: {
+            "description": "Kullanıcı bilgisi başarıyla getirildi.",
+            "content": {
+                "application/json": {
+                    "example": openapi_examples.get_api_response_example(
+                        data=openapi_examples.USER_EXAMPLE,
+                        message="Kullanıcı bilgisi başarıyla getirildi."
+                    )
+                }
+            }
+        },
+        401: {"description": "Yetkisiz erişim.", "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}}}
+    }
+)
 async def get_me(
     current_user: CurrentUser,
     auth_service: AuthService = Depends(get_auth_service),

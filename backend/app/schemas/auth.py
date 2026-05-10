@@ -7,6 +7,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .common import USER_ROLES, validate_sanitized_field, validate_status
+from app.core import openapi_examples
 
 
 # ── Request Schemas ──────────────────────────────────────
@@ -23,6 +24,12 @@ class LoginRequest(BaseModel):
         description="Kullanıcı e-posta adresi",
     )
     password: str = Field(..., min_length=6, max_length=128, description="Kullanıcı şifresi")
+
+    model_config = {
+        "json_schema_extra": {
+            "example": openapi_examples.LOGIN_REQUEST_EXAMPLE
+        }
+    }
 
 
 class UserCreate(BaseModel):
@@ -53,6 +60,12 @@ class UserCreate(BaseModel):
     @classmethod
     def sanitize_full_name(cls, v: str | None) -> str | None:
         return validate_sanitized_field(v)
+
+    model_config = {
+        "json_schema_extra": {
+            "example": openapi_examples.REGISTER_REQUEST_EXAMPLE
+        }
+    }
 
 
 class UserUpdate(BaseModel):
@@ -106,4 +119,9 @@ class UserResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": openapi_examples.USER_EXAMPLE
+        }
+    )

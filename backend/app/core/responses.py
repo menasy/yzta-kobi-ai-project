@@ -26,6 +26,18 @@ class ApiResponse(BaseModel, Generic[T]):
     data: T | None = None
     errors: list[Any] | None = None
 
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "statusCode": 200,
+                "key": "SUCCESS",
+                "message": "İşlem başarıyla tamamlandı.",
+                "data": None,
+                "errors": None
+            }
+        }
+    }
+
 
 class PaginatedData(BaseModel, Generic[T]):
     """Sayfalı liste sonuçları için veri sarmalayıcı."""

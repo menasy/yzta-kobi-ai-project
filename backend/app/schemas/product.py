@@ -8,6 +8,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .common import validate_sanitized_field
+from app.core import openapi_examples
 
 
 # ── Request Schemas ──────────────────────────────────────
@@ -39,6 +40,12 @@ class ProductCreate(BaseModel):
     def normalize_sku(cls, v: str) -> str:
         """SKU'yu büyük harfe çevirir."""
         return v.upper()
+
+    model_config = {
+        "json_schema_extra": {
+            "example": openapi_examples.PRODUCT_CREATE_EXAMPLE
+        }
+    }
 
 
 class ProductUpdate(BaseModel):
@@ -87,4 +94,9 @@ class ProductResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": openapi_examples.PRODUCT_EXAMPLE
+        }
+    )
