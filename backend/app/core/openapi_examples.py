@@ -88,17 +88,6 @@ PRODUCT_CREATE_EXAMPLE = {
     "category": "Elektronik"
 }
 
-# ── AI Chat Örnekleri ──────────────────────────────────
-
-AI_CHAT_REQUEST_EXAMPLE = {
-    "message": "En çok satan 3 ürünümü listeler misin?"
-}
-
-AI_CHAT_RESPONSE_DATA_EXAMPLE = {
-    "response": "En çok satan 3 ürününüz: 1. Kablosuz Mouse, 2. Klavye, 3. USB-C Adaptör."
-}
-
-
 # ── Helper Fonksiyonlar ───────────────────────────────
 
 def get_api_response_example(

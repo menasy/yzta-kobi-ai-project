@@ -23,7 +23,7 @@ from app.core.response_builder import error_response, success_response
 from app.core.responses import ApiResponse
 from app.db.session import close_db_connections
 
-from app.api.endpoints import ai_chat
+
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -270,7 +270,7 @@ async def unhandled_exception_handler(
 
 app.include_router(api_router, prefix=settings.API_PREFIX)
 
-app.include_router(ai_chat.router, prefix="/api/ai", tags=["AI Agent"])
+
 
 # Chat router artık api_router üzerinden /api/chat prefix'i ile kayıtlıdır.
 # Bkz: app/api/router.py
