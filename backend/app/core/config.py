@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "KOBİ Agent"
     APP_VERSION: str = "0.1.0"
     ENVIRONMENT: str = "development"  # development | staging | production
-    DEBUG: bool = False
+    DEBUG: bool = True
     API_PREFIX: str = "/api"
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
