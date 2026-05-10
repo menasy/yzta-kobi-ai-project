@@ -23,6 +23,11 @@ from app.core.response_builder import error_response, success_response
 from app.core.responses import ApiResponse
 from app.db.session import close_db_connections
 
+from app.api.endpoints import ai_chat
+
+from dotenv import load_dotenv
+load_dotenv()
+
 # ── Settings ve Logger ───────────────────────────────────
 
 settings = get_settings()
@@ -264,6 +269,8 @@ async def unhandled_exception_handler(
 # ══════════════════════════════════════════════════════════
 
 app.include_router(api_router, prefix=settings.API_PREFIX)
+
+app.include_router(ai_chat.router, prefix="/api/ai", tags=["AI Agent"])
 
 
 # ══════════════════════════════════════════════════════════
