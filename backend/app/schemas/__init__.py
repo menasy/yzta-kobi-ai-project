@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-from .user import User, UserCreate, UserUpdate
-from .product import Product, ProductCreate, ProductUpdate
-from .order import Order, OrderCreate, OrderUpdate
-=======
 # schemas/__init__.py
 # Tüm Pydantic schema'larını merkezi olarak export eder.
 # Endpoint'ler ve service'ler bu dosyadan import yapabilir.
@@ -109,4 +104,3 @@ __all__ = [
     "MessageResponse",
     "sanitize_html",
 ]
->>>>>>> origin/backend

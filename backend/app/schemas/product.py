@@ -1,29 +1,3 @@
-<<<<<<< HEAD
-from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime
-
-class ProductBase(BaseModel):
-    name: str
-    price: float
-    stock_quantity: int
-    low_stock_threshold: int = 10
-
-class ProductCreate(ProductBase):
-    pass
-
-class ProductUpdate(BaseModel):
-    stock_quantity: Optional[int] = None
-    price: Optional[float] = None
-
-class Product(ProductBase):
-    id: int
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
-=======
 # schemas/product.py
 # Ürün CRUD schema'ları.
 # description gibi serbest metin alanları global sanitize ile temizlenir.
@@ -114,4 +88,3 @@ class ProductResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
->>>>>>> origin/backend
