@@ -1,3 +1,5 @@
+import { GlobalHeader } from "@/components/navigation/GlobalHeader";
+
 // Minimal admin layout — sidebar ve header sonraki adımda eklenecek
 export default function AdminLayout({
   children,
@@ -35,25 +37,7 @@ export default function AdminLayout({
 
       {/* İçerik alanı */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Header — sonraki adımda AdminHeader bileşeni buraya gelecek */}
-        <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4 lg:px-6">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-foreground lg:hidden">
-              KOBİ AI
-            </span>
-            <span className="hidden text-sm text-muted-foreground lg:block">
-              Yönetici Paneli
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <a
-              href="/auth/login"
-              className="rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              Çıkış
-            </a>
-          </div>
-        </header>
+        <GlobalHeader />
 
         {/* Sayfa içeriği */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>

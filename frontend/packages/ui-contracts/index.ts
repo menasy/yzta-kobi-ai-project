@@ -7,4 +7,4 @@
  */
 
 // Şimdilik boş — tipler domain bazlı dosyalarda tanımlandıkça buraya eklenir
-export type {};
+export * from "./shared/app-header.types";

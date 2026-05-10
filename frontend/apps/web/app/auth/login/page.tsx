@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo
 import type { Metadata } from "next";
 
 import { LoginForm } from "@/components/auth/LoginForm";
-import { Logo } from "@/components/brand/logo";
+import { Logo } from "@repo/ui";
 
 export const metadata: Metadata = {
   title: "Giriş | KOBİ AI",

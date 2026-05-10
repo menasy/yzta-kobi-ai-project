@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
     "@repo/ui",
     "@repo/i18n",
     "@repo/ui-contracts",
+    "@repo/ui-web",
   ],
 
   // Görüntü optimizasyonu için izin verilen domain'ler

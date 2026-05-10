@@ -1,4 +1,4 @@
-import { cn } from "@repo/core/utils/cn";
+import { cn } from "@repo/core";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -10,6 +10,7 @@ type LogoProps = {
   tone?: LogoTone;
   className?: string;
   priority?: boolean;
+  href?: string;
 };
 
 const LOGO_SOURCES = {
@@ -44,12 +45,13 @@ export function Logo({
   tone = "light",
   className,
   priority = false,
+  href = "/",
 }: LogoProps) {
   const src = getLogoSrc(variant, tone);
   const { width, height } = getLogoSize(variant);
 
   return (
-    <Link href="/" className="inline-flex items-center" aria-label="KobiAi">
+    <Link href={href} className="inline-flex items-center" aria-label="KobiAi">
       <Image
         src={src}
         alt="KobiAi"

@@ -11,10 +11,6 @@ export default function HomePage() {
     <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
       <div className="mx-auto max-w-3xl text-center">
         {/* Hero Bölümü */}
-        <div className="mb-6 inline-flex items-center rounded-full border border-border bg-accent px-4 py-1.5 text-sm text-accent-foreground">
-          <span className="mr-2 h-2 w-2 rounded-full bg-success animate-pulse" />
-          Yapay Zeka Asistanı Aktif
-        </div>
 
         <h1 className="mb-4 text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
           KOBİ{" "}

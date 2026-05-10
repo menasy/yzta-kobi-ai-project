@@ -1,4 +1,5 @@
-import { Logo } from "@/components/brand/logo";
+import { Logo } from "@repo/ui";
+import { GlobalHeader } from "@/components/navigation/GlobalHeader";
 
 // Minimal public layout — header ve footer bileşenleri sonraki adımda eklenecek
 export default function PublicLayout({
@@ -8,26 +9,7 @@ export default function PublicLayout({
 }) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-sm">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-          <Logo priority />
-          <nav className="flex items-center gap-1">
-            <a
-              href="/chat"
-              className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-            >
-              AI Asistan
-            </a>
-            <a
-              href="/auth/login"
-              className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              Giriş Yap
-            </a>
-          </nav>
-        </div>
-      </header>
+      <GlobalHeader />
 
       {/* İçerik */}
       <main className="flex-1">{children}</main>
