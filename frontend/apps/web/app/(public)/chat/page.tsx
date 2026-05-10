@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { Logo } from "@/components/brand/logo";
+
 export const metadata: Metadata = {
   title: "AI Asistan | KOBİ AI",
   description:
@@ -18,8 +20,8 @@ export default function ChatPage() {
       <header className="border-b border-border bg-card px-4 py-3">
         <div className="mx-auto flex max-w-3xl items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
-              AI
+            <div className="rounded-full bg-primary/10 p-1">
+              <Logo variant="icon" className="h-7 w-7" />
             </div>
             <div>
               <p className="text-sm font-medium text-foreground">KOBİ AI Asistan</p>

@@ -8,6 +8,7 @@
 
 // TanStack Query
 export { queryClient } from "./query/client";
+export { QueryProvider } from "./query/provider";
 export { queryKeys } from "./query/keys";
 export type { QueryKeys } from "./query/types";
 
@@ -15,3 +16,4 @@ export type { QueryKeys } from "./query/types";
 export { useAuthStore } from "./stores/auth/auth.store";
 export { useChatStore } from "./stores/chat/chat.store";
 export { useUIStore } from "./stores/ui/ui.store";
+export { useThemeStore } from "./stores/theme/theme.store";

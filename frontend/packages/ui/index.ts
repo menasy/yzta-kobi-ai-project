@@ -23,3 +23,12 @@ export {
   useFormField,
 } from "./components/shadcn/form";
 export { Checkbox } from "./components/shadcn/checkbox";
+export { Badge, badgeVariants } from "./components/shadcn/badge";
+export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from "./components/shadcn/table";
+export { Dialog, DialogPortal, DialogOverlay, DialogClose, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "./components/shadcn/dialog";
+export { Sheet, SheetPortal, SheetOverlay, SheetTrigger, SheetClose, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from "./components/shadcn/sheet";
+export { Skeleton } from "./components/shadcn/skeleton";
+export { Separator } from "./components/shadcn/separator";
+export { Avatar, AvatarImage, AvatarFallback } from "./components/shadcn/avatar";
+export { Progress } from "./components/shadcn/progress";
+export { Alert, AlertTitle, AlertDescription } from "./components/shadcn/alert";

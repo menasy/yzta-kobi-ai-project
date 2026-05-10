@@ -1,3 +1,5 @@
+import { Logo } from "@/components/brand/logo";
+
 // Minimal public layout — header ve footer bileşenleri sonraki adımda eklenecek
 export default function PublicLayout({
   children,
@@ -9,15 +11,7 @@ export default function PublicLayout({
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-          <a
-            href="/"
-            className="flex items-center gap-2 text-sm font-semibold text-foreground"
-          >
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground text-xs font-bold">
-              K
-            </div>
-            KOBİ AI
-          </a>
+          <Logo priority />
           <nav className="flex items-center gap-1">
             <a
               href="/chat"
@@ -39,10 +33,13 @@ export default function PublicLayout({
       <main className="flex-1">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t border-border py-6 text-center">
-        <p className="text-xs text-muted-foreground">
-          © {new Date().getFullYear()} KOBİ AI · Tüm hakları saklıdır.
-        </p>
+      <footer className="border-t border-border py-8">
+        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:items-center">
+          <Logo variant="footer" className="sm:shrink-0" />
+          <p className="text-center text-xs text-muted-foreground sm:text-right">
+            © {new Date().getFullYear()} KobiAi · Tüm hakları saklıdır.
+          </p>
+        </div>
       </footer>
     </div>
   );

@@ -6,6 +6,7 @@ export const metadata: Metadata = {
 };
 
 import { RegisterForm } from "@/components/auth/RegisterForm";
+import { Logo } from "@/components/brand/logo";
 import { Card, CardHeader, CardContent, CardDescription, CardTitle } from "@repo/ui";
 
 export default function RegisterPage() {
@@ -13,8 +14,8 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground text-xl font-bold shadow-lg shadow-primary/20">
-            K
+          <div className="mx-auto mb-3 inline-flex rounded-xl bg-primary/10 p-2 shadow-lg shadow-primary/20">
+            <Logo variant="icon" className="h-8 w-8" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">KOBİ AI</h1>
           <p className="mt-1 text-sm text-muted-foreground">
