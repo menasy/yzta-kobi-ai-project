@@ -2,9 +2,9 @@ import { ApiError } from "./api-error";
 import type { ApiResponse } from "./types";
 
 /**
- * Response handler — Backend ApiResponse<T> formatını parse eder
+ * Response handler — Backend ApiResponse<T> formatını doğrular.
  */
-export function handleResponse<T>(json: ApiResponse<T>): T {
+export function handleResponse<T>(json: ApiResponse<T>): ApiResponse<T> {
   if (json.statusCode >= 400) {
     throw new ApiError(
       json.message ?? "Bir hata oluştu",
@@ -13,5 +13,9 @@ export function handleResponse<T>(json: ApiResponse<T>): T {
       json.errors ?? null,
     );
   }
-  return json.data;
+  return json;
+}
+
+export function unwrapResponseData<T>(json: ApiResponse<T>): T {
+  return handleResponse(json).data;
 }

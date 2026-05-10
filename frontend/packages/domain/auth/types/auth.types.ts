@@ -1,3 +1,4 @@
+import type { ApiResponse } from "@repo/core";
 import type { z } from "zod";
 
 import type { loginSchema, registerSchema } from "../schemas/auth.schema";
@@ -27,11 +28,11 @@ export interface LoginRequest {
   password: string;
 }
 
-export type RegisterResponse = AuthUser;
-export type LoginResponse = null;
-export type RefreshResponse = null;
-export type LogoutResponse = null;
-export type MeResponse = AuthUser;
+export type RegisterResponse = ApiResponse<AuthUser>;
+export type LoginResponse = ApiResponse<AuthUser | null>;
+export type RefreshResponse = ApiResponse<null>;
+export type LogoutResponse = ApiResponse<null>;
+export type MeResponse = ApiResponse<AuthUser>;
 
 export type RegisterFormValues = z.infer<typeof registerSchema>;
 export type LoginFormValues = z.infer<typeof loginSchema>;

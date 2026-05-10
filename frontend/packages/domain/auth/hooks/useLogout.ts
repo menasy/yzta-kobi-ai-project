@@ -1,9 +1,9 @@
 "use client";
 
 import type { ApiError } from "@repo/core";
+import { queryKeys } from "@repo/state/query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { queryKeys } from "../../../state/query/keys";
 import { logout } from "../api/auth.api";
 import type { LogoutResponse } from "../types/auth.types";
 

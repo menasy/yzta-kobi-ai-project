@@ -88,10 +88,10 @@ export class ApiClient {
     this.baseUrl = baseUrl;
   }
 
-  public async request<TResponse>(
+  public async request<TData>(
     path: string,
     init?: ApiRequestConfig,
-  ): Promise<TResponse> {
+  ): Promise<ApiResponse<TData>> {
     const { params, ...requestInit } = init ?? {};
     const response = await fetch(buildUrl(this.baseUrl, path, params), {
       ...requestInit,
@@ -99,7 +99,7 @@ export class ApiClient {
       credentials: "include",
     });
 
-    const json = await parseResponse<TResponse>(response);
+    const json = await parseResponse<TData>(response);
 
     if (!response.ok || json.statusCode >= 400) {
       throw new ApiError(
@@ -110,57 +110,107 @@ export class ApiClient {
       );
     }
 
-    return json.data;
+    return json;
   }
 
-  public get<TResponse>(
+  public async requestData<TData>(
     path: string,
     init?: ApiRequestConfig,
-  ): Promise<TResponse> {
-    return this.request<TResponse>(path, { ...init, method: "GET" });
+  ): Promise<TData> {
+    const response = await this.request<TData>(path, init);
+    return response.data;
   }
 
-  public post<TResponse, TRequest = unknown>(
+  public get<TData>(
+    path: string,
+    init?: ApiRequestConfig,
+  ): Promise<ApiResponse<TData>> {
+    return this.request<TData>(path, { ...init, method: "GET" });
+  }
+
+  public post<TData, TRequest = unknown>(
     path: string,
     body?: TRequest,
     init?: ApiRequestConfig,
-  ): Promise<TResponse> {
-    return this.request<TResponse>(path, {
+  ): Promise<ApiResponse<TData>> {
+    return this.request<TData>(path, {
       ...init,
       method: "POST",
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   }
 
-  public put<TResponse, TRequest = unknown>(
+  public put<TData, TRequest = unknown>(
     path: string,
     body?: TRequest,
     init?: ApiRequestConfig,
-  ): Promise<TResponse> {
-    return this.request<TResponse>(path, {
+  ): Promise<ApiResponse<TData>> {
+    return this.request<TData>(path, {
       ...init,
       method: "PUT",
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   }
 
-  public patch<TResponse, TRequest = unknown>(
+  public patch<TData, TRequest = unknown>(
     path: string,
     body?: TRequest,
     init?: ApiRequestConfig,
-  ): Promise<TResponse> {
-    return this.request<TResponse>(path, {
+  ): Promise<ApiResponse<TData>> {
+    return this.request<TData>(path, {
       ...init,
       method: "PATCH",
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   }
 
-  public delete<TResponse>(
+  public delete<TData>(
     path: string,
     init?: ApiRequestConfig,
-  ): Promise<TResponse> {
-    return this.request<TResponse>(path, { ...init, method: "DELETE" });
+  ): Promise<ApiResponse<TData>> {
+    return this.request<TData>(path, { ...init, method: "DELETE" });
+  }
+
+  public getData<TData>(
+    path: string,
+    init?: ApiRequestConfig,
+  ): Promise<TData> {
+    return this.requestData<TData>(path, { ...init, method: "GET" });
+  }
+
+  public async postData<TData, TRequest = unknown>(
+    path: string,
+    body?: TRequest,
+    init?: ApiRequestConfig,
+  ): Promise<TData> {
+    const response = await this.post<TData, TRequest>(path, body, init);
+    return response.data;
+  }
+
+  public async putData<TData, TRequest = unknown>(
+    path: string,
+    body?: TRequest,
+    init?: ApiRequestConfig,
+  ): Promise<TData> {
+    const response = await this.put<TData, TRequest>(path, body, init);
+    return response.data;
+  }
+
+  public async patchData<TData, TRequest = unknown>(
+    path: string,
+    body?: TRequest,
+    init?: ApiRequestConfig,
+  ): Promise<TData> {
+    const response = await this.patch<TData, TRequest>(path, body, init);
+    return response.data;
+  }
+
+  public async deleteData<TData>(
+    path: string,
+    init?: ApiRequestConfig,
+  ): Promise<TData> {
+    const response = await this.delete<TData>(path, init);
+    return response.data;
   }
 }
 
@@ -169,15 +219,29 @@ const defaultClient = new ApiClient();
 export async function apiClient<T>(
   path: string,
   init?: ApiRequestConfig,
-): Promise<T> {
+): Promise<ApiResponse<T>> {
   return defaultClient.request<T>(path, init);
+}
+
+export async function apiDataClient<T>(
+  path: string,
+  init?: ApiRequestConfig,
+): Promise<T> {
+  return defaultClient.requestData<T>(path, init);
 }
 
 /**
  * GET isteği
  */
-export function get<T>(path: string, init?: ApiRequestConfig): Promise<T> {
+export function get<T>(
+  path: string,
+  init?: ApiRequestConfig,
+): Promise<ApiResponse<T>> {
   return defaultClient.get<T>(path, init);
+}
+
+export function getData<T>(path: string, init?: ApiRequestConfig): Promise<T> {
+  return defaultClient.getData<T>(path, init);
 }
 
 /**
@@ -187,8 +251,16 @@ export function post<T, TRequest = unknown>(
   path: string,
   body?: TRequest,
   init?: ApiRequestConfig,
-): Promise<T> {
+): Promise<ApiResponse<T>> {
   return defaultClient.post<T, TRequest>(path, body, init);
+}
+
+export function postData<T, TRequest = unknown>(
+  path: string,
+  body?: TRequest,
+  init?: ApiRequestConfig,
+): Promise<T> {
+  return defaultClient.postData<T, TRequest>(path, body, init);
 }
 
 /**
@@ -198,8 +270,16 @@ export function put<T, TRequest = unknown>(
   path: string,
   body?: TRequest,
   init?: ApiRequestConfig,
-): Promise<T> {
+): Promise<ApiResponse<T>> {
   return defaultClient.put<T, TRequest>(path, body, init);
+}
+
+export function putData<T, TRequest = unknown>(
+  path: string,
+  body?: TRequest,
+  init?: ApiRequestConfig,
+): Promise<T> {
+  return defaultClient.putData<T, TRequest>(path, body, init);
 }
 
 /**
@@ -209,13 +289,28 @@ export function patch<T, TRequest = unknown>(
   path: string,
   body?: TRequest,
   init?: ApiRequestConfig,
-): Promise<T> {
+): Promise<ApiResponse<T>> {
   return defaultClient.patch<T, TRequest>(path, body, init);
+}
+
+export function patchData<T, TRequest = unknown>(
+  path: string,
+  body?: TRequest,
+  init?: ApiRequestConfig,
+): Promise<T> {
+  return defaultClient.patchData<T, TRequest>(path, body, init);
 }
 
 /**
  * DELETE isteği
  */
-export function del<T>(path: string, init?: ApiRequestConfig): Promise<T> {
+export function del<T>(
+  path: string,
+  init?: ApiRequestConfig,
+): Promise<ApiResponse<T>> {
   return defaultClient.delete<T>(path, init);
+}
+
+export function delData<T>(path: string, init?: ApiRequestConfig): Promise<T> {
+  return defaultClient.deleteData<T>(path, init);
 }

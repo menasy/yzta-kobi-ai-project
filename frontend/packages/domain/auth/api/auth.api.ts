@@ -10,21 +10,24 @@ import type {
 } from "../types/auth.types";
 
 export function register(data: RegisterRequest): Promise<RegisterResponse> {
-  return authClient.post<RegisterResponse, RegisterRequest>("register", data);
+  return authClient.post<RegisterResponse["data"], RegisterRequest>(
+    "register",
+    data,
+  );
 }
 
 export function login(data: LoginRequest): Promise<LoginResponse> {
-  return authClient.post<LoginResponse, LoginRequest>("login", data);
+  return authClient.post<LoginResponse["data"], LoginRequest>("login", data);
 }
 
 export function refresh(): Promise<RefreshResponse> {
-  return authClient.post<RefreshResponse>("refresh");
+  return authClient.post<RefreshResponse["data"]>("refresh");
 }
 
 export function logout(): Promise<LogoutResponse> {
-  return authClient.post<LogoutResponse>("logout");
+  return authClient.post<LogoutResponse["data"]>("logout");
 }
 
 export function getMe(): Promise<MeResponse> {
-  return authClient.get<MeResponse>("me");
+  return authClient.get<MeResponse["data"]>("me");
 }

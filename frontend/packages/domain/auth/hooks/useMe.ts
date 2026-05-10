@@ -1,10 +1,10 @@
 "use client";
 
 import type { ApiError } from "@repo/core";
+import { queryKeys } from "@repo/state/query";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
-import { queryKeys } from "../../../state/query/keys";
 import { getMe } from "../api/auth.api";
 import type { MeResponse } from "../types/auth.types";
 
@@ -39,7 +39,7 @@ export function useMe(options: UseMeOptions = {}) {
   }, [onError, onSettled, query.error]);
 
   return {
-    user: query.data ?? null,
+    user: query.data?.data ?? null,
     data: query.data,
     refetch: query.refetch,
     isLoading: query.isLoading,

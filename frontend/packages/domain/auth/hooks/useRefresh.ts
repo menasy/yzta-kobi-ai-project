@@ -1,9 +1,9 @@
 "use client";
 
 import type { ApiError } from "@repo/core";
+import { queryKeys } from "@repo/state/query";
 import { useMutation } from "@tanstack/react-query";
 
-import { queryKeys } from "../../../state/query/keys";
 import { refresh } from "../api/auth.api";
 import type { RefreshResponse } from "../types/auth.types";
 

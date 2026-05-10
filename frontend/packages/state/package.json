@@ -6,6 +6,7 @@
   "types": "./index.ts",
   "exports": {
     ".": "./index.ts",
+    "./query": "./query/index.ts",
     "./query/client": "./query/client.ts",
     "./query/keys": "./query/keys.ts",
     "./query/provider": "./query/provider.tsx",
