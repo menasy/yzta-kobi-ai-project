@@ -53,7 +53,9 @@ ORDER_STATUSES = frozenset({"pending", "processing", "shipped", "delivered", "ca
 SHIPMENT_STATUSES = frozenset({"created", "in_transit", "delivered", "delayed", "failed", "cancelled"})
 
 # Bildirim tipleri
-NOTIFICATION_TYPES = frozenset({"low_stock", "shipment_delayed", "order_created", "system"})
+NOTIFICATION_TYPES = frozenset(
+    {"LOW_STOCK_ALERT", "SHIPMENT_DELAYED", "DAILY_SUMMARY", "SYSTEM", "AI_AGENT"}
+)
 
 # Bildirim durumları
 NOTIFICATION_STATUSES = frozenset({"unread", "read", "archived"})

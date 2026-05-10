@@ -1,37 +1,82 @@
+from __future__ import annotations
+
+import asyncio
 import os
+from logging.config import fileConfig
 from pathlib import Path
-from pydantic_settings import BaseSettings
-from typing import Optional
 
-class Settings(BaseSettings):
-    # Proje Ana Dizini
-    BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent
-    
-    # Proje Bilgileri
-    PROJECT_NAME: str = "YZTA Kobi AI Project"
-    VERSION: str = "1.0.0"
-    API_V1_STR: str = "/api/v1"
+from alembic import context
+from dotenv import load_dotenv
+from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import async_engine_from_config
 
-    # Veritabanı ve RabbitMQ (Hataları önlemek için default değerler)
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:password@localhost:5433/kobidb")
-    RABBITMQ_URL: str = os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672//")
+from app.db.base import Base
+import app.models  # noqa: F401
 
-    # --- Pydantic'in hata verdiği "Ekstra" alanları buraya ekleyelim ---
-    POSTGRES_USER: Optional[str] = None
-    POSTGRES_PASSWORD: Optional[str] = None
-    POSTGRES_DB: Optional[str] = None
-    DEBUG: Optional[bool] = False
-    REDIS_URL: Optional[str] = None
-    SECRET_KEY: Optional[str] = None
-    GEMINI_API_KEY: Optional[str] = None
+# this is the Alembic Config object, which provides
+# access to the values within the .ini file in use.
+config = context.config
 
-    class Config:
-        case_sensitive = True
-        env_file = ".env"
-        # KRİTİK DÜZELTME: .env içindeki fazladan değişkenleri hata olarak görme, görmezden gel.
-        extra = "ignore" 
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
 
-def get_settings() -> Settings:
-    return Settings()
+backend_dir = Path(__file__).resolve().parents[1]
+project_root = backend_dir.parent
+load_dotenv(project_root / ".env")
+load_dotenv(backend_dir / ".env")
 
-settings = get_settings()
+database_url = os.getenv("DATABASE_URL") or config.get_main_option("sqlalchemy.url")
+if not database_url:
+    raise RuntimeError("DATABASE_URL is not set for Alembic.")
+
+config.set_main_option("sqlalchemy.url", database_url)
+
+target_metadata = Base.metadata
+
+
+def run_migrations_offline() -> None:
+    """Run migrations in 'offline' mode."""
+    url = config.get_main_option("sqlalchemy.url")
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+        compare_type=True,
+        compare_server_default=True,
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+def do_run_migrations(connection) -> None:
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        compare_type=True,
+        compare_server_default=True,
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+async def run_migrations_online() -> None:
+    """Run migrations in 'online' mode."""
+    connectable = async_engine_from_config(
+        config.get_section(config.config_ini_section, {}),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+
+    async with connectable.connect() as connection:
+        await connection.run_sync(do_run_migrations)
+
+    await connectable.dispose()
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    asyncio.run(run_migrations_online())

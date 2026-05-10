@@ -2,7 +2,10 @@
 # Notification tablosuna özel DB sorguları.
 # Sadece veri erişimi — iş mantığı yok.
 
-from sqlalchemy import func, select
+from datetime import datetime, timezone
+from typing import Any
+
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.notification import Notification
@@ -16,66 +19,77 @@ class NotificationRepository(BaseRepository[Notification]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(Notification, session)
 
-    async def get_unread(
+    async def create_notification(self, data: dict[str, Any]) -> Notification:
+        """Yeni bildirim kaydı oluşturur."""
+        return await self.create(data)
+
+    async def get_by_id(self, notification_id: int) -> Notification | None:
+        """ID ile bildirim kaydı getirir."""
+        result = await self.session.execute(
+            select(Notification).where(Notification.id == notification_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def list_notifications(
         self,
         *,
-        user_id: int | None = None,
         skip: int = 0,
         limit: int = 50,
+        is_read: bool | None = None,
+        notification_type: str | None = None,
+        severity: str | None = None,
     ) -> list[Notification]:
-        """Okunmamış bildirimleri getirir. user_id verilirse filtreler."""
+        """Bildirimleri sayfalı listeler."""
+        stmt = select(Notification)
+        if is_read is not None:
+            stmt = stmt.where(Notification.is_read.is_(is_read))
+        if notification_type is not None:
+            stmt = stmt.where(Notification.type == notification_type)
+        if severity is not None:
+            stmt = stmt.where(Notification.severity == severity)
         stmt = (
-            select(Notification)
-            .where(Notification.status == "unread")
+            stmt.offset(skip)
+            .limit(limit)
+            .order_by(Notification.created_at.desc(), Notification.id.desc())
         )
-        if user_id is not None:
-            stmt = stmt.where(Notification.user_id == user_id)
-        stmt = stmt.offset(skip).limit(limit).order_by(Notification.id.desc())
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_by_user(
+    async def list_unread_notifications(
         self,
-        user_id: int,
         *,
         skip: int = 0,
         limit: int = 50,
     ) -> list[Notification]:
-        """Kullanıcıya ait bildirimleri getirir."""
+        """Okunmamış bildirimleri sayfalı listeler."""
         result = await self.session.execute(
             select(Notification)
-            .where(Notification.user_id == user_id)
+            .where(Notification.is_read.is_(False))
             .offset(skip)
             .limit(limit)
-            .order_by(Notification.id.desc())
+            .order_by(Notification.created_at.desc(), Notification.id.desc())
         )
         return list(result.scalars().all())
 
-    async def count_unread(self, user_id: int | None = None) -> int:
-        """Okunmamış bildirim sayısını döndürür."""
-        stmt = (
-            select(func.count())
-            .select_from(Notification)
-            .where(Notification.status == "unread")
-        )
-        if user_id is not None:
-            stmt = stmt.where(Notification.user_id == user_id)
-        result = await self.session.execute(stmt)
-        return result.scalar_one()
+    async def mark_as_read(self, notification_id: int) -> Notification | None:
+        """Tek bildirimi okundu olarak işaretler."""
+        notification = await self.get_by_id(notification_id)
+        if notification is None:
+            return None
 
-    async def get_by_type(
-        self,
-        notification_type: str,
-        *,
-        skip: int = 0,
-        limit: int = 50,
-    ) -> list[Notification]:
-        """Tipe göre bildirimleri getirir."""
+        now = datetime.now(tz=timezone.utc)
+        notification.is_read = True
+        notification.read_at = notification.read_at or now
+        await self.session.flush()
+        await self.session.refresh(notification)
+        return notification
+
+    async def mark_all_as_read(self) -> int:
+        """Tüm okunmamış bildirimleri okundu olarak işaretler."""
         result = await self.session.execute(
-            select(Notification)
-            .where(Notification.type == notification_type)
-            .offset(skip)
-            .limit(limit)
-            .order_by(Notification.id.desc())
+            update(Notification)
+            .where(Notification.is_read.is_(False))
+            .values(is_read=True, read_at=datetime.now(tz=timezone.utc))
         )
-        return list(result.scalars().all())
+        await self.session.flush()
+        return int(result.rowcount or 0)

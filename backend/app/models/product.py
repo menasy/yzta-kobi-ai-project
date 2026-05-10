@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     from .inventory import Inventory
     from .order_item import OrderItem
     from .inventory_movement import InventoryMovement
-    from .notification import Notification
 
 class Product(Base, IDMixin, TimestampMixin):
     """Satılan ürün tanımları."""
@@ -32,6 +31,4 @@ class Product(Base, IDMixin, TimestampMixin):
     inventory: Mapped["Inventory"] = relationship(back_populates="product", uselist=False, cascade="all, delete-orphan")
     order_items: Mapped[list["OrderItem"]] = relationship(back_populates="product")
     inventory_movements: Mapped[list["InventoryMovement"]] = relationship(back_populates="product")
-    notifications: Mapped[list["Notification"]] = relationship(back_populates="product")
-
 

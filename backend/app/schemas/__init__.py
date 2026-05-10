@@ -41,6 +41,13 @@ from .order import (
     OrderStatusUpdate,
     OrderSummaryResponse,
 )
+from .notification import (
+    NotificationBase,
+    NotificationCreate,
+    NotificationListItem,
+    NotificationMarkReadResponse,
+    NotificationResponse,
+)
 from .product import (
     ProductCreate,
     ProductResponse,
@@ -76,6 +83,12 @@ __all__ = [
     "OrderListResponse",
     "OrderStatusHistoryResponse",
     "OrderSummaryResponse",
+    # Notification
+    "NotificationBase",
+    "NotificationCreate",
+    "NotificationResponse",
+    "NotificationListItem",
+    "NotificationMarkReadResponse",
     # Inventory
     "InventoryUpdate",
     "InventoryMovementCreate",

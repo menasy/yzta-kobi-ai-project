@@ -10,7 +10,6 @@ from .base_model import TimestampMixin, IDMixin
 
 if TYPE_CHECKING:
     from .audit_log import AuditLog
-    from .notification import Notification
     from .inventory_movement import InventoryMovement
     from .order_status_history import OrderStatusHistory
 
@@ -27,6 +26,5 @@ class User(Base, IDMixin, TimestampMixin):
 
     # İlişkiler
     audit_logs: Mapped[list["AuditLog"]] = relationship(back_populates="user", cascade="all, delete-orphan")
-    notifications: Mapped[list["Notification"]] = relationship(back_populates="user")
     inventory_movements: Mapped[list["InventoryMovement"]] = relationship(back_populates="created_by_user")
     order_status_history: Mapped[list["OrderStatusHistory"]] = relationship(back_populates="changed_by_user")

@@ -15,7 +15,6 @@ if TYPE_CHECKING:
     from .shipment import Shipment
     from .order_status_history import OrderStatusHistory
     from .inventory_movement import InventoryMovement
-    from .notification import Notification
 
 class Order(Base, IDMixin, TimestampMixin):
     """Sipariş ana tablosu."""
@@ -38,4 +37,3 @@ class Order(Base, IDMixin, TimestampMixin):
     shipment: Mapped[Optional["Shipment"]] = relationship(back_populates="order", uselist=False)
     status_history: Mapped[list["OrderStatusHistory"]] = relationship(back_populates="order", cascade="all, delete-orphan")
     inventory_movements: Mapped[list["InventoryMovement"]] = relationship(back_populates="order")
-    notifications: Mapped[list["Notification"]] = relationship(back_populates="order")

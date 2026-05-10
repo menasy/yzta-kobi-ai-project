@@ -11,7 +11,6 @@ from .base_model import TimestampMixin, IDMixin
 if TYPE_CHECKING:
     from .order import Order
     from .shipment_event import ShipmentEvent
-    from .notification import Notification
 
 class Shipment(Base, IDMixin, TimestampMixin):
     """Kargo ana tablosu."""
@@ -33,4 +32,3 @@ class Shipment(Base, IDMixin, TimestampMixin):
     # İlişkiler
     order: Mapped["Order"] = relationship(back_populates="shipment")
     events: Mapped[list["ShipmentEvent"]] = relationship(back_populates="shipment", cascade="all, delete-orphan")
-    notifications: Mapped[list["Notification"]] = relationship(back_populates="shipment")
