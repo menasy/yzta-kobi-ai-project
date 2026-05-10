@@ -25,6 +25,8 @@ from app.db.session import close_db_connections
 
 from app.api.endpoints import ai_chat
 
+from app.api.endpoints import chat
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -271,6 +273,8 @@ async def unhandled_exception_handler(
 app.include_router(api_router, prefix=settings.API_PREFIX)
 
 app.include_router(ai_chat.router, prefix="/api/ai", tags=["AI Agent"])
+
+app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 
 
 # ══════════════════════════════════════════════════════════

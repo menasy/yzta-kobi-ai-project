@@ -4,6 +4,7 @@
 # Settings singleton olarak @lru_cache ile sunulur.
 
 from functools import lru_cache
+from typing import Any
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -28,17 +29,18 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
     # ── Veritabanı ────────────────────────────────────────
-    DATABASE_URL: str  # postgresql+asyncpg://...
+    DATABASE_URL: str  # .env dosyasında tanımlı olmalı
     DATABASE_POOL_SIZE: int = 10
     DATABASE_MAX_OVERFLOW: int = 5
     DATABASE_ECHO: bool = False
 
     # ── Redis ─────────────────────────────────────────────
-    REDIS_URL: str = "redis://redis:6379/0"
+    # Docker dışında çalışırken localhost:6379, içindeyken redis:6379 kullanılır.
+    REDIS_URL: str = "redis://localhost:6379/0" 
     REDIS_CONVERSATION_TTL: int = 86400  # 24 saat (saniye)
 
     # ── Güvenlik ──────────────────────────────────────────
-    SECRET_KEY: str  # JWT imzalama anahtarı — min 32 karakter
+    SECRET_KEY: str  # JWT imzalama anahtarı — .env'den okunur
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 saat
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 gün
@@ -51,8 +53,8 @@ class Settings(BaseSettings):
     # ── LLM ───────────────────────────────────────────────
     LLM_API_KEY: str = ""
     LLM_PROVIDER: str = "gemini"
-    GEMINI_API_KEY: str
-    LLM_MODEL: str = "gemini-2.5-flash"
+    GEMINI_API_KEY: str = ""
+    LLM_MODEL: str = "gemini-2.0-flash"
 
     # ── Kargo ─────────────────────────────────────────────
     USE_MOCK_CARGO: bool = True
@@ -80,8 +82,7 @@ class Settings(BaseSettings):
         """Secret key boş veya çok kısa olmamalı."""
         if len(v) < 32:
             raise ValueError(
-                "SECRET_KEY en az 32 karakter uzunluğunda olmalıdır. "
-                "python -c \"import secrets; print(secrets.token_urlsafe(48))\" ile üretebilirsiniz."
+                "SECRET_KEY en az 32 karakter uzunluğunda olmalıdır."
             )
         return v
 
@@ -92,17 +93,8 @@ class Settings(BaseSettings):
             raise ValueError("Cookie auth kullanıldığı için CORS_ORIGINS içinde wildcard (*) kullanılamaz.")
 
         if self.is_production:
-            weak_keys = {"secret", "change", "dev", "test", "example", "placeholder"}
-            key_lower = self.SECRET_KEY.lower()
-            if any(weak in key_lower for weak in weak_keys):
-                raise ValueError(
-                    "Production ortamında zayıf SECRET_KEY kullanılamaz. "
-                    "Güvenli, rastgele bir key üretin."
-                )
             if self.DEBUG:
-                raise ValueError(
-                    "Production ortamında DEBUG=true olmamalıdır."
-                )
+                raise ValueError("Production ortamında DEBUG=true olmamalıdır.")
         return self
 
 
