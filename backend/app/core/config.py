@@ -41,6 +41,12 @@ class Settings(BaseSettings):
     SECRET_KEY: str  # JWT imzalama anahtarı — min 32 karakter
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 saat
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 gün
+
+    # ── Cookie Ayarları ───────────────────────────────────
+    COOKIE_SECURE: bool = True
+    COOKIE_SAMESITE: str = "none" # 'lax', 'strict', 'none'
+    COOKIE_DOMAIN: str | None = None
 
     # ── LLM ───────────────────────────────────────────────
     LLM_API_KEY: str = ""
@@ -82,6 +88,9 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_production_settings(self) -> "Settings":
         """Production ortamında güvenlik açısından kritik kontroller."""
+        if "*" in self.CORS_ORIGINS:
+            raise ValueError("Cookie auth kullanıldığı için CORS_ORIGINS içinde wildcard (*) kullanılamaz.")
+
         if self.is_production:
             weak_keys = {"secret", "change", "dev", "test", "example", "placeholder"}
             key_lower = self.SECRET_KEY.lower()

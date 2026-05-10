@@ -7,7 +7,7 @@
 from typing import Annotated
 
 from fastapi import Depends
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import APIKeyCookie
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
@@ -22,9 +22,9 @@ logger = get_logger(__name__)
 
 # ── Security Scheme ──────────────────────────────────────
 
-# HTTPBearer auto_error=False olarak ayarlandı.
+# APIKeyCookie auto_error=False olarak ayarlandı.
 # Token yoksa veya geçersizse kendi hata mesajımızı döneriz.
-_bearer_scheme = HTTPBearer(auto_error=False)
+_cookie_scheme = APIKeyCookie(name="access_token", auto_error=False)
 
 
 # ── Type Aliases ─────────────────────────────────────────
@@ -37,9 +37,9 @@ CurrentSettings = Annotated[Settings, Depends(get_settings)]
 
 
 async def get_current_user(
-    credentials: Annotated[
-        HTTPAuthorizationCredentials | None,
-        Depends(_bearer_scheme),
+    token: Annotated[
+        str | None,
+        Depends(_cookie_scheme),
     ],
     db: DBSession,
     settings: CurrentSettings,
@@ -48,7 +48,7 @@ async def get_current_user(
     JWT token'ı doğrulayarak mevcut kullanıcıyı döndürür.
 
     Akış:
-        1. Authorization header'dan Bearer token alınır.
+        1. Request'ten 'access_token' cookie'si alınır.
         2. Token decode edilir (SECRET_KEY + algoritma).
         3. Payload'dan user_id çıkarılır.
         4. Kullanıcı DB'den sorgulanır.
@@ -57,10 +57,8 @@ async def get_current_user(
     Kullanım:
         current_user: User = Depends(get_current_user)
     """
-    if credentials is None:
-        raise UnauthorizedError(message="Authorization header eksik.")
-
-    token = credentials.credentials
+    if not token:
+        raise UnauthorizedError(message="Yetki belgesi bulunamadı (Cookie eksik).")
 
     # decode_access_token invalid/expired durumda UnauthorizedError fırlatır
     payload = decode_access_token(token)

@@ -87,6 +87,40 @@ def create_access_token(
     )
 
 
+def create_refresh_token(
+    user_id: int,
+    expires_delta: timedelta | None = None,
+) -> str:
+    """
+    JWT refresh token üretir.
+    
+    Payload:
+        - sub: kullanıcı ID (string olarak)
+        - type: token tipi (refresh)
+        - iat: token oluşturma zamanı
+        - exp: token son kullanma zamanı
+    """
+    settings = get_settings()
+
+    now = datetime.now(tz=timezone.utc)
+
+    if expires_delta is None:
+        expires_delta = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
+
+    payload: dict[str, Any] = {
+        "sub": str(user_id),
+        "type": "refresh",
+        "iat": now,
+        "exp": now + expires_delta,
+    }
+
+    return jwt.encode(
+        payload,
+        settings.SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM,
+    )
+
+
 def decode_access_token(token: str) -> dict[str, Any]:
     """
     JWT token'ı decode eder ve payload'ı döndürür.
@@ -115,4 +149,14 @@ def decode_access_token(token: str) -> dict[str, Any]:
     if payload.get("sub") is None:
         raise UnauthorizedError(message="Token payload geçersiz.")
 
+    return payload
+
+
+def decode_refresh_token(token: str) -> dict[str, Any]:
+    """
+    JWT refresh token'ı decode eder. Tipi kontrol eder.
+    """
+    payload = decode_access_token(token)
+    if payload.get("type") != "refresh":
+        raise UnauthorizedError(message="Geçersiz token tipi.")
     return payload

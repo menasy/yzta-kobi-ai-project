@@ -1,29 +1,38 @@
-import os
-import httpx  
-from dotenv import load_dotenv
+from google import genai
+from google.genai import errors as genai_errors
+from app.core.config import get_settings
+from app.core.exceptions import ExternalServiceError
+from app.core.logger import get_logger
 
-load_dotenv()
+logger = get_logger(__name__)
 
 class AIService:
     def __init__(self, db_session):
         self.db = db_session
-        self.api_key = os.getenv("GOOGLE_API_KEY")
-        # Google'ın ana v1 API adresi
-        self.url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={self.api_key}"
+        self.settings = get_settings()
 
-    async def ask_ai(self, user_message: str):
-        payload = {
-            "contents": [{
-                "parts": [{"text": user_message}]
-            }]
-        }
-        
-        async with httpx.AsyncClient() as client:
-            response = await client.post(self.url, json=payload, timeout=30.0)
-            
-            if response.status_code != 200:
-                return f"Hata Oluştu: {response.text}"
-            
-            data = response.json()
-            # Google'dan gelen cevabı ayıkla
-            return data['candidates'][0]['content']['parts'][0]['text']
+    async def ask_ai(self, user_message: str) -> str:
+        """
+        Kullanıcı mesajını Gemini AI modeline gönderir ve cevabı döner.
+        google-genai SDK kullanır.
+        """
+        try:
+            client = genai.Client(api_key=self.settings.GEMINI_API_KEY)
+            # generate_content senkron çağrı yapabilir veya async için aio da kullanılabilir. 
+            # Şu anlık standart usage'ı kullanıyoruz. İleride async methodu varsa (client.aio.models...)
+            # eklenebilir, fakat prompt'taki örneğe sadık kalıyoruz.
+            response = client.models.generate_content(
+                model=self.settings.LLM_MODEL,
+                contents=user_message,
+            )
+            return response.text
+        except genai_errors.APIError as e:
+            logger.error(f"Gemini API Error: {e}")
+            raise ExternalServiceError(
+                message="AI sağlayıcısı yanıt veremedi.",
+            )
+        except Exception as e:
+            logger.error(f"Unexpected AI Error: {e}")
+            raise ExternalServiceError(
+                message="AI sağlayıcısı yanıt veremedi.",
+            )

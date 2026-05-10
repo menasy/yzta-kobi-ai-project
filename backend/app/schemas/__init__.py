@@ -5,7 +5,6 @@
 from .auth import (
     ChangePasswordRequest,
     LoginRequest,
-    TokenResponse,
     UserCreate,
     UserResponse,
     UserUpdate,
@@ -59,7 +58,6 @@ from .shipment import (
 __all__ = [
     # Auth
     "LoginRequest",
-    "TokenResponse",
     "UserCreate",
     "UserUpdate",
     "UserResponse",

@@ -9,10 +9,10 @@ from datetime import datetime, timezone
 from app.core.config import Settings
 from app.core.exceptions import ConflictError, ForbiddenError, UnauthorizedError
 from app.core.logger import get_logger
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.security import create_access_token, create_refresh_token, decode_refresh_token, hash_password, verify_password
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
-from app.schemas.auth import LoginRequest, TokenResponse, UserCreate, UserResponse
+from app.schemas.auth import LoginRequest, UserCreate, UserResponse
 
 logger = get_logger(__name__)
 
@@ -74,23 +74,19 @@ class AuthService:
 
         return UserResponse.model_validate(user)
 
-    async def login(self, data: LoginRequest) -> TokenResponse:
+    async def login(self, data: LoginRequest) -> tuple[str, str]:
         """
-        Kullanıcı girişi yapar ve JWT token döndürür.
+        Kullanıcı girişi yapar ve JWT token'ları üretir.
 
         Kurallar:
             - Email ile kullanıcı bulunamazsa → UnauthorizedError
             - Şifre yanlışsa → UnauthorizedError
             - Kullanıcı aktif değilse → ForbiddenError
-            - Başarılıysa access_token döner
+            - Başarılıysa (access_token, refresh_token) döner
             - last_login_at güncellenir
 
         Returns:
-            TokenResponse: JWT access token
-
-        Raises:
-            UnauthorizedError: Email bulunamadı veya şifre yanlış
-            ForbiddenError: Kullanıcı hesabı devre dışı
+            tuple[str, str]: (access_token, refresh_token)
         """
         # Kullanıcıyı bul
         user = await self._user_repo.get_by_email(data.email)
@@ -106,10 +102,13 @@ class AuthService:
         if not user.is_active:
             raise ForbiddenError(message="Kullanıcı hesabı devre dışı.")
 
-        # JWT token üret
+        # JWT token'ları üret
         access_token = create_access_token(
             user_id=user.id,
             role=user.role,
+        )
+        refresh_token = create_refresh_token(
+            user_id=user.id,
         )
 
         # last_login_at güncelle
@@ -122,7 +121,43 @@ class AuthService:
             extra={"user_id": user.id, "role": user.role},
         )
 
-        return TokenResponse(access_token=access_token)
+        return access_token, refresh_token
+
+    async def refresh_token(self, refresh_token: str) -> tuple[str, str]:
+        """
+        Mevcut refresh_token'ı kullanarak yeni token'lar üretir.
+        
+        Returns:
+            tuple[str, str]: (new_access_token, new_refresh_token)
+        """
+        payload = decode_refresh_token(refresh_token)
+        user_id_str = payload.get("sub")
+        if not user_id_str:
+            raise UnauthorizedError(message="Token geçersiz.")
+            
+        user_id = int(user_id_str)
+        user = await self._user_repo.get(user_id)
+        
+        if user is None:
+            raise UnauthorizedError(message="Kullanıcı bulunamadı.")
+            
+        if not user.is_active:
+            raise ForbiddenError(message="Kullanıcı hesabı devre dışı.")
+            
+        new_access_token = create_access_token(
+            user_id=user.id,
+            role=user.role,
+        )
+        new_refresh_token = create_refresh_token(
+            user_id=user.id,
+        )
+        
+        logger.info(
+            "Token yenilendi.",
+            extra={"user_id": user.id, "role": user.role},
+        )
+        
+        return new_access_token, new_refresh_token
 
     def get_profile(self, user: User) -> UserResponse:
         """
