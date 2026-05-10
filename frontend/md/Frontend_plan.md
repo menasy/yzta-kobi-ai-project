@@ -1208,21 +1208,47 @@ export function createQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime:     60 * 1000,    // 60sn — sessiz yenileme
-        gcTime:        5 * 60 * 1000,// 5dk — önbellekten atma
-        retry:         1,            // Bir kez yeniden dene
-        refetchOnWindowFocus: false, // Admin panelde rahatsız edici
+        staleTime: 10 * 60 * 1000,
+        gcTime: 15 * 60 * 1000,
+        retry: shouldRetryQuery,      // 4xx retry yok, 5xx/network retry var
+        retryDelay: exponentialBackoff,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: true,
+        refetchOnMount: false,
+        throwOnError: false,
       },
       mutations: {
-        onError: (error) => {
-          // Global hata bildirimi: Sonner toast
-          // ApiError'dan key ve message al
-        },
+        retry: false,
+        throwOnError: false,
       },
     },
   });
 }
 ```
+
+### Merkezi Query Key Sistemi
+
+`packages/state/query/keys.ts` tüm domain'ler için tek query key factory kaynağıdır. Query key içinde endpoint string'i (`/api/...`) kullanılmaz; domain/scope mantığı kullanılır. Filtre objeleri `normalizeKeyParams()` ile alfabetik sıralanır, `null`/`undefined` alanlar atılır ve nested object'ler normalize edilir. Böylece aynı anlamdaki filtreler gereksiz ayrı cache entry üretmez.
+
+Desteklenen key alanları:
+
+```typescript
+queryKeys.auth.me();
+queryKeys.chat.history(sessionId);
+queryKeys.orders.list(filters);
+queryKeys.orders.detail(orderId);
+queryKeys.orders.summaryToday();
+queryKeys.products.list(filters);
+queryKeys.products.detail(productId);
+queryKeys.inventory.list(filters);
+queryKeys.inventory.lowStock();
+queryKeys.inventory.report(filters);
+queryKeys.shipments.list(filters);
+queryKeys.shipments.detail(shipmentId);
+queryKeys.shipments.delayed(filters);
+```
+
+`QueryProvider`, `useState(() => createQueryClient())` ile browser session içinde tek `QueryClient` oluşturur. Development ortamında React Query Devtools dinamik import edilir ve component unmount olduktan sonra state update yapılmaması için `isMounted` guard kullanılır.
 
 ### Optimistic Update Örneği — Stok Güncelleme
 

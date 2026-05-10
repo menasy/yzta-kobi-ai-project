@@ -64,3 +64,59 @@ Bu proje KOBİ'ler için yapay zeka destekli bir operasyon platformudur. `apps/w
 **Component Geliştirme Kuralı**
 
 UI/UX Geliştiirlirken emoji kulanma profosyenel senior seviye tasrımlar kullan. Proje temasına ve mimarisien uygun olsun. Eğer shadcn/ui da yapılacak goreve uygun compoenent varsa bunu kullan yoksa sıfırdan uı-contracts uı sistemine uyarak sıfırdan yap.
+
+**API request / response data flow kuralı**
+
+Tüm domain API çağrıları aşağıdaki akışı izler. Endpoint ve token mantığı component içinde kurulmaz.
+
+1. Core client
+
+- `NEXT_PUBLIC_API_BASE_URL` yalnızca ana backend host'unu tutar.
+- Örnek: `http://localhost:8000`
+- Tüm isteklerde `credentials: "include"` kullanılır.
+- Manuel `Authorization: Bearer` header eklenmez.
+- Backend response formatı `{ statusCode, key, message, data, errors }` olarak parse edilir.
+- Hata durumunda `ApiError` fırlatılır.
+- `ApiClient` opsiyonel relative domain prefix alabilir; relative prefix core base URL üstüne eklenir.
+
+2. Domain client
+
+- Her domain kendi client dosyasında yalnızca relative API prefix okur.
+- Örnek auth:
+  - `NEXT_PUBLIC_AUTH_API_URL=/api/auth`
+  - `new ApiClient(process.env.NEXT_PUBLIC_AUTH_API_URL ?? "/api/auth")`
+- Örnek orders:
+  - `NEXT_PUBLIC_ORDERS_API_URL=/api/orders`
+  - `new ApiClient(process.env.NEXT_PUBLIC_ORDERS_API_URL ?? "/api/orders")`
+- Domain client içinde endpoint uç path'i yazılmaz; sadece base prefix yönetilir.
+
+3. Domain API fonksiyonu
+
+- API dosyası ilgili domain client'ı kullanır.
+- Sadece uç path gönderilir; `/api/...` tekrar yazılmaz.
+- Request/response tipleri domain `types` dosyasından gelir, inline hardcode edilmez.
+- Örnek:
+  - `register(data)` → `authClient.post("register", data)`
+  - Final URL: `POST http://localhost:8000/api/auth/register`
+  - `getOrder(id)` → `ordersClient.get(String(id))`
+  - Final URL: `GET http://localhost:8000/api/orders/{id}`
+
+4. TanStack Query hook
+
+- Client Component'ler API fonksiyonunu doğrudan çağırmaz; `domain/*/hooks/*.ts` hook'larını kullanır.
+- Query/mutation key'ler merkezi `@repo/state/query` içindeki `queryKeys` factory'sinden gelir.
+- Query key içinde endpoint string'i kullanılmaz; domain/scope mantığı kullanılır.
+- Örnek:
+  - `queryKeys.auth.me()`
+  - `queryKeys.orders.list(filters)`
+  - `queryKeys.orders.detail(orderId)`
+  - `queryKeys.inventory.lowStock()`
+- Mutation örneği:
+  - `mutationKey: ["auth", "register"]` veya merkezi factory ile eşdeğer domain/scope key
+  - Hook sade typed API döndürür: `mutate`, `mutateAsync`, `isPending`, `isSuccess`, `error`, `reset`.
+
+5. Auth güvenliği
+
+- Auth HttpOnly cookie ile yürür.
+- Token localStorage/sessionStorage/Zustand içine yazılmaz.
+- Backend cookie set/clear eder; frontend sadece `credentials: "include"` ile cookie'yi taşır.

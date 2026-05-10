@@ -10,7 +10,7 @@ export function handleResponse<T>(json: ApiResponse<T>): T {
       json.message ?? "Bir hata oluştu",
       json.key ?? "UNKNOWN_ERROR",
       json.statusCode,
-      json.errors,
+      json.errors ?? null,
     );
   }
   return json.data;

@@ -5,12 +5,17 @@
  * { statusCode, key, message, data, errors }
  */
 
+export type ApiResponseErrors =
+  | Record<string, string[]>
+  | Array<{ field?: string; message?: string; [key: string]: unknown }>
+  | null;
+
 export interface ApiResponse<T = unknown> {
   statusCode: number;
   key: string;
   message: string;
   data: T;
-  errors?: Record<string, string[]>;
+  errors?: ApiResponseErrors;
 }
 
 export interface PaginatedData<T> {

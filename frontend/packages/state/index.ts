@@ -7,10 +7,34 @@
  */
 
 // TanStack Query
-export { queryClient } from "./query/client";
-export { QueryProvider } from "./query/provider";
-export { queryKeys } from "./query/keys";
-export type { QueryKeys } from "./query/types";
+export {
+  createQueryClient,
+  exponentialBackoff,
+  GC_TIME,
+  queryKeys,
+  QueryProvider,
+  RETRY_BASE_DELAY,
+  RETRY_COUNT,
+  RETRY_MAX_DELAY,
+  shouldRetryQuery,
+  STALE_TIME,
+} from "./query";
+export type {
+  ApiListResponse,
+  BaseQueryOptions,
+  InfiniteQueryParams,
+  InventoryListFilterParams,
+  InventoryReportFilterParams,
+  MutationCallbacks,
+  OrderListFilterParams,
+  PaginatedResponse,
+  ProductListFilterParams,
+  QueryKeys,
+  QueryParams,
+  SerializablePrimitive,
+  SerializableValue,
+  ShipmentListFilterParams,
+} from "./query";
 
 // Zustand Stores
 export { useAuthStore } from "./stores/auth/auth.store";

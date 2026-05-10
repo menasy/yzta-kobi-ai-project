@@ -22,8 +22,8 @@ export { useDebounce } from "./hooks/useDebounce";
 export { useIntersectionObserver } from "./hooks/useIntersectionObserver";
 
 // Client
-export { apiClient, get, post, put, patch, del } from "./client/client";
+export { ApiClient, apiClient, get, post, put, patch, del } from "./client/client";
 export { ApiError } from "./client/api-error";
 export { handleResponse } from "./client/response-handler";
 export { handleUnauthorized, toApiError } from "./client/interceptors";
-export type { ApiResponse, PaginatedData, ApiRequestConfig } from "./client/types";
+export type { ApiResponse, ApiResponseErrors, PaginatedData, ApiRequestConfig } from "./client/types";

@@ -1,17 +1,62 @@
 "use client";
 
 import { QueryClientProvider } from "@tanstack/react-query";
+import type { ComponentType, ReactNode } from "react";
+import { useEffect, useState } from "react";
 
-import { queryClient } from "./client";
+import { createQueryClient } from "./client";
 
-/**
- * QueryProvider — TanStack Query client provider'ı
- *
- * apps/web/components/providers/index.tsx içinde kullanılır.
- * "use client" zorunludur — QueryClientProvider CSR gerektirir.
- */
-export function QueryProvider({ children }: { children: React.ReactNode }) {
+type ReactQueryDevtoolsComponent = ComponentType<{
+  initialIsOpen?: boolean;
+}>;
+
+interface ReactQueryDevtoolsModule {
+  ReactQueryDevtools: ReactQueryDevtoolsComponent;
+}
+
+interface QueryProviderProps {
+  children: ReactNode;
+}
+
+function isReactQueryDevtoolsModule(
+  value: unknown,
+): value is ReactQueryDevtoolsModule {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const moduleRecord = value as Record<string, unknown>;
+  return typeof moduleRecord.ReactQueryDevtools === "function";
+}
+
+export function QueryProvider({ children }: QueryProviderProps) {
+  const [queryClient] = useState(() => createQueryClient());
+  const [ReactQueryDevtools, setReactQueryDevtools] =
+    useState<ReactQueryDevtoolsComponent | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (process.env.NODE_ENV === "development") {
+      void (
+        // @ts-expect-error App package provides this optional dev-only dependency.
+        import("@tanstack/react-query-devtools") as Promise<unknown>
+      ).then((module) => {
+        if (isMounted && isReactQueryDevtoolsModule(module)) {
+          setReactQueryDevtools(() => module.ReactQueryDevtools);
+        }
+      });
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      {children}
+      {ReactQueryDevtools ? <ReactQueryDevtools initialIsOpen={false} /> : null}
+    </QueryClientProvider>
   );
 }

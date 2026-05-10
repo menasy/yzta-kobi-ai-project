@@ -1,3 +1,5 @@
+import type { ApiResponseErrors } from "./types";
+
 /**
  * ApiError — Standart hata sınıfı
  *
@@ -7,13 +9,13 @@
 export class ApiError extends Error {
   public readonly key: string;
   public readonly statusCode: number;
-  public readonly errors?: Record<string, string[]>;
+  public readonly errors?: ApiResponseErrors;
 
   constructor(
     message: string,
     key: string,
     statusCode: number,
-    errors?: Record<string, string[]>,
+    errors?: ApiResponseErrors,
   ) {
     super(message);
     this.name = "ApiError";
