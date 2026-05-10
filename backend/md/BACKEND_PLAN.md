@@ -394,9 +394,18 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://redis:6379/0"
     REDIS_CONVERSATION_TTL: int = 86400        # 24 saat (saniye)
 
-    # Güvenlik
+    # Güvenlik & Cookie Auth
     SECRET_KEY: str                            # JWT imzalama anahtarı
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440   # 24 saat
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440    # 24 saat
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7         # 7 gün
+    
+    AUTH_ACCESS_COOKIE_NAME: str = "access_token"
+    AUTH_REFRESH_COOKIE_NAME: str = "refresh_token"
+    AUTH_COOKIE_HTTPONLY: bool = True
+    AUTH_COOKIE_SECURE: bool = True            # Production'da True olmalı
+    AUTH_COOKIE_SAMESITE: str = "lax"
+    AUTH_COOKIE_DOMAIN: str | None = None
 
     # LLM
     LLM_API_KEY: str
@@ -956,26 +965,52 @@ Varsayılan Pydantic hata mesajları İngilizce ve teknik bir dille gelir. `vali
 
 ## 9. Güvenlik Mimarisi
 
-### JWT Token Akışı
+### HttpOnly Cookie tabanlı JWT Akışı
 
 ```
-1. Kullanıcı POST /auth/login gönderir → email + password
+1. Kullanıcı POST /api/auth/login gönderir → email + password
 2. auth_service: email ile kullanıcıyı bul, bcrypt ile hash karşılaştır
-3. Doğruysa JWT token üret (payload: user_id, role, exp)
-4. Token client'a döner
+3. Doğruysa backend access_token ve refresh_token üretir.
+4. Tokenlar response body içinde dönmez.
+5. Tokenlar Set-Cookie header ile HttpOnly cookie olarak yazılır.
 
-5. Sonraki isteklerde: Authorization: Bearer <token> header
-6. dependencies.get_current_user():
-   - Token'ı decode et
-   - Süresi dolmuşsa → UnauthorizedError (401)
-   - Kullanıcı aktif değilse → ForbiddenError (403)
-   - Kullanıcı nesnesini endpoint'e inject et
+6. Protected endpointlerde:
+   - Browser HttpOnly cookie'yi her istekte otomatik gönderir.
+   - dependencies.get_current_user() request.cookies üzerinden access_token'ı okur.
+   - Token decode edilir (payload: user_id, role, exp).
+   - Token yoksa/geçersizse/expired ise → UnauthorizedError (401).
+   - Kullanıcı aktif değilse → ForbiddenError (403).
+   - Kullanıcı nesnesini endpoint'e inject et.
+
+7. Refresh akışı:
+   - access_token expired olduğunda frontend /api/auth/refresh çağırır.
+   - Backend refresh_token cookie'sini okur, doğrular ve yeni cookie'leri set eder.
+   - Refresh token rotation ve revoke yaklaşımı esas alınır.
+
+8. Logout akışı:
+   - /api/auth/logout çağrıldığında backend auth cookie'lerini temizler.
 ```
 
 ### Role Kontrolü
 
 ```python
 # core/dependencies.py
+
+async def get_current_user(
+    request: Request,
+    settings: Settings = Depends(get_settings)
+) -> User:
+    """Access token cookie'sini okur ve kullanıcıyı doğrular."""
+    access_token = request.cookies.get(settings.AUTH_ACCESS_COOKIE_NAME)
+    
+    if not access_token:
+        raise UnauthorizedError(message="Oturum bulunamadı.")
+    
+    # JWT decode ve user validation adımları...
+    # sub (user_id) yoksa -> UnauthorizedError
+    # User DB'de yoksa -> UnauthorizedError
+    # User is_active değilse -> ForbiddenError
+    return user
 
 async def get_admin_user(
     current_user: User = Depends(get_current_user)
@@ -1076,9 +1111,9 @@ from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,   # ["http://localhost:3000"]
-    allow_credentials=True,
+    allow_credentials=True,                # Cookie iletimi için zorunlu
     allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_headers=["Content-Type"],        # Authorization header artık kullanılmıyor
 )
 ```
 
@@ -1465,7 +1500,7 @@ Body: {"quantity": 8}  ← eşik 10, bu değer kritik
 
 ```
 GET /api/orders/summary/today
-Headers: Authorization: Bearer <token>
+Credentials: include
 
 1. [orders.py endpoint] → Admin token doğrula
 2. [order_service.py] → get_daily_summary()
@@ -1844,55 +1879,57 @@ Adım 43: Son kontrol: docker-compose down && up
 
 | Method | URL | Auth | Açıklama |
 |--------|-----|------|----------|
-| POST | `/api/auth/login` | Public | E-posta + şifre ile JWT token al |
-| POST | `/api/auth/register` | Public | Yeni admin kullanıcı oluştur |
-| GET | `/api/auth/me` | Token | Mevcut kullanıcı bilgisini getir |
+| POST | `/api/auth/register` | Public | Yeni kullanıcı kaydı, opsiyonel cookie login |
+| POST | `/api/auth/login` | Public | Kullanıcı girişi, access/refresh cookie set eder |
+| POST | `/api/auth/refresh` | Cookie | refresh_token cookie ile yeni token cookie’leri üretir |
+| POST | `/api/auth/logout` | Cookie | Auth cookie’lerini temizler/revoke eder |
+| GET | `/api/auth/me` | Cookie | access_token cookie ile mevcut kullanıcıyı getirir |
 
 ### Chat (Agent)
 
 | Method | URL | Auth | Açıklama |
 |--------|-----|------|----------|
-| POST | `/api/chat/message` | Token | Agent'a mesaj gönder |
-| GET | `/api/chat/history/{session_id}` | Token | Konuşma geçmişini getir |
-| DELETE | `/api/chat/history/{session_id}` | Token | Konuşmayı temizle |
+| POST | `/api/chat/message` | Cookie Auth | Agent'a mesaj gönder |
+| GET | `/api/chat/history/{session_id}` | Cookie Auth | Konuşma geçmişini getir |
+| DELETE | `/api/chat/history/{session_id}` | Cookie Auth | Konuşmayı temizle |
 
 ### Ürünler
 
 | Method | URL | Auth | Açıklama |
 |--------|-----|------|----------|
-| GET | `/api/products` | Token | Ürün listesi (sayfalı) |
-| GET | `/api/products/{id}` | Token | Tek ürün detayı |
-| POST | `/api/products` | Token | Yeni ürün ekle |
-| PUT | `/api/products/{id}` | Token | Ürün güncelle |
-| DELETE | `/api/products/{id}` | Token | Ürünü pasife al |
+| GET | `/api/products` | Cookie Auth | Ürün listesi (sayfalı) |
+| GET | `/api/products/{id}` | Cookie Auth | Tek ürün detayı |
+| POST | `/api/products` | Cookie Auth | Yeni ürün ekle |
+| PUT | `/api/products/{id}` | Cookie Auth | Ürün güncelle |
+| DELETE | `/api/products/{id}` | Cookie Auth | Ürünü pasife al |
 
 ### Siparişler
 
 | Method | URL | Auth | Açıklama |
 |--------|-----|------|----------|
-| GET | `/api/orders` | Token | Sipariş listesi (sayfalı, filtrelenebilir) |
-| GET | `/api/orders/{id}` | Token | Sipariş detayı (kalemler dahil) |
-| POST | `/api/orders` | Token | Yeni sipariş oluştur |
-| PUT | `/api/orders/{id}/status` | Token | Sipariş durumunu güncelle |
-| GET | `/api/orders/summary/today` | Token | Günlük özet (dashboard) |
+| GET | `/api/orders` | Cookie Auth | Sipariş listesi (sayfalı, filtrelenebilir) |
+| GET | `/api/orders/{id}` | Cookie Auth | Sipariş detayı (kalemler dahil) |
+| POST | `/api/orders` | Cookie Auth | Yeni sipariş oluştur |
+| PUT | `/api/orders/{id}/status` | Cookie Auth | Sipariş durumunu güncelle |
+| GET | `/api/orders/summary/today` | Cookie Auth | Günlük özet (dashboard) |
 
 ### Stok
 
 | Method | URL | Auth | Açıklama |
 |--------|-----|------|----------|
-| GET | `/api/inventory` | Token | Tüm stok durumu |
-| GET | `/api/inventory/low-stock` | Token | Kritik stok uyarıları |
-| PUT | `/api/inventory/{product_id}` | Token | Stok miktarını güncelle |
-| GET | `/api/inventory/report` | Token | Detaylı stok raporu |
+| GET | `/api/inventory` | Cookie Auth | Tüm stok durumu |
+| GET | `/api/inventory/low-stock` | Cookie Auth | Kritik stok uyarıları |
+| PUT | `/api/inventory/{product_id}` | Cookie Auth | Stok miktarını güncelle |
+| GET | `/api/inventory/report` | Cookie Auth | Detaylı stok raporu |
 
 ### Kargo
 
 | Method | URL | Auth | Açıklama |
 |--------|-----|------|----------|
-| POST | `/api/shipments` | Token | Kargo kaydı oluştur |
-| GET | `/api/shipments/{id}` | Token | Kargo detayını getir |
-| PUT | `/api/shipments/{id}/refresh` | Token | Kargo durumunu harici API'den yenile |
-| GET | `/api/shipments/delayed` | Token | Geciken kargo listesi |
+| POST | `/api/shipments` | Cookie Auth | Kargo kaydı oluştur |
+| GET | `/api/shipments/{id}` | Cookie Auth | Kargo detayını getir |
+| PUT | `/api/shipments/{id}/refresh` | Cookie Auth | Kargo durumunu harici API'den yenile |
+| GET | `/api/shipments/delayed` | Cookie Auth | Geciken kargo listesi |
 
 ### Sistem
 
@@ -1938,12 +1975,17 @@ Adım 43: Son kontrol: docker-compose down && up
 16. `model_dump()` kullanılır; `dict()` (deprecated) kullanılmaz.
 17. Serbest metin alanları (`notes`, `description` vb.) `bleach.clean()` ile sanitize edilir.
 
-### Güvenlik Kuralları
+### Güvenlik & Auth Kuralları
 
-18. Her admin endpoint `Depends(get_admin_user)` ile korunur.
-19. Şifre düz metin olarak asla loglanmaz, saklanmaz veya response'a eklenmez.
-20. `SECRET_KEY`, `LLM_API_KEY` ve diğer hassas değerler kod içinde sabit string olarak yazılmaz. `get_settings()` üzerinden alınır.
-21. SQL sorguları için f-string veya string concatenation kullanılmaz. SQLAlchemy ORM veya `bindparams` kullanılır.
+18. Bu projede auth sistemi yalnızca HttpOnly cookie based JWT auth olarak uygulanır.
+19. Yeni yazılacak hiçbir endpoint Authorization Bearer auth varsayımıyla tasarlanamaz.
+20. Yeni yazılacak hiçbir service token’ı response body’ye koyamaz (Frontend’e token döndürmek yasaktır).
+21. Yeni auth gerektiren endpointler `get_current_user` veya `get_admin_user` dependency’sini kullanır.
+22. Login/refresh/logout dışında token üretimi veya cookie yönetimi dağınık yapılmaz. Cookie set/clear işlemleri merkezi helper üzerinden yapılmalıdır.
+23. Şifre düz metin olarak asla loglanmaz, saklanmaz veya response'a eklenmez.
+24. `SECRET_KEY`, `LLM_API_KEY` ve diğer hassas değerler kod içinde sabit string olarak yazılmaz. `get_settings()` üzerinden alınır.
+25. SQL sorguları için f-string veya string concatenation kullanılmaz. SQLAlchemy ORM veya `bindparams` kullanılır.
+26. CORSMiddleware `allow_credentials=True` olmalı ve `allow_origins` wildcard olmamalıdır.
 
 ### Kod Kalitesi
 

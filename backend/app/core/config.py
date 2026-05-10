@@ -44,7 +44,9 @@ class Settings(BaseSettings):
 
     # ── LLM ───────────────────────────────────────────────
     LLM_API_KEY: str = ""
-    LLM_MODEL: str = "claude-sonnet-4-20250514"
+    LLM_PROVIDER: str = "gemini"
+    GEMINI_API_KEY: str
+    LLM_MODEL: str = "gemini-2.5-flash"
 
     # ── Kargo ─────────────────────────────────────────────
     USE_MOCK_CARGO: bool = True

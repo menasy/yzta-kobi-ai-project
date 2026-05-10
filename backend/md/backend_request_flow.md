@@ -73,8 +73,7 @@ Agent Tool      → Repository'e doğrudan erişemez
 Örnek endpoint:
 
 ```http
-POST /api/v1/orders
-Authorization: Bearer <token>
+POST /api/orders
 Content-Type: application/json
 ```
 
@@ -176,7 +175,7 @@ API layer, route'ların bulunduğu katmandır.
 Örnek dosya:
 
 ```txt
-app/api/v1/endpoints/orders.py
+app/api/endpoints/orders.py
 ```
 
 ## 4.1 Görevleri
@@ -455,22 +454,27 @@ app/core/security.py
 app/core/dependencies.py
 ```
 
-## 7.1 JWT akışı
+## 7.1 Cookie tabanlı Auth akışı
 
 ```txt
-1. Client Authorization header gönderir
-2. get_current_user token'ı okur
-3. Token decode edilir
-4. Süresi kontrol edilir
-5. Kullanıcı DB'de aranır
-6. Kullanıcı aktif mi kontrol edilir
-7. Endpoint'e current_user olarak inject edilir
+1. Client login olur.
+2. Backend Set-Cookie ile access_token ve refresh_token yazar.
+3. Client sonraki isteklerde credentials: "include" ile request atar.
+4. Browser HttpOnly cookie'leri otomatik gönderir.
+5. get_current_user request.cookies üzerinden access_token'ı okur.
+6. Token decode edilir.
+7. sub üzerinden kullanıcı DB'den alınır.
+8. Kullanıcı aktif değilse 403 döner.
+9. Kullanıcı endpoint'e current_user olarak inject edilir.
 ```
 
-Header:
+Frontend request örneği:
 
-```http
-Authorization: Bearer <token>
+```javascript
+fetch("/api/orders", {
+  method: "GET",
+  credentials: "include" // Cookie'lerin gitmesi için zorunlu
+})
 ```
 
 ## 7.2 Role kontrolü
@@ -986,11 +990,11 @@ Response:
 
 # 15. Tam Akış: Sipariş Oluşturma
 
-Bu bölümde `/api/v1/orders` endpoint'i için tam request-response akışı gösterilir.
+Bu bölümde `/api/orders` endpoint'i için tam request-response akışı gösterilir.
 
 ```txt
 1. Client
-   POST /api/v1/orders isteği gönderir.
+   POST /api/orders isteği gönderir.
 
 2. RequestIDMiddleware
    Request'e benzersiz request_id ekler.
@@ -999,7 +1003,7 @@ Bu bölümde `/api/v1/orders` endpoint'i için tam request-response akışı gö
    Origin izinli mi kontrol eder.
 
 4. API Router
-   /api/v1/orders endpoint'ini bulur.
+   /api/orders endpoint'ini bulur.
 
 5. Pydantic Schema Validation
    Body alanları doğru mu kontrol eder.
@@ -1012,7 +1016,7 @@ Bu bölümde `/api/v1/orders` endpoint'i için tam request-response akışı gö
    notes gibi serbest metin alanlarından HTML/script temizlenir.
 
 7. Auth Dependency
-   JWT token geçerli mi kontrol edilir.
+   access_token HttpOnly cookie'den okunur ve doğrulanır.
 
 8. Role Dependency
    Kullanıcı admin mi kontrol edilir.
@@ -1066,9 +1070,9 @@ Bu bölümde `/api/v1/orders` endpoint'i için tam request-response akışı gö
 Örnek request:
 
 ```http
-POST /api/v1/chat/message
-Authorization: Bearer <token>
+POST /api/chat/message
 Content-Type: application/json
+Credentials: include
 ```
 
 Body:
@@ -1095,7 +1099,7 @@ Akış:
 4. XSS sanitization yapılır.
    content içindeki HTML/script temizlenir.
 
-5. Auth dependency token'ı kontrol eder.
+5. Auth dependency access_token cookie'sini kontrol eder.
 
 6. chat.py endpoint'i AgentOrchestrator'ı çağırır.
 
@@ -1153,8 +1157,7 @@ Akış:
 Örnek request:
 
 ```http
-PUT /api/v1/inventory/5
-Authorization: Bearer <token>
+PUT /api/inventory/5
 Content-Type: application/json
 ```
 
@@ -1177,7 +1180,7 @@ Akış:
    quantity integer mı?
    quantity negatif değil mi?
 
-4. Auth ve admin role kontrolü yapılır.
+4. Auth ve admin role kontrolü cookie üzerinden yapılır.
 
 5. inventory.py endpoint'i InventoryService'i çağırır.
 
@@ -1243,7 +1246,7 @@ Yeni endpoint yazarken şu checklist takip edilmelidir.
 ## 19.1 Endpoint checklist
 
 ```txt
-[ ] Endpoint app/api/v1/endpoints içinde mi?
+[ ] Endpoint app/api/endpoints içinde mi?
 [ ] Request body Pydantic schema ile mi alınıyor?
 [ ] Auth gerekiyorsa Depends(get_current_user) var mı?
 [ ] Admin gerekiyorsa Depends(get_admin_user) var mı?
@@ -1290,6 +1293,14 @@ Yeni endpoint yazarken şu checklist takip edilmelidir.
 ```txt
 [ ] SECRET_KEY kod içine yazılmamış mı?
 [ ] LLM_API_KEY kod içine yazılmamış mı?
+[ ] access_token response body içinde dönmüyor mu?
+[ ] refresh_token response body içinde dönmüyor mu?
+[ ] Tokenlar sadece HttpOnly cookie ile mi taşınıyor?
+[ ] Authorization Bearer header dependency’si kullanılmıyor mu?
+[ ] Protected endpointler cookie auth dependency kullanıyor mu?
+[ ] CORS allow_credentials=True mi?
+[ ] allow_origins wildcard değil mi?
+[ ] Logout cookie’leri temizliyor mu?
 [ ] Password response'a eklenmiyor mu?
 [ ] Password loglanmıyor mu?
 [ ] Admin endpoint'ler korunuyor mu?

@@ -39,6 +39,7 @@ bleach = "^6.2.0"
 
 # LLM SDK (Anthropic Claude)
 anthropic = "^0.42.0"
+google-genai = "^2.0.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.0"
