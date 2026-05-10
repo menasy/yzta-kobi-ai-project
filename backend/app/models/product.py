@@ -8,6 +8,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 from .base_model import TimestampMixin, IDMixin
 
+from app.models.inventory import Inventory
+
 if TYPE_CHECKING:
     from .inventory import Inventory
     from .order_item import OrderItem
@@ -31,3 +33,5 @@ class Product(Base, IDMixin, TimestampMixin):
     order_items: Mapped[list["OrderItem"]] = relationship(back_populates="product")
     inventory_movements: Mapped[list["InventoryMovement"]] = relationship(back_populates="product")
     notifications: Mapped[list["Notification"]] = relationship(back_populates="product")
+
+

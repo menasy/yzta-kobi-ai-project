@@ -23,6 +23,11 @@ from app.core.response_builder import error_response, success_response
 from app.core.responses import ApiResponse
 from app.db.session import close_db_connections
 
+from app.api.endpoints import ai_chat
+
+from dotenv import load_dotenv
+load_dotenv()
+
 # ── Settings ve Logger ───────────────────────────────────
 
 settings = get_settings()
@@ -89,13 +94,22 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         if request.url.path.startswith("/docs") or request.url.path.startswith(
             "/redoc"
         ):
+            """
             response.headers["Content-Security-Policy"] = (
                 "default-src 'self'; "
                 "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
                 "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
                 "img-src 'self' data: https://fastapi.tiangolo.com; "
                 "font-src 'self' data: https://cdn.jsdelivr.net"
+                )
+                """
+            response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; " \
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " \
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " \
+            "img-src 'self' data: https://fastapi.tiangolo.com;"
             )
+            
         else:
             response.headers["Content-Security-Policy"] = "default-src 'self'"
         return response
@@ -255,6 +269,8 @@ async def unhandled_exception_handler(
 # ══════════════════════════════════════════════════════════
 
 app.include_router(api_router, prefix=settings.API_PREFIX)
+
+app.include_router(ai_chat.router, prefix="/api/ai", tags=["AI Agent"])
 
 
 # ══════════════════════════════════════════════════════════

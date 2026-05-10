@@ -5,12 +5,15 @@
 from fastapi import APIRouter
 
 from app.api.endpoints import auth
+from app.api.endpoints import products  
 
 api_router = APIRouter()
 
 # ── Aktif Router'lar ─────────────────────────────────────
 
 api_router.include_router(auth.router, prefix="/auth", tags=["Auth"])
+
+api_router.include_router(products.router, prefix="/products", tags=["Ürün Yönetimi"])
 
 # ── İleride eklenecek router'lar ─────────────────────────
 # from app.api.endpoints import products, orders, inventory, shipments, chat
