@@ -13,10 +13,27 @@ class GeminiService:
     def __init__(self):
         # ... diğer kodlar
         genai.configure(api_key=settings.GEMINI_API_KEY)
+
+
+        self.system_prompt = (
+            "Sen 'KOBİ-Asistan' adında uzman bir iş danışmanısın. "
+            "Türkiye'deki küçük ve orta ölçekli işletmelere (KOBİ) dijital dönüşüm, "
+            "pazarlama, stok yönetimi ve finans konularında yardımcı oluyorsun. "
+            "Dilin profesyonel ama samimi (esnaf dilinden anlayan) olmalı. "
+            "Cevapların kısa, öz ve uygulanabilir öneriler içermeli. "
+            "Eğer kullanıcı bir sorun anlatırsa, ona adım adım bir çözüm planı sun."
+        )
         
-        # BURAYI GÜNCELLE: Terminalde 'gemini-2.5-flash' başarılı olmuştu.
-        #self.model = genai.GenerativeModel('gemini-2.5-flash')
         self.model = genai.GenerativeModel('models/gemini-2.5-flash')
+
+
+        """
+        # Modeli system_instruction ile başlatıyoruz
+        self.model = genai.GenerativeModel(
+            model_name='gemini-2.5-flash',
+            system_instruction=self.system_prompt
+        )
+        """
 
 
 
