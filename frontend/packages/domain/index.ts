@@ -25,3 +25,6 @@ export * from "./inventory/index";
 
 // Shipments domain
 export * from "./shipments/index";
+
+// Customer domain
+export * from "./customer/index";

@@ -8,3 +8,4 @@
 
 // Şimdilik boş — tipler domain bazlı dosyalarda tanımlandıkça buraya eklenir
 export * from "./shared/app-header.types";
+export * from "./home";

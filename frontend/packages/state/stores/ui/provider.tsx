@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import { createContext, useContext, useRef } from "react";
 import type { StoreApi } from "zustand";
 
-import type { UIStore, UIStoreInitialState } from "./types";
 import { createUIStore } from "./uiStore";
+import type { UIStore, UIStoreInitialState } from "./types";
 
 const UIStoreContext = createContext<StoreApi<UIStore> | null>(null);
 

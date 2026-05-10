@@ -60,10 +60,13 @@ export const metadata: Metadata = {
       "KOBİ'ler için yapay zeka destekli operasyon ve iş yönetimi platformu.",
     images: ["/next-assets/logo-opengraph-image.png"],
   },
-  themeColor: "#0F766E",
   other: {
     "msapplication-config": "/next-assets/browserconfig.xml",
   },
+};
+
+export const viewport = {
+  themeColor: "#0F766E",
 };
 
 export default function RootLayout({
