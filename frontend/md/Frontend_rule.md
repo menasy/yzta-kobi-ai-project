@@ -13,6 +13,7 @@ Bu proje KOBİ'ler için yapay zeka destekli bir operasyon platformudur. `apps/w
 ## Temel Kurallar
 
 **Mimari**
+
 - `apps/web/app/` içindeki `page.tsx` dosyaları yalnızca RSC olur; iş mantığı, hook ve state içermez.
 - `"use client"` direktifi yalnızca gerçekten gerekli olan component'lere eklenir. Varsayılan RSC'dir.
 - Bağımlılık akışı tek yönlüdür ve ihlal edilemez: `apps/web → packages/ui → packages/domain → packages/core`.
@@ -20,20 +21,24 @@ Bu proje KOBİ'ler için yapay zeka destekli bir operasyon platformudur. `apps/w
 - Yardımcı fonksiyonlar ilgili domain'in `utils/` klasöründe tanımlanır; component veya page içinde tanımlanmaz.
 
 **Renk ve Tema**
+
 - Hiçbir dosyada `text-red-500`, `bg-blue-600`, `border-gray-200` gibi hardcode Tailwind renk sınıfı kullanılmaz.
 - Tüm renkler yalnızca `globals.css`'teki CSS değişkenleri üzerinden gelir: `text-destructive`, `bg-primary`, `text-muted-foreground` vb.
 - Yeni bir renk ihtiyacında önce `globals.css`'e CSS değişkeni eklenir, ardından `tailwind.config.ts`'e kaydedilir.
 
 **State Yönetimi**
+
 - API verisi (server state) → TanStack Query. UI durumu (sidebar, modal, session) → Zustand. İkisi kesinlikle karıştırılmaz.
 - Filtre, arama ve sayfalama parametreleri URL'de tutulur (`nuqs`); component state'e konulmaz.
 - Optimistic update gerektiğinde `onMutate` → `onError` rollback → `onSuccess` invalidate paterni uygulanır.
 
 **SSR / Rendering**
+
 - SSR mümkün olan her yerde korunur. `page.tsx` sunucuda `prefetchQuery` yapar, `HydrationBoundary` ile Client Component'e iletir.
 - Her sayfa için `loading.tsx` (Skeleton) ve `error.tsx` (retry) tanımlanır.
 
 **API Entegrasyonu ve Auth**
+
 - API İstemcileri tek bir `API_BASE_URL` (`/api` prefix ile) üzerinden çalışır.
 - Token JavaScript tarafında (localStorage/Zustand) KESİNLİKLE tutulmaz. Auth tamamen HttpOnly cookie üzerinden yürür.
 - Admin route guard işlemleri Next.js `middleware.ts` tarafından yalnızca cookie kontrolüyle (varlık/yokluk) yapılır.
@@ -45,6 +50,7 @@ Bu proje KOBİ'ler için yapay zeka destekli bir operasyon platformudur. `apps/w
 - 401 hatası `interceptors.ts` tarafından otomatik yakalanır ve kullanıcı `/auth/login` sayfasına yönlendirilir.
 
 **Kod Kalitesi**
+
 - TypeScript `strict` mod aktiftir; `any` kullanılmaz.
 - `cn()` her zaman className birleştirmek için kullanılır; string concatenation veya template literal kullanılmaz.
 - Bir component 150 satırı geçtiğinde alt component'lere bölünür.
@@ -52,4 +58,9 @@ Bu proje KOBİ'ler için yapay zeka destekli bir operasyon platformudur. `apps/w
 - Tüm geliştirmeler DRY, modüler, yeniden kullanılabilir ve sürdürülebilir yapıda olur.
 
 **Yaşam Döngüsü**
+
 - Component unmount olduktan sonra hiçbir timer, listener, observer, subscription veya async callback yaşamaya devam etmez; her biri `useEffect` cleanup fonksiyonuyla temizlenir.
+
+**Component Geliştirme Kuralı**
+
+UI/UX Geliştiirlirken emoji kulanma profosyenel senior seviye tasrımlar kullan. Proje temasına ve mimarisien uygun olsun. Eğer shadcn/ui da yapılacak goreve uygun compoenent varsa bunu kullan yoksa sıfırdan uı-contracts uı sistemine uyarak sıfırdan yap.
