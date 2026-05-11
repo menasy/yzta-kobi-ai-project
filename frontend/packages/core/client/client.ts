@@ -94,6 +94,7 @@ export class ApiClient {
   ): Promise<ApiResponse<TData>> {
     const { params, ...requestInit } = init ?? {};
     const response = await fetch(buildApiUrl(this.baseUrl, path, params), {
+      cache: "no-store",
       ...requestInit,
       headers: buildHeaders(requestInit),
       credentials: "include",

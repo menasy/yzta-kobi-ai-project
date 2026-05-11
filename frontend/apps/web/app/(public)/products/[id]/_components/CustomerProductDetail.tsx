@@ -1,17 +1,18 @@
 "use client";
 
+import { formatCurrency } from "@repo/core";
 import { useProduct } from "@repo/domain/products";
+import { useIsAuthenticated } from "@repo/state/stores";
 import { 
   Button, 
   Badge, 
   GlobalLoader, 
   Separator,
-  Card,
-  CardContent
+  OrderCreateSheet,
 } from "@repo/ui-web";
-import { ShoppingCart, ArrowLeft, ShieldCheck, Truck, RefreshCcw } from "lucide-react";
+import { Package, ArrowLeft, ShieldCheck, Truck, RefreshCcw, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { formatCurrency } from "@repo/core";
+import { useState } from "react";
 
 interface CustomerProductDetailProps {
   productId: string;
@@ -20,6 +21,8 @@ interface CustomerProductDetailProps {
 export function CustomerProductDetail({ productId }: CustomerProductDetailProps) {
   const router = useRouter();
   const { product, isLoading, error } = useProduct(productId);
+  const isAuthenticated = useIsAuthenticated();
+  const [orderDialogOpen, setOrderDialogOpen] = useState(false);
 
   if (isLoading) {
     return <GlobalLoader className="py-20" />;
@@ -36,6 +39,16 @@ export function CustomerProductDetail({ productId }: CustomerProductDetailProps)
       </div>
     );
   }
+
+  const isAvailable = product.is_active;
+
+  const handleOrderClick = () => {
+    if (!isAuthenticated) {
+      router.push(`/auth/login?redirect=/products/${product.id}`);
+      return;
+    }
+    setOrderDialogOpen(true);
+  };
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -58,13 +71,20 @@ export function CustomerProductDetail({ productId }: CustomerProductDetailProps)
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-muted-foreground/20">
-              <ShoppingCart className="h-32 w-32" />
+              <Package className="h-32 w-32" />
             </div>
           )}
           {product.category && (
             <Badge className="absolute left-6 top-6 px-4 py-1.5 bg-background/80 backdrop-blur-md text-foreground border-none text-sm font-medium">
               {product.category}
             </Badge>
+          )}
+          {!isAvailable && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm">
+              <Badge variant="destructive" className="px-4 py-2 text-base font-semibold">
+                Satışta Değil
+              </Badge>
+            </div>
           )}
         </div>
 
@@ -73,7 +93,14 @@ export function CustomerProductDetail({ productId }: CustomerProductDetailProps)
           <div className="mb-4 flex items-center gap-2">
             <span className="text-sm font-medium text-muted-foreground uppercase tracking-widest">{product.sku}</span>
             <Separator orientation="vertical" className="h-4" />
-            <span className="text-sm text-green-600 font-medium">Stokta Mevcut</span>
+            {isAvailable ? (
+              <span className="text-sm text-primary font-medium">Stokta Mevcut</span>
+            ) : (
+              <span className="text-sm text-destructive font-medium flex items-center gap-1">
+                <XCircle className="h-3.5 w-3.5" />
+                Mevcut Değil
+              </span>
+            )}
           </div>
 
           <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">{product.name}</h1>
@@ -88,8 +115,14 @@ export function CustomerProductDetail({ productId }: CustomerProductDetailProps)
           </p>
 
           <div className="mt-10 space-y-4">
-            <Button size="lg" className="h-14 w-full text-lg font-bold shadow-lg shadow-primary/20">
-              <ShoppingCart className="mr-3 h-5 w-5" /> Sepete Ekle
+            <Button
+              size="lg"
+              className="h-14 w-full text-lg font-bold shadow-lg shadow-primary/20"
+              disabled={!isAvailable}
+              onClick={handleOrderClick}
+            >
+              <Package className="mr-3 h-5 w-5" />
+              {isAvailable ? "Sipariş Oluştur" : "Ürün Mevcut Değil"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Güvenli ödeme ve 24 saat içinde kargo garantisi.
@@ -113,6 +146,15 @@ export function CustomerProductDetail({ productId }: CustomerProductDetailProps)
           </div>
         </div>
       </div>
+
+      {/* Order Creation Sheet */}
+      {isAuthenticated && (
+        <OrderCreateSheet
+          product={product}
+          open={orderDialogOpen}
+          onOpenChange={setOrderDialogOpen}
+        />
+      )}
     </div>
   );
 }

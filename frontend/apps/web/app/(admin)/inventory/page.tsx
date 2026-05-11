@@ -1,4 +1,13 @@
-import { ResponsiveContainer, ResponsiveSection } from "@repo/ui-web";
+import {
+  ResponsiveContainer,
+  ResponsiveSection,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  InventoryTable,
+  LowStockAlerts,
+} from "@repo/ui-web";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,8 +18,24 @@ export const metadata: Metadata = {
 export default function InventoryPage() {
   return (
     <ResponsiveContainer>
-      <ResponsiveSection className="flex min-h-[400px] items-center justify-center">
-        <h1 className="text-4xl font-extrabold tracking-tight opacity-20">TODO</h1>
+      <ResponsiveSection className="space-y-6 pb-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Stok Yönetimi</h1>
+          <p className="text-muted-foreground">
+            Tüm ürünlerinizin stok durumunu, kritik stok seviyelerini buradan takip edebilir ve güncelleyebilirsiniz.
+          </p>
+        </div>
+
+        <LowStockAlerts />
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Stok Listesi</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <InventoryTable />
+          </CardContent>
+        </Card>
       </ResponsiveSection>
     </ResponsiveContainer>
   );

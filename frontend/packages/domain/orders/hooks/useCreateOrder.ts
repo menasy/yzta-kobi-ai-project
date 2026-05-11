@@ -31,6 +31,8 @@ export function useCreateOrder(options: UseCreateOrderOptions = {}) {
           queryKey: queryKeys.orders.myList(),
         });
         void queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         options.onSuccess?.(data, variables);
       },
       onError: (error, variables) => {

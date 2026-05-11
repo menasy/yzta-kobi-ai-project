@@ -6,6 +6,7 @@ export * from "./components/chat";
 export * from "./components/orders";
 export * from "./components/products";
 export * from "./components/notifications";
+export * from "./components/inventory";
 export { Button, buttonVariants } from "./components/shadcn/button";
 export { Input } from "./components/shadcn/input";
 export { Label } from "./components/shadcn/label";
@@ -85,3 +86,16 @@ export {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "./components/shadcn/dropdown-menu";
+export {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectScrollDownButton,
+  SelectScrollUpButton,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "./components/shadcn/select";
+export { Textarea } from "./components/shadcn/textarea";
