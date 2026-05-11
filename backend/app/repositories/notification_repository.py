@@ -158,3 +158,16 @@ class NotificationRepository(BaseRepository[Notification]):
         )
         return result.scalar_one_or_none() is not None
 
+
+   
+    async def get_notifications_by_type_and_date(self, notification_type: str, since_date: datetime):
+        """Belirli bir türdeki ve tarihten sonraki bildirimleri getirir."""
+        from sqlalchemy import select
+        
+        query = select(self.model).where(
+            self.model.type == notification_type,
+            self.model.created_at >= since_date
+        ).order_by(self.model.created_at.desc())
+        
+        result = await self.session.execute(query)
+        return result.scalars().all()

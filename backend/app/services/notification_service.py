@@ -168,3 +168,36 @@ class NotificationService:
     async def mark_all_read(self) -> int:
         """Tüm okunmamış bildirimleri okundu olarak işaretler."""
         return await self._repo.mark_all_as_read()
+    
+
+    async def get_daily_delay_summary(self) -> str:
+        """
+        Son 24 saat içindeki geciken kargoları analiz eder ve özet rapor hazırlar.
+        """
+        from datetime import datetime, timedelta, timezone
+        
+        since_24h = datetime.now(timezone.utc) - timedelta(days=1)
+        
+        # Repository üzerinden son 24 saatteki SHIPMENT_DELAY bildirimlerini çek
+        notifications = await self.repo.get_notifications_by_type_and_date(
+            notification_type="SHIPMENT_DELAY",
+            since_date=since_24h
+        )
+        
+        if not notifications:
+            return "Son 24 saat içinde herhangi bir kargo gecikmesi tespit edilmedi."
+        
+        count = len(notifications)
+        summary = f"📢 **Kargo Gecikme Raporu ({count} Adet)**\n\n"
+        
+        for n in notifications:
+            p = n.payload  # JSON payload
+            summary += f"• **Sipariş:** {p.get('order_number')} | **Takip:** {p.get('tracking_number')}\n"
+            summary += f"  - Sebep: {p.get('delay_reason')}\n"
+            summary += f"  - Yeni Teslimat: {p.get('new_estimated_date')}\n\n"
+            
+        return summary
+    
+
+
+    

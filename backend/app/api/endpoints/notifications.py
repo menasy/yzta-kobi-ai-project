@@ -374,3 +374,27 @@ async def notification_stream(
             "X-Accel-Buffering": "no",
         },
     )
+
+
+@router.get("/summary/delays")
+async def get_delay_summary(db: AsyncSession = Depends(get_db_session)):
+    service = NotificationService(db)
+    summary_text = await service.get_daily_delay_summary()
+    return {"summary": summary_text}
+
+
+
+@router.get(
+    "/summary/delays",
+    summary="Günlük gecikme özeti getir"
+)
+async def get_delay_summary(
+    admin: AdminUser,
+    service: NotificationService = Depends(get_notification_service)
+):
+    """Admin paneli için son 24 saatin gecikme özetini metin olarak döner."""
+    summary_text = await service.get_daily_delay_summary()
+    return success_response(
+        data={"summary": summary_text},
+        message="Özet rapor hazırlandı."
+    )
