@@ -5,6 +5,7 @@
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.inventory import Inventory
 from app.models.product import Product
 
 from .base import BaseRepository
@@ -98,3 +99,13 @@ class ProductRepository(BaseRepository[Product]):
             stmt = stmt.where(Product.id != exclude_id)
         result = await self.session.execute(stmt)
         return result.scalar_one() > 0
+
+    async def get_low_stock_products(self) -> list[Product]:
+        """Stoku kritik eşik değerinin altında olan ürünleri getirir."""
+        result = await self.session.execute(
+            select(Product)
+            .join(Inventory, Inventory.product_id == Product.id)
+            .where(Inventory.quantity <= Inventory.low_stock_threshold)
+            .order_by(Product.id.desc())
+        )
+        return list(result.scalars().all())

@@ -58,6 +58,14 @@ router = APIRouter()
                 }
             },
         },
+        500: {
+            "description": "Beklenmeyen sunucu hatası.",
+            "content": {
+                "application/json": {
+                    "example": openapi_examples.INTERNAL_ERROR_RESPONSE
+                }
+            },
+        },
     },
 )
 async def list_notifications(
@@ -103,6 +111,22 @@ async def list_notifications(
             "content": {
                 "application/json": {
                     "example": openapi_examples.UNAUTHORIZED_RESPONSE
+                }
+            },
+        },
+        403: {
+            "description": "Admin yetkisi gerekli.",
+            "content": {
+                "application/json": {
+                    "example": openapi_examples.FORBIDDEN_RESPONSE
+                }
+            },
+        },
+        500: {
+            "description": "Beklenmeyen sunucu hatası.",
+            "content": {
+                "application/json": {
+                    "example": openapi_examples.INTERNAL_ERROR_RESPONSE
                 }
             },
         },
@@ -153,6 +177,30 @@ async def list_unread_notifications(
                 }
             },
         },
+        401: {
+            "description": "Yetkisiz erişim.",
+            "content": {
+                "application/json": {
+                    "example": openapi_examples.UNAUTHORIZED_RESPONSE
+                }
+            },
+        },
+        403: {
+            "description": "Admin yetkisi gerekli.",
+            "content": {
+                "application/json": {
+                    "example": openapi_examples.FORBIDDEN_RESPONSE
+                }
+            },
+        },
+        500: {
+            "description": "Beklenmeyen sunucu hatası.",
+            "content": {
+                "application/json": {
+                    "example": openapi_examples.INTERNAL_ERROR_RESPONSE
+                }
+            },
+        },
     },
 )
 async def mark_notification_read(
@@ -192,6 +240,30 @@ async def mark_notification_read(
                 }
             },
         },
+        401: {
+            "description": "Yetkisiz erişim.",
+            "content": {
+                "application/json": {
+                    "example": openapi_examples.UNAUTHORIZED_RESPONSE
+                }
+            },
+        },
+        403: {
+            "description": "Admin yetkisi gerekli.",
+            "content": {
+                "application/json": {
+                    "example": openapi_examples.FORBIDDEN_RESPONSE
+                }
+            },
+        },
+        500: {
+            "description": "Beklenmeyen sunucu hatası.",
+            "content": {
+                "application/json": {
+                    "example": openapi_examples.INTERNAL_ERROR_RESPONSE
+                }
+            },
+        },
     },
 )
 async def mark_all_notifications_read(
@@ -222,6 +294,18 @@ async def mark_all_notifications_read(
         200: {
             "description": "Server-Sent Events stream başlatıldı.",
             "content": {"text/event-stream": {}},
+        },
+        401: {
+            "description": "Yetkisiz erişim.",
+            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
+        },
+        403: {
+            "description": "Admin yetkisi gerekli.",
+            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
+        },
+        500: {
+            "description": "Beklenmeyen sunucu hatası.",
+            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
         },
     },
 )

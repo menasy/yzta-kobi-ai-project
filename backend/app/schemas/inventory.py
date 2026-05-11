@@ -7,6 +7,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.core import openapi_examples
 from .common import MOVEMENT_TYPES, validate_sanitized_field, validate_status
 
 
@@ -22,6 +23,10 @@ class InventoryUpdate(BaseModel):
         ge=0,
         le=999999,
         description="Kritik stok eşik değeri",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": openapi_examples.INVENTORY_UPDATE_EXAMPLE}
     )
 
 

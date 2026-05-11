@@ -23,4 +23,15 @@ class RedisService:
         client = await self._get_client()
         await client.delete(key)
 
+    async def incr_with_expire(self, key: str, expire: int) -> int:
+        """
+        Anahtar değerini artırır; sayaç ilk kez oluştuysa TTL set eder.
+        Rate limiting gibi pencere bazlı sayaçlarda kullanılır.
+        """
+        client = await self._get_client()
+        value = await client.incr(key)
+        if value == 1:
+            await client.expire(key, expire)
+        return int(value)
+
 redis_service = RedisService()

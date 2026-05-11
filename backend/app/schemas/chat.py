@@ -6,6 +6,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.core import openapi_examples
 from .common import validate_sanitized_field
 
 
@@ -36,6 +37,10 @@ class ChatMessageRequest(BaseModel):
             raise ValueError("Mesaj içeriği boş olamaz.")
         return result
 
+    model_config = ConfigDict(
+        json_schema_extra={"example": openapi_examples.CHAT_MESSAGE_REQUEST_EXAMPLE}
+    )
+
 
 # ── Response Schemas ─────────────────────────────────────
 
@@ -45,6 +50,10 @@ class ChatResponse(BaseModel):
 
     reply: str
     session_id: str
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": openapi_examples.CHAT_RESPONSE_EXAMPLE}
+    )
 
 
 class ConversationResponse(BaseModel):

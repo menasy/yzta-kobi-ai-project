@@ -4,7 +4,6 @@
 # global exception handler'lar ve startup/shutdown event'leri burada tanımlanır.
 # uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-import logging
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -19,7 +18,8 @@ from app.api.router import api_router
 from app.core.config import get_settings
 from app.core.exceptions import AppException
 from app.core.logger import get_logger, setup_logging
-from app.core.response_builder import error_response, success_response
+from app.core import openapi_examples
+from app.core.response_builder import success_response
 from app.core.responses import ApiResponse
 from app.db.session import close_db_connections
 
@@ -91,25 +91,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        if request.url.path.startswith("/docs") or request.url.path.startswith(
-            "/redoc"
-        ):
-            """
+        if request.url.path.startswith("/docs") or request.url.path.startswith("/redoc"):
             response.headers["Content-Security-Policy"] = (
                 "default-src 'self'; "
                 "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
                 "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-                "img-src 'self' data: https://fastapi.tiangolo.com; "
-                "font-src 'self' data: https://cdn.jsdelivr.net"
-                )
-                """
-            response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; " \
-            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " \
-            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " \
-            "img-src 'self' data: https://fastapi.tiangolo.com;"
+                "img-src 'self' data: https://fastapi.tiangolo.com;"
             )
-            
         else:
             response.headers["Content-Security-Policy"] = "default-src 'self'"
         return response
@@ -230,7 +218,12 @@ async def validation_exception_handler(
         data=None,
         errors=field_errors,
     )
-    return JSONResponse(status_code=422, content=body.model_dump())
+    request_id = getattr(request.state, "request_id", None)
+    return JSONResponse(
+        status_code=422,
+        content=body.model_dump(),
+        headers={"X-Request-ID": str(request_id)} if request_id else {},
+    )
 
 
 @app.exception_handler(Exception)
@@ -281,7 +274,37 @@ app.include_router(api_router, prefix=settings.API_PREFIX)
 # ══════════════════════════════════════════════════════════
 
 
-@app.get("/health", tags=["Sistem"])
+@app.get(
+    "/health",
+    tags=["Sistem"],
+    response_model=None,
+    responses={
+        200: {
+            "description": "Sistem sağlık bilgisi.",
+            "content": {
+                "application/json": {
+                    "example": openapi_examples.get_api_response_example(
+                        data={
+                            "status": "ok",
+                            "app_name": "KOBİ Agent",
+                            "version": "0.1.0",
+                            "environment": "development",
+                        },
+                        message="Sistem çalışıyor.",
+                    )
+                }
+            },
+        },
+        500: {
+            "description": "Beklenmeyen sunucu hatası.",
+            "content": {
+                "application/json": {
+                    "example": openapi_examples.INTERNAL_ERROR_RESPONSE
+                }
+            },
+        },
+    },
+)
 async def health_check():
     """Sistem sağlık kontrolü — public endpoint."""
     return success_response(

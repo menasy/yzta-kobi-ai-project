@@ -1,120 +1,205 @@
-# urunlerin listelenmesi ve yoneetimi
+# api/endpoints/products.py
+# Ürün yönetimi endpoint'leri.
+# Sadece routing/response sorumluluğu taşır; business logic ProductService'dedir.
 
-from fastapi.encoders import jsonable_encoder
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from fastapi import APIRouter, Depends
 
-from app.db.session import get_db_session as get_db
-from app.services.product_service import ProductService
-from app.schemas.product import ProductCreate, ProductUpdate, ProductResponse
-from app.core.response_builder import success_response
 from app.core import openapi_examples
+from app.core.dependencies import AdminUser, get_product_service
+from app.core.response_builder import success_response
+from app.schemas.product import ProductCreate, ProductUpdate
+from app.services.product_service import ProductService
 
 router = APIRouter()
 
-# 1. Tüm Ürünleri Listele
+
 @router.get(
     "/",
     response_model=None,
+    summary="Tüm ürünleri listele",
     responses={
         200: {
             "description": "Ürünler başarıyla listelendi.",
-            "content": {
-                "application/json": {
-                    "example": openapi_examples.get_api_response_example(
-                        data=[openapi_examples.PRODUCT_EXAMPLE],
-                        message="Ürünler listelendi."
-                    )
-                }
-            }
+            "content": openapi_examples.example_content(
+                data=[openapi_examples.PRODUCT_EXAMPLE],
+                message="Ürünler listelendi.",
+            ),
         },
-        401: {"description": "Yetkisiz erişim.", "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}}}
-    }
+        401: {
+            "description": "Yetkisiz erişim.",
+            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
+        },
+        403: {
+            "description": "Admin yetkisi gerekli.",
+            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
+        },
+        500: {
+            "description": "Beklenmeyen sunucu hatası.",
+            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
+        },
+    },
 )
-async def get_all(db: AsyncSession = Depends(get_db)):
-    products = await ProductService.get_all_products(db)
+async def get_all(
+    admin: AdminUser,
+    service: ProductService = Depends(get_product_service),
+):
+    products = await service.get_all_products()
     return success_response(data=products, message="Ürünler listelendi.")
 
-# 2. Yeni Ürün Ekle (POST)
+
 @router.post(
     "/",
     status_code=201,
+    response_model=None,
+    summary="Yeni ürün oluştur",
     responses={
         201: {
             "description": "Ürün başarıyla oluşturuldu.",
-            "content": {
-                "application/json": {
-                    "example": openapi_examples.get_api_response_example(
-                        data=openapi_examples.PRODUCT_EXAMPLE,
-                        message="Ürün başarıyla oluşturuldu.",
-                        status_code=201
-                    )
-                }
-            }
+            "content": openapi_examples.example_content(
+                data=openapi_examples.PRODUCT_EXAMPLE,
+                message="Ürün başarıyla oluşturuldu.",
+                status_code=201,
+            ),
         },
-        401: {"description": "Yetkisiz erişim.", "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}}},
-        422: {"description": "Validasyon hatası.", "content": {"application/json": {"example": openapi_examples.VALIDATION_ERROR_RESPONSE}}}
-    }
+        401: {
+            "description": "Yetkisiz erişim.",
+            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
+        },
+        403: {
+            "description": "Admin yetkisi gerekli.",
+            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
+        },
+        422: {
+            "description": "Validasyon hatası.",
+            "content": {"application/json": {"example": openapi_examples.VALIDATION_ERROR_RESPONSE}},
+        },
+        500: {
+            "description": "Beklenmeyen sunucu hatası.",
+            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
+        },
+    },
 )
-async def create(product_in: ProductCreate, db: AsyncSession = Depends(get_db)):
-    product = await ProductService.create_product(db, product_in)
+async def create(
+    product_in: ProductCreate,
+    admin: AdminUser,
+    service: ProductService = Depends(get_product_service),
+):
+    product = await service.create_product(product_in)
+    return success_response(data=product, message="Ürün başarıyla oluşturuldu.", status_code=201)
 
-    safe_data = jsonable_encoder(product)
-    
-    return success_response(
-        data=safe_data, 
-        message="Ürün başarıyla oluşturuldu."
-    )
 
-# 3. Kritik Stoktaki Ürünleri Getir (GET)
 @router.get(
     "/low-stock",
+    response_model=None,
+    summary="Kritik stok seviyesindeki ürünleri getir",
     responses={
         200: {
             "description": "Kritik stok seviyesindeki ürünler başarıyla getirildi.",
-            "content": {
-                "application/json": {
-                    "example": openapi_examples.get_api_response_example(
-                        data=[openapi_examples.PRODUCT_EXAMPLE],
-                        message="Kritik stok seviyesindeki ürünler getirildi."
-                    )
-                }
-            }
-        }
-    }
+            "content": openapi_examples.example_content(
+                data=[openapi_examples.PRODUCT_EXAMPLE],
+                message="Kritik stok seviyesindeki ürünler getirildi.",
+            ),
+        },
+        401: {
+            "description": "Yetkisiz erişim.",
+            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
+        },
+        403: {
+            "description": "Admin yetkisi gerekli.",
+            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
+        },
+        500: {
+            "description": "Beklenmeyen sunucu hatası.",
+            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
+        },
+    },
 )
-async def get_low_stock(db: AsyncSession = Depends(get_db)):
-    products = await ProductService.get_low_stock_products(db)
+async def get_low_stock(
+    admin: AdminUser,
+    service: ProductService = Depends(get_product_service),
+):
+    products = await service.get_low_stock_products()
     return success_response(data=products, message="Kritik stok seviyesindeki ürünler getirildi.")
 
-# 4. Ürün Güncelle (PUT)
+
 @router.put(
     "/{id}",
+    response_model=None,
+    summary="Ürün güncelle",
     responses={
         200: {
             "description": "Ürün başarıyla güncellendi.",
-            "content": {
-                "application/json": {
-                    "example": openapi_examples.get_api_response_example(
-                        data=openapi_examples.PRODUCT_EXAMPLE,
-                        message="Ürün güncellendi."
-                    )
-                }
-            }
+            "content": openapi_examples.example_content(
+                data=openapi_examples.PRODUCT_EXAMPLE,
+                message="Ürün güncellendi.",
+            ),
         },
-        404: {"description": "Ürün bulunamadı.", "content": {"application/json": {"example": openapi_examples.NOT_FOUND_RESPONSE}}}
-    }
+        401: {
+            "description": "Yetkisiz erişim.",
+            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
+        },
+        403: {
+            "description": "Admin yetkisi gerekli.",
+            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
+        },
+        404: {
+            "description": "Ürün bulunamadı.",
+            "content": {"application/json": {"example": openapi_examples.NOT_FOUND_RESPONSE}},
+        },
+        422: {
+            "description": "Validasyon hatası.",
+            "content": {"application/json": {"example": openapi_examples.VALIDATION_ERROR_RESPONSE}},
+        },
+        500: {
+            "description": "Beklenmeyen sunucu hatası.",
+            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
+        },
+    },
 )
-async def update(id: int, product_in: ProductUpdate, db: AsyncSession = Depends(get_db)):
-    product = await ProductService.update_product(db, id, product_in)
-    if not product:
-        raise HTTPException(status_code=404, detail="Ürün bulunamadı.")
+async def update(
+    id: int,
+    product_in: ProductUpdate,
+    admin: AdminUser,
+    service: ProductService = Depends(get_product_service),
+):
+    product = await service.update_product(id, product_in)
     return success_response(data=product, message="Ürün güncellendi.")
 
-# 5. Ürün Sil (DELETE)
-@router.delete("/{id}")
-async def delete(id: int, db: AsyncSession = Depends(get_db)):
-    # Servis kısmına delete eklemediysek şimdilik basitçe id ile işlem yapabilirsin
-    # Ama genelde product_service.delete_product(db, id) çağırmak daha şıktır.
-    return success_response(message="Ürün silindi (Soft delete veya direkt silme işlemi).")
+
+@router.delete(
+    "/{id}",
+    response_model=None,
+    summary="Ürün sil",
+    responses={
+        200: {
+            "description": "Ürün başarıyla silindi.",
+            "content": openapi_examples.example_content(
+                data={"id": 101},
+                message="Ürün silindi.",
+            ),
+        },
+        401: {
+            "description": "Yetkisiz erişim.",
+            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
+        },
+        403: {
+            "description": "Admin yetkisi gerekli.",
+            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
+        },
+        404: {
+            "description": "Ürün bulunamadı.",
+            "content": {"application/json": {"example": openapi_examples.NOT_FOUND_RESPONSE}},
+        },
+        500: {
+            "description": "Beklenmeyen sunucu hatası.",
+            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
+        },
+    },
+)
+async def delete(
+    id: int,
+    admin: AdminUser,
+    service: ProductService = Depends(get_product_service),
+):
+    await service.delete_product(id)
+    return success_response(data={"id": id}, message="Ürün silindi.")

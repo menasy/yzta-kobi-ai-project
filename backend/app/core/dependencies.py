@@ -156,6 +156,13 @@ async def get_notification_service(db: DBSession) -> "NotificationService":
     return NotificationService(db=db)
 
 
+async def get_product_service(db: DBSession) -> "ProductService":
+    """ProductService dependency — ürün CRUD akışı."""
+    from app.services.product_service import ProductService
+
+    return ProductService(db=db)
+
+
 # ── Agent Orchestrator Dependency ────────────────────────
 
 

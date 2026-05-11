@@ -1830,9 +1830,6 @@ Adım 33: RequestIDMiddleware ekle ve test et
 Adım 34: SecurityHeadersMiddleware ekle ve test et
   X-Content-Type-Options, X-Frame-Options vb. header'lar var mı?
 
-Adım 35: XSS korumasını test et
-  Serbest metin alanlarına <script>alert(1)</script> gönder
-  Temizlenerek mi kaydediliyor?
 
 Adım 36: SQL injection korumasını doğrula
   Tüm DB sorgularında f-string yok, ORM kullanılıyor

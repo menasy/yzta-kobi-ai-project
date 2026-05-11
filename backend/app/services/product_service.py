@@ -1,64 +1,45 @@
 # services/product_service.py
 # Ürün CRUD iş mantığı servisi.
-# Stok (Inventory) güncelleme işlemleri InventoryService'e taşınmıştır.
-# Bu servis sadece Product tablosuyla ilgilenir.
+# Repository katmanı üzerinden ürün işlemlerini yönetir.
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
 
+from app.core.exceptions import NotFoundError
 from app.models.product import Product
-from app.models.inventory import Inventory
+from app.repositories.product_repository import ProductRepository
 from app.schemas.product import ProductCreate, ProductUpdate
 
 
 class ProductService:
+    """Ürün yönetimi iş mantığı servisi."""
 
-    @staticmethod
-    async def get_all_products(db: AsyncSession):
-        """Tüm ürünleri veritabanından çeker."""
-        result = await db.execute(select(Product))
-        return result.scalars().all()
+    def __init__(self, db: AsyncSession) -> None:
+        self._product_repo = ProductRepository(db)
 
-    @staticmethod
-    async def create_product(db: AsyncSession, product_data: ProductCreate):
+    async def get_all_products(self) -> list[Product]:
+        """Tüm ürünleri döndürür."""
+        return await self._product_repo.get_all()
+
+    async def create_product(self, product_data: ProductCreate) -> Product:
         """Yeni ürün oluşturur."""
-        db_product = Product(**product_data.model_dump())
-        db.add(db_product)
-        await db.commit()
-        await db.refresh(db_product)
-        return db_product
+        return await self._product_repo.create(product_data.model_dump())
 
-    @staticmethod
-    async def get_low_stock_products(db: AsyncSession):
-        """Product ve Inventory tablolarını birleştirip kritik stoktaki ürünleri getirir."""
-        query = (
-            select(Product)
-            .join(Inventory)
-            .where(Inventory.quantity <= Inventory.low_stock_threshold)
+    async def get_low_stock_products(self) -> list[Product]:
+        """Kritik stok seviyesindeki ürünleri döndürür."""
+        return await self._product_repo.get_low_stock_products()
+
+    async def update_product(self, product_id: int, update_data: ProductUpdate) -> Product:
+        """Ürünü günceller, yoksa NotFoundError fırlatır."""
+        product = await self._product_repo.update(
+            product_id,
+            update_data.model_dump(exclude_unset=True),
         )
-        result = await db.execute(query)
-        return result.scalars().all()
-
-    @staticmethod
-    async def get_product_by_id(db: AsyncSession, product_id: int):
-        """ID ile ürün getirir."""
-        result = await db.execute(
-            select(Product).where(Product.id == product_id)
-        )
-        return result.scalar_one_or_none()
-
-    @staticmethod
-    async def update_product(db: AsyncSession, product_id: int, update_data: ProductUpdate):
-        """Ürün bilgilerini günceller (stok hariç — stok için InventoryService kullanın)."""
-        product = await ProductService.get_product_by_id(db, product_id)
-        if product:
-            update_dict = update_data.model_dump(exclude_unset=True)
-            for key, value in update_dict.items():
-                setattr(product, key, value)
-            await db.commit()
-            await db.refresh(product)
+        if product is None:
+            raise NotFoundError(message=f"{product_id} numaralı ürün bulunamadı.")
         return product
 
-    # NOT: Stok güncelleme işlemleri InventoryService'e taşınmıştır.
-    # update_stock_quantity() ve check_and_update_stock() kaldırıldı.
-    # Stok güncellemesi için: InventoryService.update_stock() kullanın.
+    async def delete_product(self, product_id: int) -> None:
+        """Ürünü siler, yoksa NotFoundError fırlatır."""
+        deleted = await self._product_repo.delete(product_id)
+        if not deleted:
+            raise NotFoundError(message=f"{product_id} numaralı ürün bulunamadı.")

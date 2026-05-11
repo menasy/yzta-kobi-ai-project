@@ -30,6 +30,22 @@ NOT_FOUND_RESPONSE = {
     "errors": None
 }
 
+INTERNAL_ERROR_RESPONSE = {
+    "statusCode": 500,
+    "key": "INTERNAL_ERROR",
+    "message": "Beklenmeyen bir hata oluştu.",
+    "data": None,
+    "errors": None
+}
+
+RATE_LIMIT_RESPONSE = {
+    "statusCode": 429,
+    "key": "RATE_LIMIT_EXCEEDED",
+    "message": "İstek sınırı aşıldı. Lütfen biraz bekleyip tekrar deneyin.",
+    "data": None,
+    "errors": None
+}
+
 VALIDATION_ERROR_RESPONSE = {
     "statusCode": 422,
     "key": "VALIDATION_ERROR",
@@ -66,6 +82,12 @@ REGISTER_REQUEST_EXAMPLE = {
     "role": "admin"
 }
 
+COOKIE_AUTH_DESCRIPTION = (
+    "Kimlik doğrulama HttpOnly cookie tabanlıdır. "
+    "Token değerleri response body içinde dönmez. "
+    "Login/refresh sonrası access_token ve refresh_token cookie olarak set edilir."
+)
+
 # ── Ürün Örnekleri ─────────────────────────────────────
 
 PRODUCT_EXAMPLE = {
@@ -86,6 +108,18 @@ PRODUCT_CREATE_EXAMPLE = {
     "price": 250.00,
     "stock_quantity": 50,
     "category": "Elektronik"
+}
+
+# ── Chat Örnekleri ─────────────────────────────────────
+
+CHAT_MESSAGE_REQUEST_EXAMPLE = {
+    "session_id": "session-2026-001",
+    "content": "128 numaralı siparişimin kargo durumunu kontrol eder misin?"
+}
+
+CHAT_RESPONSE_EXAMPLE = {
+    "reply": "Siparişiniz kargoya verilmiş görünüyor, son durum: Ankara transfer merkezinde.",
+    "session_id": "session-2026-001"
 }
 
 # ── Notification Örnekleri ────────────────────────────
@@ -144,6 +178,23 @@ INVENTORY_UPDATE_EXAMPLE = {
     "low_stock_threshold": 10,
 }
 
+# ── Sipariş/Kargo Örnekleri (stub endpoint docs için) ──
+
+ORDER_SUMMARY_EXAMPLE = {
+    "total_orders": 42,
+    "revenue": 18750.40,
+}
+
+ORDER_DETAIL_EXAMPLE = {
+    "order_id": 128,
+    "status": "hazırlanıyor",
+}
+
+SHIPMENT_TRACK_EXAMPLE = {
+    "tracking_number": "TRK-2026-9812",
+    "location": "Dağıtım Merkezinde",
+}
+
 # ── Helper Fonksiyonlar ───────────────────────────────
 
 def get_api_response_example(
@@ -159,4 +210,18 @@ def get_api_response_example(
         "message": message,
         "data": data,
         "errors": None
+    }
+
+
+def example_content(data: Any = None, *, message: str = "İşlem başarıyla tamamlandı.", key: str = "SUCCESS", status_code: int = 200) -> dict[str, Any]:
+    """OpenAPI responses.content için kısa helper."""
+    return {
+        "application/json": {
+            "example": get_api_response_example(
+                data=data,
+                message=message,
+                key=key,
+                status_code=status_code,
+            )
+        }
     }

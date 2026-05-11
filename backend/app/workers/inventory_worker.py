@@ -1,53 +1,73 @@
+# workers/inventory_worker.py
+# Kritik stok kayıtlarını tarayıp RabbitMQ kuyruğuna bildirim olarak yayınlayan worker.
+# DB sorguları repository katmanı üzerinden yapılır.
+
 import asyncio
 import json
+
 import aio_pika
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-# Ayarlar
-DATABASE_URL = "postgresql+asyncpg://postgres:password@localhost:5433/kobidb"
-RABBITMQ_URL = "amqp://guest:guest@localhost:5672/"
+from app.core.config import get_settings
+from app.core.logger import get_logger, setup_logging
+from app.repositories.inventory_repository import InventoryRepository
 
-async def check_inventory_and_notify():
-    # 1. Veritabanına Bağlan
-    engine = create_async_engine(DATABASE_URL)
-    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    
-    # 2. RabbitMQ'ya Bağlan
-    connection = await aio_pika.connect_robust(RABBITMQ_URL)
-    
+settings = get_settings()
+setup_logging(level=settings.LOG_LEVEL, json_output=settings.LOG_JSON)
+logger = get_logger(__name__)
+
+_QUEUE_NAME = "stok_uyarilari"
+
+
+async def _list_low_stock_messages(session: AsyncSession) -> list[dict[str, object]]:
+    inventory_repo = InventoryRepository(session)
+    low_stock_items = await inventory_repo.get_low_stock_items()
+
+    messages: list[dict[str, object]] = []
+    for item in low_stock_items:
+        product_name = item.product.name if item.product else f"Ürün #{item.product_id}"
+        messages.append(
+            {
+                "urun": product_name,
+                "mevcut_stok": item.quantity,
+                "kritik_esik": item.low_stock_threshold,
+                "uyari": "Stok kritik seviyenin altında!",
+            }
+        )
+    return messages
+
+
+async def check_inventory_and_notify() -> None:
+    engine = create_async_engine(settings.DATABASE_URL)
+    session_factory = async_sessionmaker(
+        engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
+
+    connection = await aio_pika.connect_robust(settings.RABBITMQ_URL)
+
     async with connection:
         channel = await connection.channel()
-        # "stok_uyarilari" adında bir kuyruk oluştur
-        queue = await channel.declare_queue("stok_uyarilari", durable=True)
+        await channel.declare_queue(_QUEUE_NAME, durable=True)
 
-        async with async_session() as session:
-            # Stoğu eşik değerinin altında olanları bul
-            result = await session.execute(text("""
-                SELECT p.name, i.quantity, i.low_stock_threshold 
-                FROM inventory i 
-                JOIN products p ON i.product_id = p.id 
-                WHERE i.quantity < i.low_stock_threshold
-            """))
-            
-            for row in result:
-                message_data = {
-                    "urun": row[0],
-                    "mevcut_stok": row[1],
-                    "kritik_esik": row[2],
-                    "uyari": "Stok kritik seviyenin altında!"
-                }
-                
-                # Mesajı RabbitMQ'ya gönder
+        async with session_factory() as session:
+            for message_data in await _list_low_stock_messages(session):
                 await channel.default_exchange.publish(
-                    aio_pika.Message(body=json.dumps(message_data).encode()),
-                    routing_key="stok_uyarilari"
+                    aio_pika.Message(body=json.dumps(message_data).encode("utf-8")),
+                    routing_key=_QUEUE_NAME,
                 )
-                print(f"📢 RabbitMQ'ya uyarı gönderildi: {row[0]} (Stok: {row[1]})")
+                logger.info(
+                    "RabbitMQ'ya stok uyarısı gönderildi.",
+                    extra={
+                        "queue": _QUEUE_NAME,
+                        "product_name": message_data["urun"],
+                    },
+                )
 
     await engine.dispose()
 
+
 if __name__ == "__main__":
-    print("🕵️ Stok Dedektifi çalışıyor...")
+    logger.info("Stok worker başlatıldı.")
     asyncio.run(check_inventory_and_notify())
