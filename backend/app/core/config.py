@@ -6,7 +6,7 @@
 from functools import lru_cache
 from typing import Any
 
-from pydantic import field_validator, model_validator
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -54,9 +54,22 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 gün
 
     # ── Cookie Ayarları ───────────────────────────────────
-    COOKIE_SECURE: bool = False
-    COOKIE_SAMESITE: str = "lax"  # 'lax', 'strict', 'none'
-    COOKIE_DOMAIN: str | None = None
+    AUTH_ACCESS_COOKIE_NAME: str = "access_token"
+    AUTH_REFRESH_COOKIE_NAME: str = "refresh_token"
+    AUTH_COOKIE_PATH: str = "/"
+    AUTH_COOKIE_DOMAIN: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("AUTH_COOKIE_DOMAIN", "COOKIE_DOMAIN"),
+    )
+    AUTH_COOKIE_SECURE: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("AUTH_COOKIE_SECURE", "COOKIE_SECURE"),
+    )
+    AUTH_COOKIE_HTTPONLY: bool = True
+    AUTH_COOKIE_SAMESITE: str = Field(
+        default="lax",
+        validation_alias=AliasChoices("AUTH_COOKIE_SAMESITE", "COOKIE_SAMESITE"),
+    )
 
     # ── LLM ───────────────────────────────────────────────
     LLM_API_KEY: str = ""
@@ -102,6 +115,36 @@ class Settings(BaseSettings):
             r")(:\d{1,5})?$"
         )
 
+    @property
+    def auth_cookie_cleanup_paths(self) -> list[str]:
+        """Canonical path yanında olası legacy path'leri de temizlemek için adaylar."""
+        candidates = [
+            self.AUTH_COOKIE_PATH,
+            "/",
+            self.API_PREFIX,
+            f"{self.API_PREFIX}/auth",
+        ]
+        normalized: list[str] = []
+        for path in candidates:
+            if not path:
+                continue
+            value = path if path == "/" else path.rstrip("/")
+            if not value.startswith("/"):
+                value = f"/{value}"
+            if value not in normalized:
+                normalized.append(value)
+        return normalized
+
+    @property
+    def auth_cookie_cleanup_domains(self) -> list[str | None]:
+        """Canonical domain yanında host-only legacy cookie temizliği için adaylar."""
+        candidates = [self.AUTH_COOKIE_DOMAIN, None]
+        normalized: list[str | None] = []
+        for domain in candidates:
+            if domain not in normalized:
+                normalized.append(domain)
+        return normalized
+
     # ── Validators ────────────────────────────────────────
 
     @field_validator("SECRET_KEY")
@@ -114,6 +157,15 @@ class Settings(BaseSettings):
             )
         return v
 
+    @field_validator("AUTH_COOKIE_DOMAIN", mode="before")
+    @classmethod
+    def normalize_cookie_domain(cls, v: str | None) -> str | None:
+        """Boş domain değeri host-only cookie anlamına gelecek şekilde None'a çevrilir."""
+        if v is None:
+            return None
+        value = str(v).strip()
+        return value or None
+
     @model_validator(mode="after")
     def validate_production_settings(self) -> "Settings":
         """Production ortamında güvenlik açısından kritik kontroller."""
@@ -121,19 +173,28 @@ class Settings(BaseSettings):
             raise ValueError("Cookie auth kullanıldığı için CORS_ORIGINS içinde wildcard (*) kullanılamaz.")
 
         allowed_samesite = {"lax", "strict", "none"}
-        if self.COOKIE_SAMESITE.lower() not in allowed_samesite:
-            raise ValueError("COOKIE_SAMESITE yalnızca lax, strict veya none olabilir.")
+        if self.AUTH_COOKIE_SAMESITE.lower() not in allowed_samesite:
+            raise ValueError("AUTH_COOKIE_SAMESITE yalnızca lax, strict veya none olabilir.")
 
-        self.COOKIE_SAMESITE = self.COOKIE_SAMESITE.lower()
+        self.AUTH_COOKIE_SAMESITE = self.AUTH_COOKIE_SAMESITE.lower()
 
-        if self.COOKIE_SAMESITE == "none" and not self.COOKIE_SECURE:
-            raise ValueError("COOKIE_SAMESITE=none kullanılırsa COOKIE_SECURE=true olmalıdır.")
+        if self.AUTH_COOKIE_SAMESITE == "none" and not self.AUTH_COOKIE_SECURE:
+            raise ValueError("AUTH_COOKIE_SAMESITE=none kullanılırsa AUTH_COOKIE_SECURE=true olmalıdır.")
+
+        if not self.AUTH_ACCESS_COOKIE_NAME.strip():
+            raise ValueError("AUTH_ACCESS_COOKIE_NAME boş olamaz.")
+        if not self.AUTH_REFRESH_COOKIE_NAME.strip():
+            raise ValueError("AUTH_REFRESH_COOKIE_NAME boş olamaz.")
+        if not self.AUTH_COOKIE_PATH.startswith("/"):
+            raise ValueError("AUTH_COOKIE_PATH '/' ile başlamalıdır.")
+        if self.AUTH_COOKIE_PATH != "/" and self.AUTH_COOKIE_PATH.endswith("/"):
+            self.AUTH_COOKIE_PATH = self.AUTH_COOKIE_PATH.rstrip("/")
 
         if self.is_production:
             if self.DEBUG:
                 raise ValueError("Production ortamında DEBUG=true olmamalıdır.")
-            if not self.COOKIE_SECURE:
-                raise ValueError("Production ortamında COOKIE_SECURE=true olmalıdır.")
+            if not self.AUTH_COOKIE_SECURE:
+                raise ValueError("Production ortamında AUTH_COOKIE_SECURE=true olmalıdır.")
         return self
 
 

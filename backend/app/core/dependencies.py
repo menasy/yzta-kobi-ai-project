@@ -8,11 +8,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated
 
-from fastapi import Depends
-from fastapi.security import APIKeyCookie
+from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
+from app.core.cookie import read_access_token
 from app.core.exceptions import ForbiddenError, UnauthorizedError
 from app.core.logger import get_logger
 from app.core.security import decode_access_token
@@ -30,13 +30,6 @@ if TYPE_CHECKING:
     from app.services.order_service import OrderService
     from app.services.product_service import ProductService
 
-# ── Security Scheme ──────────────────────────────────────
-
-# APIKeyCookie auto_error=False olarak ayarlandı.
-# Token yoksa veya geçersizse kendi hata mesajımızı döneriz.
-_cookie_scheme = APIKeyCookie(name="access_token", auto_error=False)
-
-
 # ── Type Aliases ─────────────────────────────────────────
 
 DBSession = Annotated[AsyncSession, Depends(get_db_session)]
@@ -47,10 +40,7 @@ CurrentSettings = Annotated[Settings, Depends(get_settings)]
 
 
 async def get_current_user(
-    token: Annotated[
-        str | None,
-        Depends(_cookie_scheme),
-    ],
+    request: Request,
     db: DBSession,
     settings: CurrentSettings,
 ) -> User:
@@ -67,6 +57,8 @@ async def get_current_user(
     Kullanım:
         current_user: User = Depends(get_current_user)
     """
+    token = read_access_token(request, settings)
+
     if not token:
         raise UnauthorizedError(message="Yetki belgesi bulunamadı (Cookie eksik).")
 

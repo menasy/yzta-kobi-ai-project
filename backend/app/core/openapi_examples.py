@@ -85,7 +85,8 @@ REGISTER_REQUEST_EXAMPLE = {"email": "user@kobi.ai", "password": "StrongPass123!
 COOKIE_AUTH_DESCRIPTION = (
     "Kimlik doğrulama HttpOnly cookie tabanlıdır. "
     "Token değerleri response body içinde dönmez. "
-    "Login/refresh sonrası access_token ve refresh_token cookie olarak set edilir."
+    "Login/refresh sonrası access_token ve refresh_token cookie olarak set edilir. "
+    "Frontend isteklerinde credentials/include veya withCredentials=true kullanılmalıdır."
 )
 
 # ── Ürün Örnekleri ─────────────────────────────────────

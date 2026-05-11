@@ -21,7 +21,7 @@ from app.core.logger import get_logger, setup_logging
 from app.core import openapi_examples
 from app.core.response_builder import success_response
 from app.core.responses import ApiResponse
-from app.db.session import close_db_connections
+from app.db.session import close_db_connections, ensure_schema
 
 
 
@@ -54,6 +54,7 @@ async def lifespan(app: FastAPI):
             "environment": settings.ENVIRONMENT,
         },
     )
+    await ensure_schema()
     yield
     await close_db_connections()
     logger.info("Uygulama kapatıldı.")

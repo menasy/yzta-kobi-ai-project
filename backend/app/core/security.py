@@ -160,3 +160,31 @@ def decode_refresh_token(token: str) -> dict[str, Any]:
     if payload.get("type") != "refresh":
         raise UnauthorizedError(message="Geçersiz token tipi.")
     return payload
+
+
+def get_token_remaining_seconds(
+    payload: dict[str, Any],
+    *,
+    now: datetime | None = None,
+) -> int:
+    """
+    Decode edilmiş token payload'ından kalan yaşam süresini saniye cinsinden hesaplar.
+    """
+    exp = payload.get("exp")
+    if exp is None:
+        raise UnauthorizedError(message="Token payload geçersiz.")
+
+    current_time = now or datetime.now(tz=timezone.utc)
+
+    if isinstance(exp, datetime):
+        expires_at = exp.astimezone(timezone.utc)
+    elif isinstance(exp, (int, float)):
+        expires_at = datetime.fromtimestamp(exp, tz=timezone.utc)
+    else:
+        raise UnauthorizedError(message="Token payload geçersiz.")
+
+    remaining_seconds = int((expires_at - current_time).total_seconds())
+    if remaining_seconds <= 0:
+        raise UnauthorizedError(message="Token geçersiz veya süresi dolmuş.")
+
+    return remaining_seconds

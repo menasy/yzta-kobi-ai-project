@@ -2,12 +2,14 @@
 # Kimlik doğrulama endpoint'leri.
 # Cookie-based JWT auth kullanır; token body'de dönmez.
 
-from typing import Annotated
-
-from fastapi import APIRouter, Cookie, Depends
+from fastapi import APIRouter, Depends, Request
 
 from app.core import openapi_examples
-from app.core.cookie import clear_auth_cookies, set_auth_cookies
+from app.core.cookie import (
+    clear_auth_cookies,
+    read_refresh_token,
+    set_auth_cookies,
+)
 from app.core.dependencies import CurrentUser, get_auth_service
 from app.core.exceptions import UnauthorizedError
 from app.core.response_builder import success_response
@@ -101,13 +103,20 @@ async def login(
     payload: LoginRequest,
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    access_token, refresh_token = await auth_service.login(payload)
+    tokens = await auth_service.login(payload)
 
     response = success_response(
         data=None,
         message="Giriş başarılı.",
     )
-    set_auth_cookies(response, access_token, refresh_token)
+    clear_auth_cookies(response)
+    set_auth_cookies(
+        response,
+        tokens.access_token,
+        tokens.refresh_token,
+        access_max_age=tokens.access_max_age,
+        refresh_max_age=tokens.refresh_max_age,
+    )
     return response
 
 
@@ -139,19 +148,27 @@ async def login(
     },
 )
 async def refresh(
-    refresh_token: Annotated[str | None, Cookie()] = None,
+    request: Request,
     auth_service: AuthService = Depends(get_auth_service),
 ):
+    refresh_token = read_refresh_token(request)
     if not refresh_token:
         raise UnauthorizedError(message="Refresh token bulunamadı.")
 
-    new_access, new_refresh = await auth_service.refresh_token(refresh_token)
+    tokens = await auth_service.refresh_token(refresh_token)
 
     response = success_response(
         data=None,
         message="Token başarıyla yenilendi.",
     )
-    set_auth_cookies(response, new_access, new_refresh)
+    clear_auth_cookies(response)
+    set_auth_cookies(
+        response,
+        tokens.access_token,
+        tokens.refresh_token,
+        access_max_age=tokens.access_max_age,
+        refresh_max_age=tokens.refresh_max_age,
+    )
     return response
 
 

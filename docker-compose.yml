@@ -24,9 +24,9 @@ services:
     image: postgres:16-alpine
     container_name: kobi_db
     environment:
-      POSTGRES_DB: kobidb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: kobi_db
+      POSTGRES_USER: kobi_user
+      POSTGRES_PASSWORD: kobi_pass
     ports:
       - "5433:5432"
     healthcheck:
@@ -44,16 +44,6 @@ services:
       - "6380:6379"
     networks:
       - kobi_network
-
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    container_name: kobi_rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    networks:
-      - kobi_network
-
 networks:
   kobi_network:
     driver: bridge

@@ -29,7 +29,10 @@ Tüm endpoint'ler standart bir sarmalayıcı (envelope) formatında yanıt döne
 Sistem **Cookie-based JWT** kullanır.
 - **Tokenlar**: `access_token` ve `refresh_token` HttpOnly cookie olarak set edilir.
 - **Frontend**: İsteklerde `withCredentials: true` veya `credentials: "include"` mutlaka kullanılmalıdır.
+- **CORS**: Backend `allow_credentials=True` kullanır; bu nedenle izinli origin listesi explicit tutulmalı, wildcard kullanılmamalıdır.
+- **Local geliştirme notu**: Cookie tabanlı auth için tek origin kullanın. `localhost` ve `127.0.0.1` aynı akışta karıştırılmamalıdır.
 - **Refresh**: Access token süresi dolduğunda `/api/auth/refresh` otomatik olarak veya manuel olarak çağrılabilir.
+- **Response body**: Login, refresh ve logout token döndürmez; `data` alanı `null` gelir.
 
 ---
 
@@ -68,7 +71,7 @@ Sistem **Cookie-based JWT** kullanır.
 - **Response Data**: `null` (Tokenlar HttpOnly cookie olarak set edilir).
 
 ### POST `/api/auth/refresh`
-- **Açıklama**: Mevcut `refresh_token` cookie'sini kullanarak yeni access token set eder.
+- **Açıklama**: Mevcut `refresh_token` cookie'sini kullanarak yeni access token set eder ve canonical auth cookie'lerini yeniden yazar.
 - **Request Body**: Yok.
 - **Response Data**: `null`.
 

@@ -4,6 +4,7 @@
 # HTTPException fırlatmaz — custom exception sınıfları kullanılır.
 # Password/hash bilgisi loglanmaz ve response'a eklenmez.
 
+from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from app.core.config import Settings
@@ -13,6 +14,7 @@ from app.core.security import (
     create_access_token,
     create_refresh_token,
     decode_refresh_token,
+    get_token_remaining_seconds,
     hash_password,
     verify_password,
 )
@@ -21,6 +23,16 @@ from app.repositories.user_repository import UserRepository
 from app.schemas.auth import LoginRequest, UserCreate, UserResponse
 
 logger = get_logger(__name__)
+
+
+@dataclass(frozen=True)
+class AuthTokens:
+    """Cookie katmanına yazılacak auth token seti."""
+
+    access_token: str
+    refresh_token: str
+    access_max_age: int
+    refresh_max_age: int
 
 
 class AuthService:
@@ -80,7 +92,7 @@ class AuthService:
 
         return UserResponse.model_validate(user)
 
-    async def login(self, data: LoginRequest) -> tuple[str, str]:
+    async def login(self, data: LoginRequest) -> AuthTokens:
         """
         Kullanıcı girişi yapar ve JWT token'ları üretir.
 
@@ -88,11 +100,11 @@ class AuthService:
             - Email ile kullanıcı bulunamazsa → UnauthorizedError
             - Şifre yanlışsa → UnauthorizedError
             - Kullanıcı aktif değilse → ForbiddenError
-            - Başarılıysa (access_token, refresh_token) döner
+            - Başarılıysa auth cookie token seti döner
             - last_login_at güncellenir
 
         Returns:
-            tuple[str, str]: (access_token, refresh_token)
+            AuthTokens: Cookie'ye yazılacak access/refresh token seti
         """
         # Kullanıcıyı bul
         user = await self._user_repo.get_by_email(data.email)
@@ -130,14 +142,21 @@ class AuthService:
             extra={"user_id": user.id, "role": user.role},
         )
 
-        return access_token, refresh_token
+        return AuthTokens(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            access_max_age=self._settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            refresh_max_age=self._settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,
+        )
 
-    async def refresh_token(self, refresh_token: str) -> tuple[str, str]:
+    async def refresh_token(self, refresh_token: str) -> AuthTokens:
         """
-        Mevcut refresh_token'ı kullanarak yeni token'lar üretir.
+        Mevcut refresh_token'ı kullanarak yeni access token üretir.
+        Stateful rotation olmadığı için refresh token aynı kalır; böylece
+        paralel multi-tab refresh isteklerinde sistem deterministic davranır.
 
         Returns:
-            tuple[str, str]: (new_access_token, new_refresh_token)
+            AuthTokens: Cookie'ye yazılacak access/refresh token seti
         """
         payload = decode_refresh_token(refresh_token)
         user_id_str = payload.get("sub")
@@ -157,16 +176,19 @@ class AuthService:
             user_id=user.id,
             role=user.role,
         )
-        new_refresh_token = create_refresh_token(
-            user_id=user.id,
-        )
+        refresh_max_age = get_token_remaining_seconds(payload)
 
         logger.info(
             "Token yenilendi.",
             extra={"user_id": user.id, "role": user.role},
         )
 
-        return new_access_token, new_refresh_token
+        return AuthTokens(
+            access_token=new_access_token,
+            refresh_token=refresh_token,
+            access_max_age=self._settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            refresh_max_age=refresh_max_age,
+        )
 
     def get_profile(self, user: User) -> UserResponse:
         """

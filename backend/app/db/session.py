@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import (
 
 from app.core.config import get_settings
 from app.core.logger import get_logger
+from app.db.base import Base
 
 logger = get_logger(__name__)
 
@@ -99,3 +100,20 @@ async def close_db_connections() -> None:
         logger.info("Veritabanı bağlantı havuzu kapatıldı.")
         _engine = None
         _session_factory = None
+
+
+async def ensure_schema() -> None:
+    """
+    Development ortaminda tablo eksikligiyle baslangicta patlamayi onler.
+    Production ortaminda calistirilmaz.
+    """
+    settings = get_settings()
+    if settings.is_production:
+        return
+
+    # Base.metadata'nin tum modelleri gormesi icin import gerekiyor.
+    from app import models  # noqa: F401
+
+    engine = _get_engine()
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

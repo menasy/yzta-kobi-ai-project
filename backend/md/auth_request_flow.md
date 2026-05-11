@@ -56,7 +56,7 @@ Bu doküman, backend içinde kayıt (register), giriş (login), yetkilendirme (a
 3. Kullanıcı bulunamaz veya şifre yanlışsa `UnauthorizedError (401)` döner.
 4. Kullanıcı pasifse `ForbiddenError (403)` döner.
 5. Başarılıysa `access_token` ve `refresh_token` üretilir.
-6. **Token'lar Set-Cookie header'ı ile HttpOnly cookie olarak set edilir.**
+6. Response önce mevcut auth cookie varyantlarını temizler, ardından **token'lar Set-Cookie header'ı ile HttpOnly cookie olarak canonical cookie adı/path/domain ayarlarıyla set edilir.**
 7. Response body'de token bilgisi yer almaz.
 
 **Response (örnek):**
@@ -65,12 +65,7 @@ Bu doküman, backend içinde kayıt (register), giriş (login), yetkilendirme (a
   "statusCode": 200,
   "key": "SUCCESS",
   "message": "Giriş başarılı.",
-  "data": {
-    "user": {
-      "email": "user@example.com",
-      "role": "admin"
-    }
-  },
+  "data": null,
   "errors": null
 }
 ```
@@ -83,10 +78,11 @@ Bu doküman, backend içinde kayıt (register), giriş (login), yetkilendirme (a
 - Login sonrası token'lar **HttpOnly cookie** içine yazılır.
 - Frontend (Browser), sonraki tüm isteklerde bu cookie'leri otomatik olarak gönderir.
 - Frontend tarafında `credentials: "include"` (veya Axios `withCredentials: true`) kullanılmalıdır.
+- Local geliştirmede `localhost` ve `127.0.0.1` aynı auth akışında karıştırılmamalıdır.
 - `Authorization: Bearer` header'ı **kullanılmaz**.
 
 **Doğrulama adımları (get_current_user):**
-1. `request.cookies` üzerinden `access_token` okunur. Yoksa 401.
+1. Merkezi cookie helper canonical `access_token` cookie'sini okur. Yoksa 401.
 2. JWT decode edilir (`SECRET_KEY` + `JWT_ALGORITHM`).
 3. Token payload'ında `sub` (user_id) olmalıdır.
 4. Kullanıcı DB'den bulunur, yoksa 401.
@@ -103,11 +99,12 @@ Bu doküman, backend içinde kayıt (register), giriş (login), yetkilendirme (a
 
 **Token süreleri:**
 - Access Token: `ACCESS_TOKEN_EXPIRE_MINUTES` (örn. 24 saat)
-- Refresh Token: `REFRESH_TOKEN_EXPIRE_DAYS` (örn. 7 gün)
+- Refresh Token: `REFRESH_TOKEN_EXPIRE_MINUTES` (örn. 7 gün)
 
 **Refresh Akışı:**
 - Access token süresi dolduğunda `/api/auth/refresh` endpoint'i çağrılır.
-- Backend `refresh_token` cookie'sini doğrular ve yeni access/refresh cookie'lerini set eder.
+- Backend `refresh_token` cookie'sini doğrular, legacy cookie varyantlarını temizler ve canonical auth cookie'lerini yeniden set eder.
+- Mevcut mimaride stateful refresh session-store yoktur; bu nedenle refresh token revoke/rotation yapılmaz. Refresh endpoint yeni access token üretir, mevcut refresh token'ı kalan ömrüyle yeniden yazar. Bu sayede multi-tab paralel refresh istekleri deterministic kalır.
 
 ## 6) Logout (Çıkış) Akışı
 
@@ -115,7 +112,7 @@ Bu doküman, backend içinde kayıt (register), giriş (login), yetkilendirme (a
 
 **İş adımları:**
 1. `access_token` ve `refresh_token` cookie'leri temizlenir (expires=0).
-2. Mevcut token'lar invalidate edilir.
+2. Canonical path/domain yanında bilinen legacy path/domain varyantları da temizlenmeye çalışılır.
 
 ## 7) Özet: Neden HttpOnly Cookie?
 
