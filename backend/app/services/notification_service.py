@@ -1,4 +1,3 @@
-# services/notification_service.py
 # Notification iş mantığı katmanı.
 # DB kaydı NotificationRepository üzerinden yapılır.
 # Redis event publish, DB kaydı başarılı olduktan SONRA yapılır.
@@ -21,7 +20,7 @@ class NotificationService:
     def __init__(self, db: AsyncSession) -> None:
         self._repo = NotificationRepository(db)
 
-    # ── Notification Oluşturma ───────────────────────────
+    # ── 1. Stok Bildirimi Oluşturma ───────────────────────────
 
     async def create_low_stock_notification(
         self,
@@ -34,14 +33,6 @@ class NotificationService:
     ) -> Notification | None:
         """
         Kritik stok bildirimi oluşturur.
-
-        Akış:
-            1. Duplicate kontrolü — son 1 saat içinde aynı ürün için okunmamış bildirim varsa atla.
-            2. PostgreSQL'e Notification kaydı oluştur (flush ile kalıcı hale getir).
-            3. Redis Pub/Sub ile canlı notification event yayınla.
-
-        Returns:
-            Oluşturulan Notification veya duplicate durumunda None.
         """
         # Duplicate kontrolü
         has_recent = await self._repo.has_recent_unread_for_product(product_id)
@@ -72,64 +63,108 @@ class NotificationService:
             },
         }
 
-        # 1. Önce DB'ye kaydet (flush → ID alınır, commit session dependency'de)
+        # DB'ye kaydet
+        notification = await self._repo.create_notification(notification_data)
+
+        # Redis event yayınla
+        await self._publish_event(notification, notification_data["payload"])
+
+        return notification
+
+    # ── 2. Kargo Gecikme Bildirimi Oluşturma ───────────────────
+
+    async def create_shipment_delay_notification(
+        self,
+        *,
+        shipment_id: int,
+        order_number: str,
+        tracking_number: str,
+        carrier: str,
+        new_estimated_date: str,
+        delay_reason: str = "Hava koşulları veya operasyonel yoğunluk",
+    ) -> Notification | None:
+        """
+        Kargo gecikme bildirimi oluşturur.
+        
+        Akış:
+            1. Duplicate kontrolü (Son 1 saatte aynı kargo için bildirim atıldıysa atla).
+            2. DB Kaydı (SHIPMENT_DELAY tipiyle).
+            3. Redis Event (Frontend anlık uyarı için).
+        """
+        # Duplicate kontrolü (Repository'de bu metodun olduğunu varsayıyoruz)
+        has_recent = await self._repo.has_recent_unread_for_shipment(shipment_id)
+        if has_recent:
+            logger.info(
+                "Duplicate kargo gecikme bildirimi atlandı.",
+                extra={"shipment_id": shipment_id, "tracking_number": tracking_number},
+            )
+            return None
+
+        notification_data = {
+            "type": "SHIPMENT_DELAY",
+            "title": f"Kargo Gecikmesi: {order_number}",
+            "message": (
+                f"{tracking_number} takip numaralı kargonuzda gecikme tespit edildi. "
+                f"Yeni tahmini teslimat: {new_estimated_date}. Sebep: {delay_reason}"
+            ),
+            "severity": "warning",
+            "payload": {
+                "shipment_id": shipment_id,
+                "order_number": order_number,
+                "tracking_number": tracking_number,
+                "carrier": carrier,
+                "new_estimated_date": new_estimated_date,
+                "delay_reason": delay_reason
+            },
+        }
+
+        # DB'ye kaydet
         notification = await self._repo.create_notification(notification_data)
 
         logger.info(
-            "Low stock notification oluşturuldu.",
+            "Kargo gecikme bildirimi oluşturuldu.",
             extra={
                 "notification_id": notification.id,
-                "product_id": product_id,
-                "sku": sku,
-                "quantity": current_quantity,
+                "shipment_id": shipment_id,
+                "tracking_number": tracking_number,
             },
         )
 
-        # 2. DB kaydı başarılı olduktan SONRA Redis event yayınla
+        # Redis event yayınla
+        await self._publish_event(notification, notification_data["payload"])
+
+        return notification
+
+    # ── Yardımcı Metotlar ────────────────────────────────────────
+
+    async def _publish_event(self, notification: Notification, payload: dict):
+        """Redis üzerinden anlık event yayınlar."""
         event_payload = {
             "id": notification.id,
             "type": notification.type,
             "title": notification.title,
             "message": notification.message,
             "severity": notification.severity,
-            "payload": notification_data["payload"],
+            "payload": payload,
             "created_at": str(notification.created_at),
         }
         await publish_notification_event(event_payload)
 
-        return notification
-
-    # ── Listeleme ────────────────────────────────────────
-
-    async def list_notifications(
-        self,
-        *,
-        skip: int = 0,
-        limit: int = 50,
-    ) -> list[Notification]:
+    async def list_notifications(self, *, skip: int = 0, limit: int = 50):
         """Tüm bildirimleri sayfalı listeler."""
         return await self._repo.list_notifications(skip=skip, limit=limit)
 
-    async def list_unread(
-        self,
-        *,
-        skip: int = 0,
-        limit: int = 50,
-    ) -> list[Notification]:
+    async def list_unread(self, *, skip: int = 0, limit: int = 50):
         """Okunmamış bildirimleri sayfalı listeler."""
         return await self._repo.list_unread_notifications(skip=skip, limit=limit)
-
-    # ── Okundu İşaretleme ────────────────────────────────
 
     async def mark_read(self, notification_id: int) -> Notification:
         """Tek bildirimi okundu olarak işaretler."""
         notification = await self._repo.mark_as_read(notification_id)
         if notification is None:
-            raise NotFoundError(
-                message=f"{notification_id} numaralı bildirim bulunamadı."
-            )
+            raise NotFoundError(message=f"{notification_id} numaralı bildirim bulunamadı.")
         return notification
 
     async def mark_all_read(self) -> int:
-        """Tüm okunmamış bildirimleri okundu olarak işaretler. Güncellenen sayıyı döndürür."""
+        """Tüm okunmamış bildirimleri okundu olarak işaretler."""
         return await self._repo.mark_all_as_read()

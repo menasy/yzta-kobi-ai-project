@@ -1,4 +1,3 @@
-# repositories/notification_repository.py
 # Notification tablosuna özel DB sorguları.
 # Sadece veri erişimi — iş mantığı yok.
 
@@ -121,6 +120,38 @@ class NotificationRepository(BaseRepository[Notification]):
                         SqlInteger,
                     )
                     == product_id,
+                )
+            )
+            .limit(1)
+        )
+        return result.scalar_one_or_none() is not None
+    
+
+    async def has_recent_unread_for_shipment(
+        self,
+        shipment_id: int,
+        *,
+        notification_type: str = "SHIPMENT_DELAY",
+        hours: int = 1,
+    ) -> bool:
+        """
+        Belirli bir kargo için son N saat içinde okunmamış bildirim var mı kontrol eder.
+        
+        payload JSONB alanındaki shipment_id değerine göre kontrol yapar.
+        """
+        since = datetime.now(tz=timezone.utc) - timedelta(hours=hours)
+        result = await self.session.execute(
+            select(Notification.id)
+            .where(
+                and_(
+                    Notification.type == notification_type,
+                    Notification.is_read.is_(False),
+                    Notification.created_at >= since,
+                    cast(
+                        Notification.payload["shipment_id"].as_string(),
+                        SqlInteger,
+                    )
+                    == shipment_id,
                 )
             )
             .limit(1)
