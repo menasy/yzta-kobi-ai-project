@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@repo/core";
-import { AppHeaderProps, NavItem } from "@repo/ui-contracts";
+import { AppHeaderProps } from "@repo/ui-contracts";
 import { 
   Button, 
   Avatar, 
@@ -24,22 +24,6 @@ import {
 } from "@repo/ui";
 import { Menu } from "lucide-react";
 
-const PUBLIC_NAV_ITEMS: NavItem[] = [
-  { label: "Ana Sayfa", href: "/" },
-  { label: "Ürünler", href: "/products" },
-  { label: "AI Chat", href: "/chat" },
-  { label: "Özellikler", href: "/features" },
-  { label: "Kargo", href: "/shipping" },
-];
-
-const AUTH_NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Ürünler", href: "/products" },
-  { label: "Siparişler", href: "/orders" },
-  { label: "Envanter", href: "/inventory" },
-  { label: "Kargo", href: "/shipments" },
-];
-
 /**
  * AppHeader — Global, Auth-Aware Navigation
  * Framer Motion ile optimize edilmiş, yüksek performanslı animasyonlu header.
@@ -48,12 +32,11 @@ export function AppHeader({
   isAuthenticated,
   user,
   activePathname,
+  navItems,
+  logoHref,
   onLogout,
 }: AppHeaderProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  
-  const navItems = isAuthenticated ? AUTH_NAV_ITEMS : PUBLIC_NAV_ITEMS;
-  const logoHref = isAuthenticated ? "/dashboard" : "/";
 
   // SVG animasyon değerleri (PathLength 100 üzerinden)
   const getDashArray = (index: number | null) => {

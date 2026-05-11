@@ -6,6 +6,7 @@ import {
   useRegister,
   type RegisterFormValues,
 } from "@repo/domain/auth";
+import { useApiMessageActions } from "@repo/state";
 import {
   Button,
   Form,
@@ -22,9 +23,18 @@ import { useForm } from "react-hook-form";
 
 export function RegisterForm() {
   const router = useRouter();
+  const { showApiError, showApiSuccess } = useApiMessageActions();
   const { error, isPending, register } = useRegister({
-    onSuccess: () => {
-      router.push("/auth/login");
+    onSuccess: (response) => {
+      showApiSuccess(response, "Kayıt Başarılı");
+      router.replace("/auth/login");
+    },
+    onError: (registerError) => {
+      showApiError(
+        registerError,
+        "Kayıt Başarısız",
+        "Kayıt işlemi sırasında bir hata oluştu.",
+      );
     },
   });
 
@@ -43,7 +53,6 @@ export function RegisterForm() {
       email: data.email,
       password: data.password,
       full_name: data.fullName,
-      role: "admin",
     });
   }
 
@@ -133,9 +142,9 @@ export function RegisterForm() {
         {error ? (
           <p className="text-sm font-medium text-destructive">{error.message}</p>
         ) : null}
-        <Button 
-          type="submit" 
-          className="h-12 w-full text-base font-bold shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.99]" 
+        <Button
+          type="submit"
+          className="h-12 w-full text-base font-bold shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.99]"
           disabled={isPending}
         >
           {isPending ? (

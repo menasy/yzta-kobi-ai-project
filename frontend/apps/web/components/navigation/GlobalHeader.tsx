@@ -1,9 +1,14 @@
 "use client";
 
-import { useLogout } from "@repo/domain/auth";
+import {
+  getDefaultPathForRole,
+  getPrimaryNavigationItems,
+  useLogout,
+} from "@repo/domain/auth";
 import {
   useAuthActions,
   useIsAuthenticated,
+  useIsSessionLoading,
   useUser,
 } from "@repo/state/stores/auth";
 import { AppHeader } from "@repo/ui-web";
@@ -13,6 +18,7 @@ export function GlobalHeader() {
   const pathname = usePathname();
   const user = useUser();
   const isAuthenticated = useIsAuthenticated();
+  const isSessionLoading = useIsSessionLoading();
   const { clearAuth } = useAuthActions();
   const { logout } = useLogout({
     onSuccess: () => {
@@ -26,10 +32,22 @@ export function GlobalHeader() {
   };
 
   const displayName = user?.full_name?.trim() || user?.email || "";
+  const userRole = user?.role ?? null;
+  const navItems = isSessionLoading
+    ? []
+    : getPrimaryNavigationItems({
+        isAuthenticated,
+        role: userRole,
+      });
+  const logoHref = isAuthenticated
+    ? getDefaultPathForRole(userRole)
+    : "/";
 
   return (
     <AppHeader
       isAuthenticated={isAuthenticated}
+      navItems={navItems}
+      logoHref={logoHref}
       user={
         user
           ? {

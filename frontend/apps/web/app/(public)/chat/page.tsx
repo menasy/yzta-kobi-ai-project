@@ -1,6 +1,5 @@
-import type { Metadata } from "next";
-
 import { Logo } from "@repo/ui";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "AI Asistan | KOBİ AI",

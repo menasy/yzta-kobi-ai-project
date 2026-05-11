@@ -1,10 +1,11 @@
+import { MessageContainer } from "@repo/ui-web";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Toaster } from "sonner";
 
 import { Providers } from "@/components/providers";
-import { MessageContainer } from "@repo/ui-web";
 
 import "./globals.css";
 
@@ -70,11 +71,14 @@ export const viewport = {
   themeColor: "#0F766E",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
+  const hasAuthCookie = cookieStore.has("access_token");
+
   return (
     <html
       lang="tr"
@@ -82,7 +86,13 @@ export default function RootLayout({
       className={`${GeistSans.variable} ${GeistMono.variable}`}
     >
       <body className="min-h-screen bg-background font-sans antialiased">
-        <Providers>
+        <Providers
+          hasAuthCookie={hasAuthCookie}
+          authInitialState={{
+            isAuthenticated: hasAuthCookie,
+            isSessionLoading: hasAuthCookie,
+          }}
+        >
           {children}
           <MessageContainer position="top-right" />
         </Providers>

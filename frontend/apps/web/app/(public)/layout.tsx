@@ -1,4 +1,5 @@
 import { Logo } from "@repo/ui";
+
 import { GlobalHeader } from "@/components/navigation/GlobalHeader";
 
 // Minimal public layout — header ve footer bileşenleri sonraki adımda eklenecek

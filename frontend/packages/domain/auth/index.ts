@@ -21,6 +21,30 @@ export { loginSchema, registerSchema } from "./schemas/auth.schema";
 
 // API (Server Components için)
 export { getMe, login, logout, refresh, register } from "./api/auth.api";
+export {
+  canAccessPath,
+  getAdminNavigationItems,
+  getDefaultPathForRole,
+  getPrimaryNavigationItems,
+  getRouteAccessPolicy,
+  isAuthPath,
+  isKnownAuthRole,
+  isProtectedPath,
+  KNOWN_AUTH_ROLES,
+  resolveKnownAuthRole,
+  type AccessNavItem,
+  type KnownAuthRole,
+} from "./access/policy";
+export {
+  DEFAULT_AUTH_REDIRECT_PATH,
+  resolveAuthRedirectPath,
+} from "./utils/redirect";
+export {
+  decodeJwtClaims,
+  extractAuthRoleFromClaims,
+  extractAuthRoleFromToken,
+  type AuthTokenClaims,
+} from "./utils/jwt";
 
 // Hooks (Client Components için)
 export { useLogin } from "./hooks/useLogin";

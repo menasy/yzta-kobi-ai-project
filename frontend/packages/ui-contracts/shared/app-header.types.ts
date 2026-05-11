@@ -5,6 +5,7 @@
 export interface NavItem {
   label: string;
   href: string;
+  icon?: string;
 }
 
 export interface AppHeaderUser {
@@ -29,6 +30,16 @@ export interface AppHeaderProps {
    * Şu anki sayfa yolu (aktif menü elemanını belirlemek için)
    */
   activePathname?: string;
+
+  /**
+   * Görünür birincil navigasyon öğeleri
+   */
+  navItems: NavItem[];
+
+  /**
+   * Logonun yönleneceği hedef
+   */
+  logoHref: string;
   
   /**
    * Çıkış yap butonuna tıklandığında çalışacak fonksiyon

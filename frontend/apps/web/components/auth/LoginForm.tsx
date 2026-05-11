@@ -1,7 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, useLogin, type LoginFormValues } from "@repo/domain/auth";
+import {
+  loginSchema,
+  resolveAuthRedirectPath,
+  useLogin,
+  type LoginFormValues,
+} from "@repo/domain/auth";
+import { useApiMessageActions } from "@repo/state";
 import { useAuthActions } from "@repo/state/stores/auth";
 import {
   Button,
@@ -14,23 +20,26 @@ import {
   Input,
 } from "@repo/ui";
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 
 export function LoginForm() {
-  const router = useRouter();
-  const { clearAuth, setAuth, setSessionLoading } = useAuthActions();
+  const searchParams = useSearchParams();
+  const { clearAuth, setSessionLoading } = useAuthActions();
+  const { showApiError, showApiSuccess } = useApiMessageActions();
   const { error, isPending, login } = useLogin({
     onSuccess: (response) => {
-      if (response.data) {
-        setAuth(response.data);
-      } else {
-        clearAuth();
-      }
-
-      router.push("/dashboard");
+      showApiSuccess(response, "Giriş Başarılı");
+      const redirectPath = resolveAuthRedirectPath(searchParams.get("from"));
+      window.location.href = redirectPath;
     },
-    onError: () => {
+    onError: (loginError) => {
+      showApiError(
+        loginError,
+        "Giriş Başarısız",
+        "Giriş işlemi sırasında bir hata oluştu.",
+      );
       clearAuth();
     },
     onSettled: () => {
@@ -88,12 +97,12 @@ export function LoginForm() {
             <FormItem className="space-y-3">
               <div className="flex items-center justify-between">
                 <FormLabel className="text-sm font-bold text-foreground/80">Şifre</FormLabel>
-                <a
+                <Link
                   href="/auth/forgot-password"
                   className="text-xs font-bold text-primary hover:underline"
                 >
                   Şifremi Unuttum
-                </a>
+                </Link>
               </div>
               <FormControl>
                 <Input
@@ -112,9 +121,9 @@ export function LoginForm() {
         {error ? (
           <p className="text-sm font-medium text-destructive">{error.message}</p>
         ) : null}
-        <Button 
-          type="submit" 
-          className="h-12 w-full text-base font-bold shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.99]" 
+        <Button
+          type="submit"
+          className="h-12 w-full text-base font-bold shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.99]"
           disabled={isPending}
         >
           {isPending ? (
