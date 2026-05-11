@@ -63,13 +63,16 @@ Backend, yapay zeka destekli bir operasyon merkezi sunar. Frontend bu merkezin i
 | Ekran | Kullanıcı | Rendering | Öncelik |
 |-------|-----------|-----------|---------|
 | Landing / Ana Sayfa | Herkese açık | SSR | P0 |
-| Chat (Müşteri Ajanı) | Müşteri | SSR shell + CSR | P0 |
+| Chat (AI Asistan) | Herkese açık | SSR shell + CSR | P0 |
+| Ürünler Listesi | Herkese açık | SSR | P0 |
+| Ürün Detayı | Herkese açık | SSR | P0 |
+| Siparişlerim (Müşteri) | Müşteri | SSR | P0 |
 | Admin Dashboard | Yönetici | SSR + polling | P0 |
-| Siparişler Listesi | Yönetici | SSR | P0 |
-| Sipariş Detayı | Yönetici | SSR | P0 |
-| Ürünler Listesi | Yönetici | SSR | P1 |
+| Siparişler (Yönetici) | Yönetici | SSR | P0 |
+| Ürün Yönetimi (Admin) | Yönetici | SSR | P1 |
 | Stok / Envanter | Yönetici | SSR + live alerts | P1 |
 | Kargo Takibi | Yönetici | SSR | P1 |
+| Bildirimler | Yönetici | SSR | P1 |
 | Login / Register | Auth | CSR | P0 |
 
 ---
@@ -206,88 +209,47 @@ kobi-agent/
 │   └── web/                                    # Next.js 15 — tek web uygulaması
 │       │
 │       ├── app/                                # App Router root
-│       │   │
 │       │   ├── layout.tsx                      # Root layout
-│       │   │                                   # HTML, body, font yükleme
-│       │   │                                   # ThemeProvider, QueryProvider
-│       │   │                                   # Toaster (Sonner)
+│       │   ├── globals.css                     # CSS değişkenleri
+│       │   ├── not-found.tsx                   # Global 404
+│       │   ├── error.tsx                       # Global error
 │       │   │
-│       │   ├── globals.css                     # CSS değişkenleri — tüm semantic tokenlar
-│       │   │                                   # :root (light) ve .dark override'ları
-│       │   │                                   # shadcn/ui token tanımları
-│       │   │                                   # KESİNLİKLE başka hiçbir yerde renk tanımlanmaz
-│       │   │
-│       │   ├── not-found.tsx                   # Global 404 sayfası
-│       │   ├── error.tsx                       # Global error boundary
-│       │   │
-│       │   ├── (public)/                       # Route group: auth gerektirmez
+│       │   ├── (public)/                       # Public/Storefront group
 │       │   │   ├── layout.tsx                  # Public layout: header + footer
-│       │   │   │
-│       │   │   ├── page.tsx                    # Landing page (SSR)
-│       │   │   │                               # Hero: AI asistan tanıtımı
-│       │   │   │                               # Feature cards: sipariş/stok/kargo
-│       │   │   │                               # CTA: Chat'e yönlendir
-│       │   │   │
-│       │   │   └── chat/
-│       │   │       └── page.tsx                # Müşteri chat arayüzü
-│       │   │                                   # SSR: ChatWindow shell + metadata
-│       │   │                                   # CSR: mesaj akışı, input
+│       │   │   ├── page.tsx                    # Landing page
+│       │   │   ├── chat/
+│       │   │   │   └── page.tsx                # AI Asistan (Public)
+│       │   │   └── products/
+│       │   │       ├── page.tsx                # Ürün listesi (Public)
+│       │   │       └── [id]/
+│       │   │           └── page.tsx            # Ürün detayı (Public)
 │       │   │
-│       │   ├── (admin)/                        # Route group: Auth korumalı (Cookie)
+│       │   ├── (admin)/                        # Admin/Protected group
 │       │   │   ├── layout.tsx                  # Admin layout
-│       │   │   │                               # Sol: AdminSidebar (collapsed/expanded)
-│       │   │   │                               # Üst: AdminHeader (breadcrumb, kullanıcı)
-│       │   │   │                               # İçerik: <main> slot
-│       │   │   │
 │       │   │   ├── dashboard/
-│       │   │   │   └── page.tsx                # Ana dashboard (SSR + 30sn polling)
-│       │   │   │                               # StatCard x4: sipariş, stok, kargo, gelir
-│       │   │   │                               # OrderChart: son 7 gün sipariş grafiği
-│       │   │   │                               # LowStockAlert listesi
-│       │   │   │                               # Bekleyen siparişler tablosu
-│       │   │   │
+│       │   │   │   ├── page.tsx                # Ana dashboard
+│       │   │   │   └── products/
+│       │   │   │       └── page.tsx            # Ürün yönetimi (Admin)
 │       │   │   ├── orders/
-│       │   │   │   ├── page.tsx                # Sipariş listesi (SSR)
-│       │   │   │   │                           # OrderTable (TanStack Table)
-│       │   │   │   │                           # Filtreler: durum, tarih (nuqs)
-│       │   │   │   │                           # Arama: müşteri adı, ID (debounce)
-│       │   │   │   │                           # Sayfalama: URL tabanlı
-│       │   │   │   │
-│       │   │   │   └── [id]/
-│       │   │   │       └── page.tsx            # Sipariş detayı (SSR)
-│       │   │   │                               # Sipariş bilgileri, kalemler
-│       │   │   │                               # Durum güncelleme (inline form)
-│       │   │   │                               # Kargo durumu
-│       │   │   │
-│       │   │   ├── products/
-│       │   │   │   ├── page.tsx                # Ürün listesi (SSR)
-│       │   │   │   │                           # ProductTable + stok durumu
-│       │   │   │   │                           # Ürün ekleme: Sheet/Dialog form
-│       │   │   │   │
-│       │   │   │   └── [id]/
-│       │   │   │       └── page.tsx            # Ürün detayı (SSR)
-│       │   │   │                               # Ürün bilgileri, stok geçmişi
-│       │   │   │
+│       │   │   │   ├── page.tsx                # Tüm siparişler (Admin)
+│       │   │   │   ├── [id]/
+│       │   │   │   │   └── page.tsx            # Sipariş detay yönetimi (Admin)
+│       │   │   │   └── my/
+│       │   │   │       └── page.tsx            # Siparişlerim (Customer)
 │       │   │   ├── inventory/
-│       │   │   │   └── page.tsx                # Stok yönetimi (SSR + live alerts)
-│       │   │   │                               # LowStockAlert banner (kritik ürünler)
-│       │   │   │                               # StockTable: ürün, miktar, eşik
-│       │   │   │                               # Stok güncelleme: inline edit
-│       │   │   │                               # TanStack Query polling: 60sn
-│       │   │   │
-│       │   │   └── shipments/
-│       │   │       └── page.tsx                # Kargo listesi (SSR)
-│       │   │                                   # ShipmentTable: tracking, durum, tahmini
-│       │   │                                   # Geciken kargolar: filtered view
-│       │   │                                   # Refresh button: durumu güncelle
+│       │   │   │   └── page.tsx                # Stok yönetimi
+│       │   │   ├── shipments/
+│       │   │   │   └── page.tsx                # Kargo yönetimi
+│       │   │   └── notifications/
+│       │   │       └── page.tsx            # Bildirim merkezi
 │       │   │
-│       │   └── auth/                           # Auth route group (no layout inheritance)
+│       │   └── auth/                           # Auth group
+│       │       ├── layout.tsx                  # Auth layout: header + footer
 │       │       ├── login/
-│       │       │   └── page.tsx                # Login formu (CSR)
-│       │       │                               # react-hook-form + zodResolver
-│       │       │                               # Credential hata yönetimi
+│       │       │   └── page.tsx                # Login formu
 │       │       └── register/
-│       │           └── page.tsx                # Register formu (CSR)
+│       │           └── page.tsx                # Register formu
+│       │
 │       │
 │       ├── components/                         # App-specific — paylaşılmaz
 │       │   ├── providers/

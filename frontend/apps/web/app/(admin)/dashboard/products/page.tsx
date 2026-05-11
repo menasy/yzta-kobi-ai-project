@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { ResponsiveContainer, ResponsiveSection } from "@repo/ui-web";
 
 export const metadata: Metadata = {
-  title: "Sevkiyatlar | KOBİ AI",
-  description: "Teslimat ve lojistik yönetimi",
+  title: "Ürün Yönetimi | KOBİ AI",
+  description: "Ürün listesi ve düzenleme",
 };
 
-export default function ShipmentsPage() {
+export default function ProductsPage() {
   return (
     <ResponsiveContainer>
       <ResponsiveSection className="flex min-h-[400px] items-center justify-center">

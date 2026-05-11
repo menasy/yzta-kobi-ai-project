@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@repo/core";
@@ -37,21 +37,57 @@ export function AppHeader({
   onLogout,
 }: AppHeaderProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const itemsRef = useRef<(HTMLAnchorElement | null)[]>([]);
+  const [layout, setLayout] = useState<{ centers: number[]; widths: number[]; w: number; h: number }>({
+    centers: [],
+    widths: [],
+    w: 45.95,
+    h: 4.05,
+  });
 
-  // SVG animasyon değerleri (PathLength 100 üzerinden)
-  const getDashArray = (index: number | null) => {
-    if (index === null || navItems.length === 0) return "0 0 10 40 10 40";
-    const w = 45.95;
-    const h = 4.05;
-    const dashLen = 8;
-    const p = (2 * index + 1) / (2 * navItems.length);
-    const topPos = p * w;
-    const bottomPos = (w + h) + (1 - p) * w;
-    const gap1 = Math.max(0, topPos - dashLen / 2);
-    const gap2 = Math.max(0, bottomPos - (topPos + dashLen / 2) - dashLen);
-    const gap3 = Math.max(0, 100 - (bottomPos + dashLen / 2));
-    return `0 ${gap1} ${dashLen} ${gap2} ${dashLen} ${gap3}`;
-  };
+  useEffect(() => {
+    const updateLayout = () => {
+      if (!containerRef.current) return;
+      const { offsetWidth: width, offsetHeight: height } = containerRef.current;
+      const total = 2 * (width + height);
+      const w = (width / total) * 100;
+      const h = (height / total) * 100;
+
+      const centers: number[] = [];
+      const widths: number[] = [];
+
+      itemsRef.current.forEach((item) => {
+        if (!item) {
+          centers.push(0);
+          widths.push(0);
+          return;
+        }
+        // Item center relative to container width (0 to 1)
+        centers.push((item.offsetLeft + item.offsetWidth / 2) / width);
+        // Item width relative to total perimeter (in 0-100 units)
+        widths.push((item.offsetWidth / total) * 100);
+      });
+
+      setLayout({ centers, widths, w, h });
+    };
+
+    updateLayout();
+    
+    // ResizeObserver for more robust tracking
+    const observer = new ResizeObserver(updateLayout);
+    if (containerRef.current) observer.observe(containerRef.current);
+    
+    window.addEventListener("resize", updateLayout);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateLayout);
+    };
+  }, [navItems]);
+
+  const activeIndex = navItems.findIndex((item) => item.href === activePathname);
+  const displayIndex = hoveredIndex !== null ? hoveredIndex : (activeIndex !== -1 ? activeIndex : null);
+  const currentItem = displayIndex !== null ? itemsRef.current[displayIndex] : null;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
@@ -112,13 +148,18 @@ export function AppHeader({
           </div>
         </div>
 
-        {/* Orta: Animated Navigation (Sadece Masaüstü) */}
         <nav className="hidden md:flex items-center justify-center flex-1 px-4 min-w-[300px]">
-          <div className="relative max-w-[500px] w-full h-[44px] bg-muted/30 rounded-xl border border-border/50 p-1 flex items-center justify-around">
+          <div 
+            ref={containerRef}
+            className="relative max-w-[500px] w-full h-[44px] bg-muted/30 rounded-xl border border-border/50 px-4 py-1 flex items-center justify-around"
+          >
             {navItems.length > 0 ? navItems.map((item, index) => (
               <Link
                 key={item.href}
                 href={item.href}
+                ref={(el) => {
+                  itemsRef.current[index] = el;
+                }}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 className={cn(
@@ -132,38 +173,47 @@ export function AppHeader({
               <span className="text-xs text-muted-foreground">Menü Yükleniyor...</span>
             )}
 
-            {/* SVG Outline Animation */}
-            <svg
-              className="absolute inset-0 pointer-events-none"
-              width="100%"
-              height="100%"
-              viewBox="0 0 500 44"
-              preserveAspectRatio="none"
-              overflow="visible"
-            >
-              <motion.rect
-                x="0"
-                y="0"
-                width="100%"
-                height="100%"
-                rx="12"
-                fill="transparent"
-                stroke="hsl(var(--primary))"
-                strokeWidth="2"
-                pathLength="100"
-                initial={false}
-                animate={{
-                  strokeDasharray: getDashArray(hoveredIndex),
-                  opacity: hoveredIndex !== null ? 1 : 0,
-                }}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 30,
-                  opacity: { duration: 0.2 }
-                }}
-              />
-            </svg>
+            {/* Premium Indicator System */}
+            {displayIndex !== null && currentItem && (
+              <>
+                {/* Background Capsule Highlight */}
+                <motion.div
+                  className="absolute bg-primary/5 rounded-lg z-0"
+                  initial={false}
+                  animate={{
+                    left: currentItem.offsetLeft,
+                    width: currentItem.offsetWidth,
+                    height: currentItem.offsetHeight,
+                    top: currentItem.offsetTop,
+                  }}
+                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                />
+
+                {/* Top Dash */}
+                <motion.div
+                  className="absolute top-0 h-[2px] bg-primary z-20 rounded-full"
+                  initial={false}
+                  animate={{
+                    left: currentItem.offsetLeft + 8,
+                    width: currentItem.offsetWidth - 16,
+                    opacity: 1,
+                  }}
+                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                />
+
+                {/* Bottom Dash */}
+                <motion.div
+                  className="absolute bottom-0 h-[2px] bg-primary z-20 rounded-full"
+                  initial={false}
+                  animate={{
+                    left: currentItem.offsetLeft + 8,
+                    width: currentItem.offsetWidth - 16,
+                    opacity: 1,
+                  }}
+                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                />
+              </>
+            )}
           </div>
         </nav>
 

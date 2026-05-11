@@ -19,17 +19,24 @@ interface RouteAccessPolicy {
   allowedRoles?: readonly KnownAuthRole[];
 }
 
+const CUSTOMER_ACCESS_ROLES = ["customer"] as const satisfies readonly KnownAuthRole[];
 const ADMIN_ACCESS_ROLES = ["admin", "operator"] as const satisfies readonly KnownAuthRole[];
+const AUTHENTICATED_ACCESS_ROLES = [
+  "admin",
+  "operator",
+  "customer",
+] as const satisfies readonly KnownAuthRole[];
 
+/**
+ * ROTA ERİŞİM POLİTİKALARI
+ * 
+ * Sıralama önemlidir: Daha spesifik rotalar (örn: /orders/my)
+ * daha genel rotalardan (örn: /orders) önce tanımlanmalıdır.
+ */
 const ROUTE_ACCESS_POLICIES = [
   {
     path: "/",
     matchMode: "exact",
-    kind: "public",
-  },
-  {
-    path: "/chat",
-    matchMode: "prefix",
     kind: "public",
   },
   {
@@ -42,6 +49,28 @@ const ROUTE_ACCESS_POLICIES = [
     matchMode: "exact",
     kind: "auth",
   },
+
+  // Public Storefront Routes
+  {
+    path: "/products",
+    matchMode: "prefix",
+    kind: "public",
+  },
+  {
+    path: "/chat",
+    matchMode: "prefix",
+    kind: "public",
+  },
+
+  // Customer Routes
+  {
+    path: "/orders/my",
+    matchMode: "prefix",
+    kind: "protected",
+    allowedRoles: CUSTOMER_ACCESS_ROLES,
+  },
+
+  // Admin / Operator Routes
   {
     path: "/dashboard",
     matchMode: "prefix",
@@ -50,12 +79,6 @@ const ROUTE_ACCESS_POLICIES = [
   },
   {
     path: "/orders",
-    matchMode: "prefix",
-    kind: "protected",
-    allowedRoles: ADMIN_ACCESS_ROLES,
-  },
-  {
-    path: "/products",
     matchMode: "prefix",
     kind: "protected",
     allowedRoles: ADMIN_ACCESS_ROLES,
@@ -72,24 +95,34 @@ const ROUTE_ACCESS_POLICIES = [
     kind: "protected",
     allowedRoles: ADMIN_ACCESS_ROLES,
   },
+  {
+    path: "/notifications",
+    matchMode: "prefix",
+    kind: "protected",
+    allowedRoles: ADMIN_ACCESS_ROLES,
+  },
 ] as const satisfies readonly RouteAccessPolicy[];
 
 const PUBLIC_NAV_ITEMS = [
   { label: "Ana Sayfa", href: "/" },
-  { label: "AI Chat", href: "/chat" },
+  { label: "Ürünler", href: "/products" },
+  { label: "Chat", href: "/chat" },
 ] as const satisfies readonly AccessNavItem[];
 
 const CUSTOMER_NAV_ITEMS = [
   { label: "Ana Sayfa", href: "/" },
-  { label: "AI Chat", href: "/chat" },
+  { label: "Ürünler", href: "/products" },
+  { label: "Chat", href: "/chat" },
+  { label: "Siparişlerim", href: "/orders/my" },
 ] as const satisfies readonly AccessNavItem[];
 
 const ADMIN_NAV_ITEMS = [
-  { label: "Dashboard", href: "/dashboard", icon: "📊" },
-  { label: "Ürünler", href: "/products", icon: "🏷️" },
-  { label: "Siparişler", href: "/orders", icon: "📦" },
-  { label: "Envanter", href: "/inventory", icon: "🗃️" },
-  { label: "Kargo", href: "/shipments", icon: "🚚" },
+  { label: "Dashboard", href: "/dashboard" },
+  { label: "Ürün Yönetimi", href: "/dashboard/products" },
+  { label: "Siparişler", href: "/orders" },
+  { label: "Envanter", href: "/inventory" },
+  { label: "Kargo", href: "/shipments" },
+  { label: "Bildirimler", href: "/notifications" },
 ] as const satisfies readonly AccessNavItem[];
 
 function normalizePathname(pathname: string): string {
@@ -117,7 +150,9 @@ function matchesRoutePolicy(
   );
 }
 
-export function isKnownAuthRole(role: string | null | undefined): role is KnownAuthRole {
+export function isKnownAuthRole(
+  role: string | null | undefined,
+): role is KnownAuthRole {
   return (
     typeof role === "string" &&
     (KNOWN_AUTH_ROLES as readonly string[]).includes(role)
@@ -132,8 +167,9 @@ export function resolveKnownAuthRole(
 
 export function getRouteAccessPolicy(pathname: string): RouteAccessPolicy | null {
   return (
-    ROUTE_ACCESS_POLICIES.find((policy) => matchesRoutePolicy(pathname, policy)) ??
-    null
+    ROUTE_ACCESS_POLICIES.find((policy) =>
+      matchesRoutePolicy(pathname, policy),
+    ) ?? null
   );
 }
 
@@ -170,14 +206,14 @@ export function getDefaultPathForRole(
   const knownRole = resolveKnownAuthRole(role);
 
   if (knownRole === "customer") {
-    return "/chat";
+    return "/products";
   }
 
   if (knownRole === "admin" || knownRole === "operator") {
     return "/dashboard";
   }
 
-  return "/auth/login";
+  return "/";
 }
 
 export function getPrimaryNavigationItems(options: {
@@ -199,7 +235,7 @@ export function getPrimaryNavigationItems(options: {
     return ADMIN_NAV_ITEMS.filter((item) => canAccessPath(item.href, knownRole));
   }
 
-  return [];
+  return [...PUBLIC_NAV_ITEMS];
 }
 
 export function getAdminNavigationItems(
@@ -207,7 +243,7 @@ export function getAdminNavigationItems(
 ): AccessNavItem[] {
   const knownRole = resolveKnownAuthRole(role);
 
-  if (!knownRole) {
+  if (!knownRole || !ADMIN_ACCESS_ROLES.includes(knownRole)) {
     return [];
   }
 

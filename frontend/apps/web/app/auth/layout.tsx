@@ -1,11 +1,7 @@
 import { GlobalHeader } from "@/components/navigation/GlobalHeader";
 import { GlobalFooter } from "@/components/navigation/GlobalFooter";
 
-/**
- * Admin Layout - Yan menü (sidebar) tamamen kaldırıldı.
- * Tüm sayfalar artık global header, responsive içerik alanı ve footer'ı kullanıyor.
- */
-export default async function AdminLayout({
+export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -13,11 +9,9 @@ export default async function AdminLayout({
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <GlobalHeader />
-
       <main className="flex-1">
         {children}
       </main>
-
       <GlobalFooter />
     </div>
   );

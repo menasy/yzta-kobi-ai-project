@@ -45,7 +45,7 @@ Bu proje KOBİ'ler için yapay zeka destekli bir operasyon platformudur. `apps/w
 
 - API İstemcileri tek bir `API_BASE_URL` (`/api` prefix ile) üzerinden çalışır.
 - Token JavaScript tarafında (localStorage/Zustand) KESİNLİKLE tutulmaz. Auth tamamen HttpOnly cookie üzerinden yürür.
-- Admin route guard işlemleri Next.js `middleware.ts` tarafından yalnızca cookie kontrolüyle (varlık/yokluk) yapılır.
+- Admin ve korumalı route guard işlemleri Next.js `middleware.ts` tarafından `policy.ts` kurallarına göre yapılır.
 - Manuel olarak istek başlıklarına `Authorization: Bearer` eklenmez, tarayıcı cookieleri otomatik gönderir.
 - Tüm fetch isteklerinde HttpOnly cookie iletimi için `credentials: "include"` kullanılır.
 - Client Component'lerde veri işlemleri için TanStack Query tabanlı `domain/*/hooks/*.ts` kullanılır.
@@ -140,8 +140,37 @@ Query cache kontrollü ve bilinçli yönetilmeli
 SSR mümkün olan her yerde korunmalı
 Mevcut monorepo mimarisi, Zustand, React Query, i18n, tema ve responsive sistem bozulmamalı
 
-Sayfa yapısı oluşturulurken olabildiğince atomic yapı kullanılmalı. shadcn ui yda compoenent varsa kesinlikle ocnelikle bu kullanılmalı. Componentler packages altında oluşturulmalı ve sayfalarda buradan kullanılmalı. Bu yapı ui-contracts, ui-web katmanlarına uygun şekilde uygulanmalı.
+## Rota ve Erişim Yetkileri (Access Matrix)
 
-Yardımcı fonksiyonlar ilgili domain alanının utils/ klasörü altında tanımlanmalı; page veya component içinde tanımlanmamalı.
+Tüm rotalar `packages/domain/auth/access/policy.ts` içinde merkezi olarak yönetilir.
 
-Tüm geliştirmeleri DRY prensibine uygun, temiz, modüler, yeniden kullanılabilir, okunabilir ve sürdürülebilir bir yapıda gerçekleştir. Mevcut mimariyi güçlendiren, ölçeklenebilir ve bakım kolaylığı sağlayan çözümler üret. 
+**Public (Herkese Açık):**
+- `/` (Landing/Home)
+- `/auth/login`
+- `/auth/register`
+- `/products` (Ürün listeleme)
+- `/products/[id]` (Ürün detayı)
+- `/chat` (AI Asistan - Giriş zorunlu değildir)
+
+**Customer (Müşteri):**
+- `/orders/my` (Siparişlerim listesi)
+- `/orders/my/[id]` (Sipariş detayı)
+
+**Admin / Operator (Yönetici):**
+- `/dashboard` (Genel özet)
+- `/dashboard/products` (Ürün yönetimi - Create/Update/Delete)
+- `/orders` (Tüm siparişlerin yönetimi)
+- `/orders/[id]` (Sipariş detay yönetimi)
+- `/inventory` (Stok ve envanter)
+- `/shipments` (Kargo ve lojistik)
+- `/notifications` (Bildirim merkezi)
+
+**Kurallar:**
+- Rota politikaları `middleware.ts` üzerinden enforce edilir.
+- `/orders/my` tanımı `/orders` tanımından önce gelmelidir.
+- `/chat` her zaman public kalmalı, kişisel veri sorgularında backend seviyesinde session kontrolü yapılmalıdır.
+- Admin ürün yönetimi `/dashboard/products` üzerinden yapılır, `/products` sadece storefront içindir.
+
+---
+
+Tüm geliştirmeleri DRY prensibine uygun, temiz, modüler, yeniden kullanılabilir, okunabilir ve sürdürülebilir bir yapıda gerçekleştir. Mevcut mimariyi güçlendiren, ölçeklenebilir ve bakım kolaylığı sağlayan çözümler üret.

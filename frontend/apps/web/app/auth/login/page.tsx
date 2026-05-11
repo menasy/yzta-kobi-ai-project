@@ -1,6 +1,5 @@
-import type { Metadata } from "next";
-
 import { AuthPageView } from "@/components/auth/AuthPageView";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Giriş Yap | KOBİ AI",

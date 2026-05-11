@@ -46,7 +46,7 @@ export function AuthPageView({ variant }: AuthPageViewProps) {
   const content = AUTH_PAGE_CONTENT[variant];
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-12">
+    <div className="relative flex items-center justify-center overflow-hidden bg-background px-4 py-20">
       <div className="absolute left-1/2 top-0 -z-10 h-[500px] w-full -translate-x-1/2 opacity-20 blur-[100px] [background:radial-gradient(circle_at_center,hsl(var(--primary))_0,transparent_70%)]" />
       <div className="absolute -left-24 top-48 -z-10 h-72 w-72 rounded-full bg-primary/5 blur-[60px]" />
       <div className="absolute -right-24 top-24 -z-10 h-96 w-96 rounded-full bg-primary/10 blur-[80px]" />
