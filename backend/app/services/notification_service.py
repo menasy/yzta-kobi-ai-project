@@ -187,7 +187,7 @@ class NotificationService:
         )
         
         if not notifications:
-            return "✅ Son 24 saat içinde herhangi bir kargo gecikmesi tespit edilmedi."
+            return "Son 24 saat içinde herhangi bir kargo gecikmesi tespit edilmedi."
         
         # 2. Agent'a gönderilecek ham metni hazırla
         raw_data = ""
@@ -207,12 +207,12 @@ class NotificationService:
             summary_text = await orchestrator.run(user_prompt, session_id="system_delay_report")
         except Exception as e:
             logger.error(f"AI Analiz hatası: {e}", exc_info=True)
-            summary_text = f"📊 Toplam {len(notifications)} gecikme var ancak rapor oluşturulamadı."
+            summary_text = f"Toplam {len(notifications)} gecikme var ancak rapor oluşturulamadı."
 
         # 4. Analiz sonucunu veritabanına bir "SYSTEM_REPORT" bildirimi olarak kaydet
         report_notification_data = {
             "type": "SYSTEM_REPORT",
-            "title": "📊 Günlük Kargo Gecikme Analizi (Agent)",
+            "title": "Günlük Kargo Gecikme Analizi (Agent)",
             "message": summary_text,
             "severity": "info",
             "payload": {
