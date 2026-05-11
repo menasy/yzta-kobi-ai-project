@@ -6,8 +6,6 @@
   "types": "./index.ts",
   "exports": {
     ".": "./index.ts",
-    "./ai": "./ai/index.ts",
-    "./ai/*": "./ai/*",
     "./auth": "./auth/index.ts",
     "./auth/*": "./auth/*",
     "./chat": "./chat/index.ts",

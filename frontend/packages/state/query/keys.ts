@@ -116,7 +116,6 @@ export function createQueryKeys<const TNamespace extends string>(
 }
 
 const auth = createQueryKeys("auth");
-const ai = createQueryKeys("ai");
 const chat = createQueryKeys("chat");
 const orders = createQueryKeys("orders");
 const products = createQueryKeys("products");
@@ -130,10 +129,7 @@ export const queryKeys = {
     all: auth.all,
     me: () => auth.scope("me"),
   },
-  ai: {
-    all: ai.all,
-    chat: () => ai.scope("chat"),
-  },
+
   chat: {
     all: chat.all,
     history: (sessionId?: string) =>

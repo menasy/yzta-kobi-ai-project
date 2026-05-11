@@ -117,8 +117,8 @@ const CUSTOMER_NAV_ITEMS = [
 ] as const satisfies readonly AccessNavItem[];
 
 const ADMIN_NAV_ITEMS = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Ürün Yönetimi", href: "/dashboard/products" },
+  { label: "Panel", href: "/dashboard" },
+  { label: "Ürünler", href: "/dashboard/products" },
   { label: "Siparişler", href: "/orders" },
   { label: "Envanter", href: "/inventory" },
   { label: "Kargo", href: "/shipments" },

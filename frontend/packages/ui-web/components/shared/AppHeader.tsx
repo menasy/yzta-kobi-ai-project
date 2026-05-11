@@ -94,7 +94,7 @@ export function AppHeader({
       <div className="container mx-auto flex h-16 items-center justify-between px-4 lg:px-8">
         
         {/* Sol: Logo Alanı & Mobil Menü */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {/* Mobil Menü (Hamburger) */}
           <div className="md:hidden">
             <Sheet>
@@ -142,16 +142,16 @@ export function AppHeader({
           <div className="hidden md:flex">
             <Logo variant="header" href={logoHref} />
           </div>
-          {/* Mobil ortalanmış Logo - Opsiyonel, eğer logo ortada istenirse. Şimdilik solda kalsın */}
+          {/* Mobil Logo */}
           <div className="md:hidden flex ml-2">
              <Logo variant="header" href={logoHref} />
           </div>
         </div>
 
-        <nav className="hidden md:flex items-center justify-center flex-1 px-4 min-w-[300px]">
+        <nav className="hidden md:flex items-center justify-center flex-1 px-4 overflow-hidden">
           <div 
             ref={containerRef}
-            className="relative max-w-[500px] w-full h-[44px] bg-muted/30 rounded-xl border border-border/50 px-4 py-1 flex items-center justify-around"
+            className="relative w-fit max-w-full h-[44px] bg-muted/20 backdrop-blur-sm rounded-xl border border-border/40 px-1.5 py-1 flex items-center justify-center gap-0.5 shadow-sm"
           >
             {navItems.length > 0 ? navItems.map((item, index) => (
               <Link
@@ -163,14 +163,14 @@ export function AppHeader({
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 className={cn(
-                  "relative z-10 px-3 py-2 text-sm font-medium transition-colors duration-300",
-                  activePathname === item.href ? "text-primary font-bold" : "text-muted-foreground hover:text-primary"
+                  "relative z-10 px-4 py-1.5 text-sm font-medium transition-all duration-300 whitespace-nowrap rounded-lg",
+                  activePathname === item.href ? "text-primary font-bold" : "text-muted-foreground/80 hover:text-primary hover:bg-primary/5"
                 )}
               >
                 {item.label}
               </Link>
             )) : (
-              <span className="text-xs text-muted-foreground">Menü Yükleniyor...</span>
+              <span className="text-xs text-muted-foreground px-4">Menü Yükleniyor...</span>
             )}
 
             {/* Premium Indicator System */}
@@ -186,31 +186,31 @@ export function AppHeader({
                     height: currentItem.offsetHeight,
                     top: currentItem.offsetTop,
                   }}
-                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                  transition={{ type: "spring", stiffness: 450, damping: 35 }}
                 />
 
                 {/* Top Dash */}
                 <motion.div
-                  className="absolute top-0 h-[2px] bg-primary z-20 rounded-full"
+                  className="absolute top-0 h-[2.5px] bg-primary z-20 rounded-full"
                   initial={false}
                   animate={{
-                    left: currentItem.offsetLeft + 8,
-                    width: currentItem.offsetWidth - 16,
+                    left: currentItem.offsetLeft + 10,
+                    width: currentItem.offsetWidth - 20,
                     opacity: 1,
                   }}
-                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                  transition={{ type: "spring", stiffness: 450, damping: 35 }}
                 />
 
                 {/* Bottom Dash */}
                 <motion.div
-                  className="absolute bottom-0 h-[2px] bg-primary z-20 rounded-full"
+                  className="absolute bottom-0 h-[2.5px] bg-primary z-20 rounded-full"
                   initial={false}
                   animate={{
-                    left: currentItem.offsetLeft + 8,
-                    width: currentItem.offsetWidth - 16,
+                    left: currentItem.offsetLeft + 10,
+                    width: currentItem.offsetWidth - 20,
                     opacity: 1,
                   }}
-                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                  transition={{ type: "spring", stiffness: 450, damping: 35 }}
                 />
               </>
             )}
@@ -218,7 +218,7 @@ export function AppHeader({
         </nav>
 
         {/* Sağ: Auth Aksiyon Alanı */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-shrink-0">
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
