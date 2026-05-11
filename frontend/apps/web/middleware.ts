@@ -14,7 +14,6 @@ import { NextRequest, NextResponse } from "next/server";
 const PROTECTED_PATHS = [
   "/dashboard",
   "/orders",
-  "/products",
   "/inventory",
   "/shipments",
 ];

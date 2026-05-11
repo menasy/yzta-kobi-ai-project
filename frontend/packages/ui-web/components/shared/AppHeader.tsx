@@ -26,6 +26,7 @@ import { Menu } from "lucide-react";
 
 const PUBLIC_NAV_ITEMS: NavItem[] = [
   { label: "Ana Sayfa", href: "/" },
+  { label: "Ürünler", href: "/products" },
   { label: "AI Chat", href: "/chat" },
   { label: "Özellikler", href: "/features" },
   { label: "Kargo", href: "/shipping" },
@@ -33,6 +34,7 @@ const PUBLIC_NAV_ITEMS: NavItem[] = [
 
 const AUTH_NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
+  { label: "Ürünler", href: "/products" },
   { label: "Siparişler", href: "/orders" },
   { label: "Envanter", href: "/inventory" },
   { label: "Kargo", href: "/shipments" },
@@ -55,14 +57,17 @@ export function AppHeader({
 
   // SVG animasyon değerleri (PathLength 100 üzerinden)
   const getDashArray = (index: number | null) => {
-    if (index === null) return "0 0 10 40 10 40";
-    const values = [
-      "0 2 8 73.3 8 10.7",
-      "0 12.6 9.5 49.3 9.5 31.6",
-      "0 24.5 8.5 27.5 8.5 55.5",
-      "0 34.7 6.9 10.2 6.9 76",
-    ];
-    return values[index] || "0 0 10 40 10 40";
+    if (index === null || navItems.length === 0) return "0 0 10 40 10 40";
+    const w = 45.95;
+    const h = 4.05;
+    const dashLen = 8;
+    const p = (2 * index + 1) / (2 * navItems.length);
+    const topPos = p * w;
+    const bottomPos = (w + h) + (1 - p) * w;
+    const gap1 = Math.max(0, topPos - dashLen / 2);
+    const gap2 = Math.max(0, bottomPos - (topPos + dashLen / 2) - dashLen);
+    const gap3 = Math.max(0, 100 - (bottomPos + dashLen / 2));
+    return `0 ${gap1} ${dashLen} ${gap2} ${dashLen} ${gap3}`;
   };
 
   return (
