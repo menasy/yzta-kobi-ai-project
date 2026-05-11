@@ -168,7 +168,7 @@ class NotificationService:
     async def mark_all_read(self) -> int:
         """Tüm okunmamış bildirimleri okundu olarak işaretler."""
         return await self._repo.mark_all_as_read()
-    
+
 
     async def get_daily_delay_summary(self) -> str:
         """
@@ -179,7 +179,7 @@ class NotificationService:
         since_24h = datetime.now(timezone.utc) - timedelta(days=1)
         
         # Repository üzerinden son 24 saatteki SHIPMENT_DELAY bildirimlerini çek
-        notifications = await self.repo.get_notifications_by_type_and_date(
+        notifications = await self._repo.get_notifications_by_type_and_date(
             notification_type="SHIPMENT_DELAY",
             since_date=since_24h
         )

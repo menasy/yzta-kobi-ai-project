@@ -1,4 +1,3 @@
-# scripts/create_test_shipment.py
 import asyncio
 import sys
 import os
@@ -26,7 +25,7 @@ async def create_test_data():
                 print("❌ Hata: Veritabanında müşteri bulunamadı. Önce seed_data.py çalıştırın.")
                 return
 
-            # 2. Test Siparişi Oluştur (TÜM zorunlu alanlar dolduruldu)
+            # 2. Test Siparişi Oluştur
             random_suffix = str(uuid.uuid4())[:8].upper()
             test_order = Order(
                 order_number=f"ORD-TEST-{random_suffix}",
@@ -44,11 +43,14 @@ async def create_test_data():
             session.add(test_order)
             await session.flush() 
 
-            # 3. Test Kargosu Oluştur
+            # 3. Test Kargosu Oluştur (Her seferinde farklı Takip No)
+            # 'TRACK-DELAY' ile başladığı için Worker bunu gecikmiş sayacak
+            unique_tracking = f"TRACK-DELAY-{str(uuid.uuid4())[:4].upper()}"
+            
             test_shipment = Shipment(
                 order_id=test_order.id,
                 carrier="yurtici",
-                tracking_number="TRACK-DELAY-101", # MockProvider'da 'delayed' dönecek numara
+                tracking_number=unique_tracking, 
                 status="in_transit"
             )
             session.add(test_shipment)

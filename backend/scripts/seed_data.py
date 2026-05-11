@@ -1,4 +1,3 @@
-# scripts/seed_data.py
 # Geliştirme ve demo için örnek veri oluşturma scripti.
 # Async SQLAlchemy session kullanır.
 # Mevcut models ve security altyapısı ile uyumludur.
