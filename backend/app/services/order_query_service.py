@@ -9,6 +9,7 @@ from app.core.exceptions import NotFoundError
 from app.core.logger import get_logger
 from app.repositories.customer_repository import CustomerRepository
 from app.repositories.order_repository import OrderRepository
+from app.repositories.user_repository import UserRepository
 
 logger = get_logger(__name__)
 
@@ -22,6 +23,7 @@ class OrderQueryService:
     def __init__(self, db: AsyncSession) -> None:
         self._order_repo = OrderRepository(db)
         self._customer_repo = CustomerRepository(db)
+        self._user_repo = UserRepository(db)
 
     async def get_order_detail(self, order_id: int) -> dict:
         """
@@ -51,8 +53,14 @@ class OrderQueryService:
         if customer is None:
             return []
 
+        customer_user = await self._user_repo.get_by_email(f"legacy-customer-{customer.id}@placeholder.kobi.local")
+        if customer_user is None and customer.email:
+            customer_user = await self._user_repo.get_by_email(customer.email)
+        if customer_user is None:
+            return []
+
         orders = await self._order_repo.get_by_customer(
-            customer_id=customer.id,
+            customer_id=customer_user.id,
             limit=limit,
         )
 

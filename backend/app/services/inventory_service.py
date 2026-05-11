@@ -4,12 +4,15 @@
 # Threshold kontrolü ve notification oluşturma bu katmanda yapılır.
 # Repository'ye doğrudan erişim yerine InventoryRepository kullanılır.
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from collections.abc import Mapping
 
-from app.core.exceptions import NotFoundError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import InsufficientStockError, NotFoundError
 from app.core.logger import get_logger
 from app.models.inventory import Inventory
+from app.models.product import Product
+from app.repositories.inventory_movement_repository import InventoryMovementRepository
 from app.repositories.inventory_repository import InventoryRepository
 from app.repositories.product_repository import ProductRepository
 from app.services.notification_service import NotificationService
@@ -23,6 +26,7 @@ class InventoryService:
     def __init__(self, db: AsyncSession) -> None:
         self._db = db
         self._inventory_repo = InventoryRepository(db)
+        self._movement_repo = InventoryMovementRepository(db)
         self._product_repo = ProductRepository(db)
         self._notification_service = NotificationService(db)
 
@@ -33,9 +37,7 @@ class InventoryService:
         """
         inventory = await self._inventory_repo.get_by_product_id(product_id)
         if inventory is None:
-            raise NotFoundError(
-                message=f"Ürün #{product_id} için stok kaydı bulunamadı."
-            )
+            raise NotFoundError(message=f"Ürün #{product_id} için stok kaydı bulunamadı.")
         return inventory
 
     async def update_stock(
@@ -55,7 +57,9 @@ class InventoryService:
             4. Threshold kontrolü yap — gerekirse notification oluştur.
             5. Güncel inventory'yi döndür.
         """
-        inventory = await self.get_by_product_id(product_id)
+        inventory = await self._inventory_repo.get_by_product_id_for_update(product_id)
+        if inventory is None:
+            raise NotFoundError(message=f"Ürün #{product_id} için stok kaydı bulunamadı.")
 
         if quantity is not None:
             inventory.quantity = quantity
@@ -69,6 +73,63 @@ class InventoryService:
         await self._check_low_stock_threshold(inventory)
 
         return inventory
+
+    async def validate_and_deduct_stock_for_order(
+        self,
+        *,
+        order_id: int,
+        items: Mapping[int, int],
+        created_by_user_id: int | None = None,
+    ) -> dict[int, Product]:
+        """
+        Sipariş için stokları güvenli şekilde kontrol eder ve düşer.
+
+        Inventory satırları product_id sırasıyla SELECT FOR UPDATE ile kilitlenir.
+        Stok yetersizliği veya ürün problemi olduğunda exception fırlatılır; request
+        transaction'ı üst katmanda rollback olur.
+        """
+        products: dict[int, Product] = {}
+
+        for product_id in sorted(items):
+            quantity = items[product_id]
+            inventory = await self._inventory_repo.get_by_product_id_for_update(product_id)
+            if inventory is None:
+                raise NotFoundError(message=f"Ürün #{product_id} için stok kaydı bulunamadı.")
+
+            product = await self._product_repo.get(product_id)
+            if product is None or not product.is_active:
+                raise NotFoundError(message=f"{product_id} numaralı ürün bulunamadı.")
+
+            if inventory.available_quantity < quantity:
+                raise InsufficientStockError(
+                    message=(
+                        f"{product.name} için yeterli stok yok. "
+                        f"Talep: {quantity}, mevcut: {inventory.available_quantity}."
+                    )
+                )
+
+            previous_quantity = inventory.quantity
+            inventory.quantity -= quantity
+
+            await self._movement_repo.create(
+                {
+                    "product_id": product_id,
+                    "order_id": order_id,
+                    "movement_type": "order_deducted",
+                    "quantity_change": -quantity,
+                    "previous_quantity": previous_quantity,
+                    "new_quantity": inventory.quantity,
+                    "reason": f"Sipariş #{order_id} stok düşümü",
+                    "created_by_user_id": created_by_user_id,
+                }
+            )
+
+            await self._db.flush()
+            await self._db.refresh(inventory)
+            await self._check_low_stock_threshold(inventory)
+            products[product_id] = product
+
+        return products
 
     async def _check_low_stock_threshold(self, inventory: Inventory) -> None:
         """
@@ -113,6 +174,4 @@ class InventoryService:
         limit: int = 100,
     ) -> list[Inventory]:
         """Tüm stok kayıtlarını ürün bilgisiyle birlikte getirir."""
-        return await self._inventory_repo.get_all_with_product(
-            skip=skip, limit=limit
-        )
+        return await self._inventory_repo.get_all_with_product(skip=skip, limit=limit)

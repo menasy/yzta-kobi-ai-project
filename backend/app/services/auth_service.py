@@ -4,12 +4,18 @@
 # HTTPException fırlatmaz — custom exception sınıfları kullanılır.
 # Password/hash bilgisi loglanmaz ve response'a eklenmez.
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.core.config import Settings
 from app.core.exceptions import ConflictError, ForbiddenError, UnauthorizedError
 from app.core.logger import get_logger
-from app.core.security import create_access_token, create_refresh_token, decode_refresh_token, hash_password, verify_password
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    decode_refresh_token,
+    hash_password,
+    verify_password,
+)
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.schemas.auth import LoginRequest, UserCreate, UserResponse
@@ -52,20 +58,20 @@ class AuthService:
         """
         # Email unique kontrolü
         if await self._user_repo.email_exists(data.email):
-            raise ConflictError(
-                message=f"'{data.email}' adresi zaten kayıtlı."
-            )
+            raise ConflictError(message=f"'{data.email}' adresi zaten kayıtlı.")
 
         # Password hash'le
         hashed = hash_password(data.password)
 
         # Kullanıcı oluştur
-        user = await self._user_repo.create({
-            "email": data.email,
-            "hashed_password": hashed,
-            "full_name": data.full_name,
-            "role": data.role,
-        })
+        user = await self._user_repo.create(
+            {
+                "email": data.email,
+                "hashed_password": hashed,
+                "full_name": data.full_name,
+                "role": "customer",
+            }
+        )
 
         logger.info(
             "Yeni kullanıcı oluşturuldu.",
@@ -112,9 +118,12 @@ class AuthService:
         )
 
         # last_login_at güncelle
-        await self._user_repo.update(user.id, {
-            "last_login_at": datetime.now(tz=timezone.utc),
-        })
+        await self._user_repo.update(
+            user.id,
+            {
+                "last_login_at": datetime.now(tz=UTC),
+            },
+        )
 
         logger.info(
             "Kullanıcı giriş yaptı.",
@@ -126,7 +135,7 @@ class AuthService:
     async def refresh_token(self, refresh_token: str) -> tuple[str, str]:
         """
         Mevcut refresh_token'ı kullanarak yeni token'lar üretir.
-        
+
         Returns:
             tuple[str, str]: (new_access_token, new_refresh_token)
         """
@@ -134,16 +143,16 @@ class AuthService:
         user_id_str = payload.get("sub")
         if not user_id_str:
             raise UnauthorizedError(message="Token geçersiz.")
-            
+
         user_id = int(user_id_str)
         user = await self._user_repo.get(user_id)
-        
+
         if user is None:
             raise UnauthorizedError(message="Kullanıcı bulunamadı.")
-            
+
         if not user.is_active:
             raise ForbiddenError(message="Kullanıcı hesabı devre dışı.")
-            
+
         new_access_token = create_access_token(
             user_id=user.id,
             role=user.role,
@@ -151,12 +160,12 @@ class AuthService:
         new_refresh_token = create_refresh_token(
             user_id=user.id,
         )
-        
+
         logger.info(
             "Token yenilendi.",
             extra={"user_id": user.id, "role": user.role},
         )
-        
+
         return new_access_token, new_refresh_token
 
     def get_profile(self, user: User) -> UserResponse:

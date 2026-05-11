@@ -19,8 +19,13 @@ class InventoryRepository(BaseRepository[Inventory]):
 
     async def get_by_product_id(self, product_id: int) -> Inventory | None:
         """Ürün ID'sine göre stok kaydı getirir."""
+        result = await self.session.execute(select(Inventory).where(Inventory.product_id == product_id))
+        return result.scalar_one_or_none()
+
+    async def get_by_product_id_for_update(self, product_id: int) -> Inventory | None:
+        """Ürün stok kaydını transaction içinde kilitleyerek getirir."""
         result = await self.session.execute(
-            select(Inventory).where(Inventory.product_id == product_id)
+            select(Inventory).where(Inventory.product_id == product_id).with_for_update()
         )
         return result.scalar_one_or_none()
 

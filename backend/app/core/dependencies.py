@@ -4,7 +4,9 @@
 # Endpoint'ler repository veya DB session'ı doğrudan kullanmaz;
 # bu dependency katmanından servis alır.
 
-from typing import Annotated
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Annotated
 
 from fastapi import Depends
 from fastapi.security import APIKeyCookie
@@ -19,6 +21,14 @@ from app.models.user import User
 from app.repositories.user_repository import UserRepository
 
 logger = get_logger(__name__)
+
+if TYPE_CHECKING:
+    from app.agent.orchestrator import AgentOrchestrator
+    from app.services.auth_service import AuthService
+    from app.services.inventory_service import InventoryService
+    from app.services.notification_service import NotificationService
+    from app.services.order_service import OrderService
+    from app.services.product_service import ProductService
 
 # ── Security Scheme ──────────────────────────────────────
 
@@ -102,7 +112,7 @@ AdminUser = Annotated[User, Depends(get_admin_user)]
 # ── Service Factory Dependencies ─────────────────────────
 
 
-async def get_auth_service(db: DBSession) -> "AuthService":
+async def get_auth_service(db: DBSession) -> AuthService:
     """AuthService dependency — UserRepository ve Settings ile oluşturulur."""
     from app.services.auth_service import AuthService
 
@@ -142,31 +152,38 @@ async def get_auth_service(db: DBSession) -> "AuthService":
 #     )
 
 
-async def get_inventory_service(db: DBSession) -> "InventoryService":
+async def get_inventory_service(db: DBSession) -> InventoryService:
     """InventoryService dependency — stok güncelleme ve threshold trigger."""
     from app.services.inventory_service import InventoryService
 
     return InventoryService(db=db)
 
 
-async def get_notification_service(db: DBSession) -> "NotificationService":
+async def get_notification_service(db: DBSession) -> NotificationService:
     """NotificationService dependency — bildirim CRUD ve Redis event publish."""
     from app.services.notification_service import NotificationService
 
     return NotificationService(db=db)
 
 
-async def get_product_service(db: DBSession) -> "ProductService":
+async def get_product_service(db: DBSession) -> ProductService:
     """ProductService dependency — ürün CRUD akışı."""
     from app.services.product_service import ProductService
 
     return ProductService(db=db)
 
 
+async def get_order_service(db: DBSession) -> OrderService:
+    """OrderService dependency — direct checkout ve sipariş yönetimi."""
+    from app.services.order_service import OrderService
+
+    return OrderService(db=db)
+
+
 # ── Agent Orchestrator Dependency ────────────────────────
 
 
-async def get_agent_orchestrator(db: DBSession) -> "AgentOrchestrator":
+async def get_agent_orchestrator(db: DBSession) -> AgentOrchestrator:
     """
     AgentOrchestrator dependency.
     Her request için DB session ile yeni orchestrator oluşturur.

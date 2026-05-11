@@ -6,9 +6,9 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from .common import USER_ROLES, validate_sanitized_field, validate_status
 from app.core import openapi_examples
 
+from .common import USER_ROLES, validate_sanitized_field, validate_status
 
 # ── Request Schemas ──────────────────────────────────────
 
@@ -25,11 +25,7 @@ class LoginRequest(BaseModel):
     )
     password: str = Field(..., min_length=6, max_length=128, description="Kullanıcı şifresi")
 
-    model_config = {
-        "json_schema_extra": {
-            "example": openapi_examples.LOGIN_REQUEST_EXAMPLE
-        }
-    }
+    model_config = {"json_schema_extra": {"example": openapi_examples.LOGIN_REQUEST_EXAMPLE}}
 
 
 class UserCreate(BaseModel):
@@ -49,23 +45,16 @@ class UserCreate(BaseModel):
         description="En az 8 karakter, güçlü şifre",
     )
     full_name: str | None = Field(default=None, min_length=2, max_length=255)
-    role: str = Field(default="admin", max_length=50)
-
-    @field_validator("role")
-    @classmethod
-    def validate_role(cls, v: str) -> str:
-        return validate_status(v, USER_ROLES, "rol")
 
     @field_validator("full_name")
     @classmethod
     def sanitize_full_name(cls, v: str | None) -> str | None:
         return validate_sanitized_field(v)
 
-    model_config = {
-        "json_schema_extra": {
-            "example": openapi_examples.REGISTER_REQUEST_EXAMPLE
-        }
-    }
+    model_config = ConfigDict(
+        extra="ignore",
+        json_schema_extra={"example": openapi_examples.REGISTER_REQUEST_EXAMPLE},
+    )
 
 
 class UserUpdate(BaseModel):
@@ -104,9 +93,6 @@ class ChangePasswordRequest(BaseModel):
 # ── Response Schemas ─────────────────────────────────────
 
 
-
-
-
 class UserResponse(BaseModel):
     """Kullanıcı bilgisi response — hassas alan dönmez."""
 
@@ -119,9 +105,4 @@ class UserResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_schema_extra={
-            "example": openapi_examples.USER_EXAMPLE
-        }
-    )
+    model_config = ConfigDict(from_attributes=True, json_schema_extra={"example": openapi_examples.USER_EXAMPLE})

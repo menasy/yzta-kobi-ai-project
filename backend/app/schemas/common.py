@@ -64,7 +64,7 @@ NOTIFICATION_STATUSES = frozenset({"unread", "read", "archived"})
 NOTIFICATION_SEVERITIES = frozenset({"info", "warning", "critical"})
 
 # Kullanıcı rolleri
-USER_ROLES = frozenset({"admin", "operator"})
+USER_ROLES = frozenset({"admin", "operator", "customer"})
 
 # Müşteri kaynak kanalları
 SOURCE_CHANNELS = frozenset({"web", "whatsapp", "agent"})

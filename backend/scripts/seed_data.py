@@ -227,10 +227,39 @@ async def _seed_customers(session: AsyncSession) -> list[Customer]:
     return customers
 
 
+async def _seed_customer_users(session: AsyncSession, customers: list[Customer]) -> dict[int, User]:
+    """Legacy müşteri kayıtları için login olabilen customer user kayıtları oluşturur."""
+    customer_users: dict[int, User] = {}
+
+    for customer in customers:
+        email = customer.email or f"seed-customer-{customer.id}@kobi.local"
+        result = await session.execute(select(User).where(User.email == email))
+        existing = result.scalar_one_or_none()
+        if existing is not None:
+            customer_users[customer.id] = existing
+            continue
+
+        user = User(
+            email=email,
+            hashed_password=hash_password("Customer123!"),
+            full_name=customer.full_name,
+            role="customer",
+            is_active=True,
+        )
+        session.add(user)
+        await session.flush()
+        await session.refresh(user)
+        customer_users[customer.id] = user
+
+    logger.info("Hazırlanan müşteri user sayısı: %d", len(customer_users))
+    return customer_users
+
+
 async def _seed_orders(
     session: AsyncSession,
     admin: User,
     customers: list[Customer],
+    customer_users: dict[int, User],
     products: list,
 ) -> list[Order]:
     """Sipariş, sipariş kalemleri ve ilişkili kayıtları oluşturur."""
@@ -272,6 +301,7 @@ async def _seed_orders(
 
     for order_idx, (cust_idx, status, days, items) in enumerate(order_defs):
         customer = customers[cust_idx % len(customers)]
+        customer_user = customer_users[customer.id]
         placed_at = _days_ago(days)
 
         # Sipariş numarası
@@ -285,10 +315,18 @@ async def _seed_orders(
 
         order = Order(
             order_number=order_number,
-            customer_id=customer.id,
+            customer_id=customer_user.id,
             status=status,
             total_amount=total,
             notes=f"Demo sipariş #{order_idx + 1}",
+            shipping_full_name=customer.full_name,
+            shipping_phone=customer.phone or "0000000000",
+            shipping_address="Demo Mah. Örnek Sok. No: 1",
+            shipping_city="İstanbul",
+            shipping_district="Kadıköy",
+            shipping_postal_code="34710",
+            shipping_country="Türkiye",
+            shipping_note=None,
             placed_at=placed_at,
             cancelled_at=placed_at + timedelta(hours=2) if status == "cancelled" else None,
         )
@@ -532,6 +570,7 @@ async def run_seed() -> None:
 
             # 3. Müşteriler
             customers = await _seed_customers(session)
+            customer_users = await _seed_customer_users(session, customers)
 
             # 4. Başlangıç stok hareketleri
             await _seed_initial_stock_movements(session, admin)
@@ -540,7 +579,7 @@ async def run_seed() -> None:
             # Ürünleri DB'den çek
             result = await session.execute(select(Product))
             db_products = list(result.scalars().all())
-            orders = await _seed_orders(session, admin, customers, db_products)
+            orders = await _seed_orders(session, admin, customers, customer_users, db_products)
 
             # 6. Kargolar
             await _seed_shipments(session, orders)
