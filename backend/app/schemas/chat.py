@@ -4,7 +4,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
 
 from app.core import openapi_examples
 from .common import validate_sanitized_field
@@ -27,6 +27,7 @@ class ChatMessageRequest(BaseModel):
         min_length=1,
         max_length=2000,
         description="Kullanıcı mesajı",
+        validation_alias=AliasChoices("content", "message"),
     )
 
     @field_validator("content")

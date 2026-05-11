@@ -3,6 +3,7 @@
 # LLM → tool_call → execute → LLM → final yanıt
 # HTTP request/response bilmez. Sadece mesaj alır, yanıt üretir.
 
+import re
 from typing import Any
 
 from google import genai
@@ -16,7 +17,7 @@ from app.core.logger import get_logger
 
 from .memory import ConversationMemory
 from .prompts import SYSTEM_PROMPT
-from .tools import ToolRegistry
+from .tools import ToolRegistry, ToolResult
 from .tools.cargo_tools import GetCargoStatusTool
 from .tools.inventory_tools import CheckProductStockTool, GetLowStockReportTool
 from .tools.order_tools import GetOrderStatusTool, GetOrdersByPhoneTool
@@ -155,7 +156,15 @@ class AgentOrchestrator:
                     config=config,
                 )
             except genai_errors.APIError as exc:
-                logger.error("Gemini API hatası: %s", str(exc))
+                error_text = str(exc)
+                if self._is_rate_limit_error(error_text):
+                    logger.warning(
+                        "Gemini kota limiti aşıldı, degradeli yanıt döndürülüyor: %s",
+                        error_text,
+                    )
+                    return self._build_rate_limit_reply(error_text)
+
+                logger.error("Gemini API hatası: %s", error_text)
                 raise ExternalServiceError(
                     message="AI sağlayıcısı yanıt veremedi. Lütfen tekrar deneyin.",
                 )
@@ -196,11 +205,33 @@ class AgentOrchestrator:
             # Model yanıtını ve tool sonucunu contents'e ekle
             contents.append(candidate.content)
 
-            function_response_part = types.Part.from_function_response(
-                name=tool_name,
-                response={"result": result.to_llm_text()},
-                id=tool_id,
+            function_response_payload = self._build_function_response_payload(
+                result=result,
+                tool_call_id=tool_id,
             )
+            try:
+                function_response_part = types.Part.from_function_response(
+                    name=tool_name,
+                    response=function_response_payload,
+                )
+            except TypeError as exc:
+                logger.error(
+                    "Function response format hatası: %s",
+                    str(exc),
+                    exc_info=True,
+                )
+                raise ExternalServiceError(
+                    message="AI sağlayıcısı araç yanıtını işleyemedi. Lütfen tekrar deneyin.",
+                )
+            except Exception as exc:
+                logger.error(
+                    "Function response oluşturulamadı: %s",
+                    str(exc),
+                    exc_info=True,
+                )
+                raise ExternalServiceError(
+                    message="AI sağlayıcısı araç yanıtını işleyemedi.",
+                )
             contents.append(
                 types.Content(
                     role="user",
@@ -229,6 +260,39 @@ class AgentOrchestrator:
         return None
 
     @staticmethod
+    def _build_function_response_payload(
+        result: ToolResult,
+        tool_call_id: str | None,
+    ) -> dict[str, Any]:
+        """
+        Gemini function_response payload üretir.
+        SDK id alanını desteklemediği için varsa metadata içine eklenir.
+        """
+        try:
+            payload = result.model_dump(mode="json")
+        except Exception as exc:
+            logger.error(
+                "Tool sonucu serialize edilemedi: %s",
+                str(exc),
+                exc_info=True,
+            )
+            payload = {
+                "success": result.success,
+                "error": result.error,
+                "data": result.to_llm_text(),
+            }
+
+        if tool_call_id:
+            metadata = payload.get("metadata") if isinstance(payload, dict) else None
+            payload["metadata"] = (
+                {**metadata, "tool_call_id": tool_call_id}
+                if isinstance(metadata, dict)
+                else {"tool_call_id": tool_call_id}
+            )
+
+        return payload
+
+    @staticmethod
     def _extract_text(candidate: Any) -> str:
         """Candidate'den text yanıtını çıkarır."""
         if not candidate.content or not candidate.content.parts:
@@ -240,3 +304,27 @@ class AgentOrchestrator:
                 texts.append(part.text)
 
         return "\n".join(texts) if texts else "Yanıt üretilemedi."
+
+    @staticmethod
+    def _is_rate_limit_error(error_text: str) -> bool:
+        """Gemini 429/RESOURCE_EXHAUSTED benzeri kota limit hatalarını tespit eder."""
+        normalized = error_text.upper()
+        return "RESOURCE_EXHAUSTED" in normalized or " 429 " in normalized or "CODE': 429" in normalized
+
+    @staticmethod
+    def _build_rate_limit_reply(error_text: str) -> str:
+        """
+        Provider kota limiti aşıldığında kullanıcıya hataya düşmeden dönecek mesajı üretir.
+        """
+        retry_match = re.search(r"retry in ([0-9]+(?:\.[0-9]+)?)s", error_text, re.IGNORECASE)
+        if retry_match:
+            retry_seconds = int(float(retry_match.group(1)))
+            return (
+                "Şu anda yoğunluk nedeniyle AI servisinde geçici bir kota sınırı var. "
+                f"Lütfen yaklaşık {retry_seconds} saniye sonra tekrar deneyin."
+            )
+
+        return (
+            "Şu anda yoğunluk nedeniyle AI servisinde geçici bir kota sınırı var. "
+            "Lütfen kısa bir süre sonra tekrar deneyin."
+        )

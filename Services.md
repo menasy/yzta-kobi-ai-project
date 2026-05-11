@@ -1,13 +1,13 @@
-# KOBİ Agent API Servis Referansı
+# KOBİ AI Backend API Referansı (Services.md)
 
-Bu doküman, KOBİ Agent projesi frontend geliştirmesi için gerekli tüm backend endpointlerini, request/response yapılarını ve kurallarını içerir.
+Bu doküman, KOBİ AI projesi backend sistemindeki tüm endpoint'leri, request/response yapılarını ve frontend entegrasyon detaylarını içerir.
 
 ---
 
-## 💡 Genel Kurallar ve Bilgiler
+## 1. Genel Bilgiler
 
-### 1. API Yanıt Formatı (Envelope)
-Tüm başarılı ve hatalı yanıtlar aşağıdaki standart `ApiResponse` sarmalayıcısı (envelope) ile döner:
+### 1.1 API Yanıt Formatı (ApiResponse)
+Tüm endpoint'ler standart bir sarmalayıcı (envelope) formatında yanıt döner. Frontend tarafında gelen yanıtın `data` alanına erişmeden önce `statusCode` veya `key` kontrolü yapılması önerilir.
 
 ```json
 {
@@ -20,197 +20,320 @@ Tüm başarılı ve hatalı yanıtlar aşağıdaki standart `ApiResponse` sarmal
 ```
 
 - **statusCode**: HTTP durum kodu (200, 201, 400, 401, 403, 404, 422, 500).
-- **key**: Frontend tarafında i18n veya mantıksal kontrol için kullanılabilecek benzersiz anahtar (Ör: `NOT_FOUND`, `INVALID_CREDENTIALS`).
-- **message**: Kullanıcıya gösterilebilecek dostane mesaj.
-- **data**: Asıl içerik. Liste, nesne veya null olabilir.
-- **errors**: Validasyon hataları için detaylı liste (Ör: `[{"field": "email", "message": "Geçersiz format"}]`).
+- **key**: Hata veya başarı kodunu temsil eden sabit string (Ör: `UNAUTHORIZED`, `VALIDATION_ERROR`, `INSUFFICIENT_STOCK`).
+- **message**: Kullanıcıya gösterilebilecek dostça mesaj.
+- **data**: Asıl içerik (Domain bölümlerinde detaylandırılmıştır).
+- **errors**: Validasyon hataları listesi (Örn: `[{"field": "email", "message": "Geçersiz format"}]`).
 
-### 2. Kimlik Doğrulama (Cookie-Based Auth)
-Bu proje **strictly HttpOnly Cookie** tabanlı JWT kullanır.
-- **Token Dönmez**: Login veya Register sonrasında frontend'e asla token string'i dönmez.
-- **Cookie Yönetimi**: Tarayıcı `access_token` ve `refresh_token` cookie'lerini otomatik saklar.
-- **İstek Ayarları**: Tüm API isteklerinde `credentials: "include"` (veya Axios için `withCredentials: true`) ayarı **zorunludur**.
-- **Auth Durumları**:
-  - `Public`: Giriş gerektirmez.
-  - `CurrentUser`: Herhangi bir giriş yapmış kullanıcı.
-  - `Admin`: Sadece `role: "admin"` olan kullanıcılar.
+### 1.2 Kimlik Doğrulama (Cookie-Based Auth)
+Sistem **Cookie-based JWT** kullanır.
+- **Tokenlar**: `access_token` ve `refresh_token` HttpOnly cookie olarak set edilir.
+- **Frontend**: İsteklerde `withCredentials: true` veya `credentials: "include"` mutlaka kullanılmalıdır.
+- **Refresh**: Access token süresi dolduğunda `/api/auth/refresh` otomatik olarak veya manuel olarak çağrılabilir.
 
 ---
 
-## 1. Kimlik Doğrulama Servisi (`auth`)
+## 2. Kimlik Doğrulama (`/api/auth`)
 
-| Method | URL | Auth | Domain | Açıklama |
-| :--- | :--- | :--- | :--- | :--- |
-| POST | `/api/auth/register` | Public | Auth | Yeni kullanıcı kaydı oluşturur. |
-| POST | `/api/auth/login` | Public | Auth | Kullanıcı girişi yapar ve cookie set eder. |
-| POST | `/api/auth/refresh` | Public | Auth | Refresh token ile oturumu yeniler. |
-| POST | `/api/auth/logout` | Public | Auth | Oturumu kapatır ve cookie'leri siler. |
-| GET | `/api/auth/me` | CurrentUser | Auth | Mevcut kullanıcının profil bilgilerini getirir. |
-
-### POST /api/auth/login
+### POST `/api/auth/register`
+- **Açıklama**: Yeni kullanıcı kaydı oluşturur.
 - **Request Body**:
   ```json
-  { "email": "admin@kobi.local", "password": "password" }
+  {
+    "email": "user@kobi.ai",
+    "password": "strongpassword123",
+    "full_name": "Ahmet Yılmaz"
+  }
   ```
-- **Success Response (200)**: `data: null` (Cookie'ler set edilir).
-- **Frontend Notu**: Giriş sonrası `/api/auth/me` çağrılarak kullanıcı rolü ve bilgileri alınmalıdır.
-
-### GET /api/auth/me
-- **Response `data` Tipi**: `UserResponse`
+- **Response Data (`UserResponse`)**:
   ```json
   {
     "id": 1,
-    "email": "user@example.com",
+    "email": "user@kobi.ai",
     "full_name": "Ahmet Yılmaz",
-    "role": "admin", // "admin" veya "customer"
+    "role": "customer",
     "is_active": true,
-    "created_at": "2024-05-10T..."
+    "created_at": "2026-05-11T12:00:00Z"
   }
   ```
 
----
-
-## 2. Ürün Yönetimi Servisi (`products`)
-
-| Method | URL | Auth | Domain | Açıklama |
-| :--- | :--- | :--- | :--- | :--- |
-| GET | `/api/products/` | Admin | Products | Tüm ürünleri listeler. |
-| POST | `/api/products/` | Admin | Products | Yeni ürün ekler. |
-| GET | `/api/products/low-stock` | Admin | Products | Kritik stoktaki ürünleri getirir. |
-| PUT | `/api/products/{id}` | Admin | Products | Ürün bilgilerini günceller. |
-| DELETE | `/api/products/{id}` | Admin | Products | Ürünü sistemden siler. |
-
-- **Frontend Notu**: Bu endpoint'lerin tamamı şuan sadece **Admin** erişimine açıktır. Müşteri tarafı ürün listesi için AI Agent veya özel bir "shop" endpoint'i (planlanıyor) kullanılacaktır.
-
----
-
-## 3. Sipariş Yönetimi Servisi (`orders`)
-
-| Method | URL | Auth | Domain | Açıklama |
-| :--- | :--- | :--- | :--- | :--- |
-| POST | `/api/orders` | CurrentUser | Orders | Direct Checkout: Yeni sipariş oluşturur. |
-| GET | `/api/orders/my` | CurrentUser | Orders | Kullanıcının kendi sipariş geçmişi. |
-| GET | `/api/orders/my/{id}` | CurrentUser | Orders | Kendi siparişinin detayı. |
-| GET | `/api/orders` | Admin | Orders | [Admin] Tüm siparişleri listele. |
-| GET | `/api/orders/{id}` | Admin | Orders | [Admin] Herhangi bir sipariş detayı. |
-| PATCH | `/api/orders/{id}/status`| Admin | Orders | [Admin] Sipariş durumunu güncelle. |
-| GET | `/api/orders/summary/today`| Admin | Dashboard | [Admin] Günlük satış ve sipariş özeti. |
-
-### POST /api/orders (Direct Checkout)
+### POST `/api/auth/login`
 - **Request Body**:
   ```json
   {
-    "items": [{ "product_id": 1, "quantity": 2 }],
-    "shipping": {
-      "full_name": "Can Doe",
-      "phone": "5551234567",
-      "address": "Kadıköy, İstanbul",
-      "city": "İstanbul",
-      "district": "Kadıköy"
-    },
-    "notes": "Zile basmayın."
+    "email": "user@kobi.ai",
+    "password": "strongpassword123"
   }
   ```
+- **Response Data**: `null` (Tokenlar HttpOnly cookie olarak set edilir).
 
-### GET /api/orders/summary/today
-- **Response `data` Tipi**: `OrderSummaryResponse`
+### POST `/api/auth/refresh`
+- **Açıklama**: Mevcut `refresh_token` cookie'sini kullanarak yeni access token set eder.
+- **Request Body**: Yok.
+- **Response Data**: `null`.
+
+### POST `/api/auth/logout`
+- **Açıklama**: Auth cookie'lerini temizler.
+- **Response Data**: `null`.
+
+### GET `/api/auth/me`
+- **Açıklama**: Aktif kullanıcı profilini getirir.
+- **Response Data**:
   ```json
   {
-    "total_orders": 15,
-    "pending": 5,
-    "processing": 3,
-    "total_revenue": 4500.50
+    "id": 1,
+    "email": "user@kobi.ai",
+    "full_name": "Ahmet Yılmaz",
+    "role": "admin",
+    "is_active": true,
+    "last_login_at": "2026-05-11T15:00:00Z",
+    "created_at": "2026-05-01T10:00:00Z",
+    "updated_at": "2026-05-11T15:00:00Z"
   }
   ```
 
 ---
 
-## 4. Stok ve Envanter Servisi (`inventory`)
+## 3. AI Agent & Chat (`/api/chat`)
 
-| Method | URL | Auth | Domain | Açıklama |
-| :--- | :--- | :--- | :--- | :--- |
-| GET | `/api/inventory/` | Admin | Inventory | Tüm stok kayıtlarını listeler. |
-| GET | `/api/inventory/low-stock` | Admin | Inventory | Kritik stok uyarılarını listeler. |
-| PUT | `/api/inventory/{product_id}` | Admin | Inventory | Manuel stok/eşik güncellemesi. |
-
-- **Parametreler**: `skip`, `limit` (pagination).
-- **Frontend Notu**: Stok kritik seviyenin altına düştüğünde sistem otomatik olarak "Bildirimler" kısmına uyarı atar.
-
----
-
-## 5. Sevkiyat Servisi (`shipments`)
-
-| Method | URL | Auth | Domain | Açıklama |
-| :--- | :--- | :--- | :--- | :--- |
-| POST | `/api/shipments/` | Admin | Shipments | Yeni kargo kaydı oluşturur. |
-| GET | `/api/shipments/{tracking_number}` | Admin | Shipments | Kargo durumunu sorgular. |
-
-- **Durum**: Güncellenmeli / Geliştirme aşamasında (Stub).
-- **Frontend Notu**: Şimdilik sadece admin tarafı için temel takip desteği sunar.
-
----
-
-## 6. Bildirim Servisi (`notifications`)
-
-| Method | URL | Auth | Domain | Açıklama |
-| :--- | :--- | :--- | :--- | :--- |
-| GET | `/api/notifications/` | Admin | Notifications | Tüm bildirimleri listeler. |
-| GET | `/api/notifications/unread` | Admin | Notifications | Okunmamış bildirimleri getirir. |
-| PATCH| `/api/notifications/{id}/read` | Admin | Notifications | Bildirimi okundu işaretler. |
-| PATCH| `/api/notifications/read-all` | Admin | Notifications | Hepsini okundu işaretler. |
-| GET | `/api/notifications/stream` | Admin | Notifications | **SSE Stream**: Canlı bildirim akışı. |
-
-### GET /api/notifications/stream (SSE)
-- **Açıklama**: Admin paneli için canlı bildirimler (Stok uyarısı, yeni sipariş vb.).
-- **Bağlantı**: `EventSource` veya `fetch-event-source` ile bağlanılır.
-- **Event Name**: `notification`
-- **Data**: JSON string (Notification objesi).
-
----
-
-## 7. AI Chat & Agent Servisi (`chat`)
-
-| Method | URL | Auth | Domain | Açıklama |
-| :--- | :--- | :--- | :--- | :--- |
-| POST | `/api/chat/message` | CurrentUser | Chat | Agent'a mesaj gönderir (ReAct loop). |
-| GET | `/api/chat/history/{session_id}`| CurrentUser | Chat | Konuşma geçmişini getirir. |
-| DELETE| `/api/chat/history/{session_id}`| CurrentUser | Chat | Geçmişi temizler. |
-
-### POST /api/chat/message
+### POST `/api/chat/message`
+- **Açıklama**: Kullanıcı mesajını AI Agent'a iletir.
 - **Request Body**:
   ```json
-  { "session_id": "user-123-xyz", "content": "En çok satan ürünüm hangisi?" }
+  {
+    "session_id": "uuid-123-456",
+    "content": "En çok satan 3 ürünümü listeler misin?"
+  }
   ```
-- **Success Response**:
+- **Response Data**:
   ```json
   {
-    "data": { "reply": "En çok satan ürününüz: Kablosuz Mouse.", "session_id": "..." }
+    "reply": "En çok satan 3 ürününüz: 1. Mouse, 2. Klavye, 3. Monitor.",
+    "session_id": "uuid-123-456"
+  }
+  ```
+
+### GET `/api/chat/history/{session_id}`
+- **Açıklama**: Belirli bir oturumun mesaj geçmişini getirir.
+- **Response Data**:
+  ```json
+  {
+    "session_id": "uuid-123-456",
+    "messages": [
+      { "role": "user", "content": "Sipariş durumum nedir?" },
+      { "role": "assistant", "content": "Siparişiniz kargoya verilmiştir." }
+    ]
+  }
+  ```
+
+### DELETE `/api/chat/history/{session_id}`
+- **Açıklama**: Oturum geçmişini Redis'ten temizler.
+- **Response Data**:
+  ```json
+  { "session_id": "uuid-123-456" }
+  ```
+
+---
+
+## 4. Ürün Yönetimi (`/api/products`) - [Admin]
+
+### GET `/api/products/`
+- **Açıklama**: Tüm ürünleri listeler.
+- **Response Data**:
+  ```json
+  [
+    {
+      "id": 101,
+      "name": "Kablosuz Mouse",
+      "sku": "MS-001",
+      "description": "Ergonomik tasarım",
+      "price": 250.00,
+      "category": "Elektronik",
+      "image_url": "https://cdn.kobi.ai/img/ms001.jpg",
+      "is_active": true,
+      "created_at": "2026-05-10T12:00:00Z"
+    }
+  ]
+  ```
+
+### POST `/api/products/`
+- **Request Body**:
+  ```json
+  {
+    "name": "Yeni Ürün",
+    "sku": "NEW-PRD-01",
+    "price": 1500.0,
+    "description": "Ürün açıklaması",
+    "category": "Ev Eşyası",
+    "image_url": "https://..."
+  }
+  ```
+- **Response Data**: Oluşturulan ürün objesi (id dahil).
+
+### PUT `/api/products/{id}`
+- **Request Body**: `ProductUpdate` (Tüm alanlar opsiyonel).
+- **Response Data**: Güncellenmiş ürün objesi.
+
+### DELETE `/api/products/{id}`
+- **Açıklama**: Ürünü siler.
+- **Response Data**: `{ "id": 101 }`
+
+---
+
+## 5. Stok ve Envanter (`/api/inventory`) - [Admin]
+
+### GET `/api/inventory/`
+- **Açıklama**: Stok kayıtlarını listeler.
+- **Query Params**: `page`, `size`.
+- **Response Data**:
+  ```json
+  [
+    {
+      "id": 1,
+      "product_id": 101,
+      "quantity": 50,
+      "reserved_quantity": 5,
+      "available_quantity": 45,
+      "low_stock_threshold": 10,
+      "product_name": "Kablosuz Mouse",
+      "product_sku": "MS-001"
+    }
+  ]
+  ```
+
+### GET `/api/inventory/low-stock`
+- **Açıklama**: Kritik stok seviyesindeki ürünleri getirir.
+- **Response Data**:
+  ```json
+  [
+    {
+      "product_id": 105,
+      "product_name": "Klavye",
+      "product_sku": "KB-001",
+      "current_quantity": 3,
+      "threshold": 5,
+      "severity": "critical"
+    }
+  ]
+  ```
+
+### PUT `/api/inventory/{product_id}`
+- **Request Body**:
+  ```json
+  {
+    "quantity": 100,
+    "low_stock_threshold": 15
+  }
+  ```
+- **Response Data**: Güncel `InventoryResponse`.
+
+---
+
+## 6. Sipariş Yönetimi (`/api/orders`)
+
+### 6.1 Müşteri Endpointleri (`/api/orders/my`)
+- **POST `/api/orders`**: Sipariş oluşturur.
+  - **Request Body**:
+    ```json
+    {
+      "items": [{ "product_id": 101, "quantity": 2 }],
+      "shipping": {
+        "full_name": "Müşteri Adı",
+        "phone": "05554443322",
+        "address": "Açık Adres...",
+        "city": "Ankara",
+        "district": "Çankaya"
+      },
+      "notes": "Sipariş notu"
+    }
+    ```
+- **GET `/api/orders/my`**: Kendi siparişlerini listeler.
+- **GET `/api/orders/my/{order_id}`**: Sipariş detayı.
+
+### 6.2 Yönetici Endpointleri (`/api/orders`) [Admin]
+- **GET `/api/orders`**: Tüm siparişler. Filtre: `status`.
+- **GET `/api/orders/{order_id}`**: Detaylı sipariş ve müşteri bilgisi.
+- **PATCH `/api/orders/{order_id}/status`**:
+  - **Request Body**: `{ "status": "shipped", "reason": "Kargoya verildi" }`
+- **GET `/api/orders/summary/today`**:
+  - **Response Data**:
+    ```json
+    {
+      "date": "2026-05-11",
+      "total_orders": 10,
+      "pending": 2,
+      "processing": 3,
+      "shipped": 4,
+      "delivered": 1,
+      "total_revenue": 2500.00
+    }
+    ```
+
+---
+
+## 7. Bildirimler (`/api/notifications`) - [Admin]
+
+### GET `/api/notifications/`
+- **Response Data**: `Array<NotificationListItem>`
+
+### GET `/api/notifications/unread`
+- **Açıklama**: Okunmamış bildirimler.
+
+### PATCH `/api/notifications/{notification_id}/read`
+- **Açıklama**: Okundu işaretler.
+- **Response Data**: `NotificationMarkReadResponse`
+
+### PATCH `/api/notifications/read-all`
+- **Response Data**: `{ "updated_count": 5 }`
+
+### GET `/api/notifications/stream` (SSE)
+- **Açıklama**: Canlı bildirim akışı (EventSource).
+- **Event**: `notification`
+- **Data**: Stringified JSON Notification objesi.
+
+---
+
+## 8. Sevkiyat ve Kargo (`/api/shipments`) - [Admin]
+
+### POST `/api/shipments/`
+- **Açıklama**: Kargo kaydı oluşturur.
+
+### GET `/api/shipments/{tracking_number}`
+- **Response Data**:
+  ```json
+  {
+    "tracking_number": "TRK-001",
+    "status": "in_transit",
+    "location": "İstanbul Hub",
+    "estimated_delivery_date": "2026-05-13"
   }
   ```
 
 ---
 
-## 8. Sistem Endpoints
-
-| Method | URL | Auth | Domain | Açıklama |
-| :--- | :--- | :--- | :--- | :--- |
-| GET | `/health` | Public | Health | Servis durum kontrolü. |
-
----
-
-## ⚠️ Önemli Hata Kodları (Key Listesi)
-
-| Key | HTTP | Açıklama |
-| :--- | :--- | :--- |
-| `VALIDATION_ERROR` | 422 | Pydantic validasyonu başarısız. |
-| `UNAUTHORIZED` | 401 | Oturum yok veya geçersiz. |
-| `FORBIDDEN` | 403 | Yetki yetersiz (Admin değil). |
-| `NOT_FOUND` | 404 | Kayıt bulunamadı. |
-| `CONFLICT` | 409 | Veri çakışması (Ör: Email kullanımda). |
-| `INSUFFICIENT_STOCK`| 409 | Stok yetersiz. |
-| `INTERNAL_ERROR` | 500 | Sunucu hatası. |
+## 9. Sistem Sağlığı (`/health`)
+- **Açıklama**: Public sağlık kontrolü.
+- **Response Data**:
+  ```json
+  {
+    "status": "ok",
+    "app_name": "KOBİ Agent",
+    "version": "0.1.0",
+    "environment": "development"
+  }
+  ```
 
 ---
 
-**Son Güncelleme**: 2026-05-11
-**Dokümantasyon Durumu**: Eksiksiz / Koddan Doğrulandı.
+## Frontend Geliştirici Notları
+
+1. **Enum Değerleri**:
+   - `Order Status`: `pending`, `processing`, `shipped`, `delivered`, `cancelled`
+   - `Shipment Status`: `created`, `in_transit`, `delivered`, `delayed`, `failed`, `cancelled`
+   - `Notification Severity`: `info`, `warning`, `critical`
+2. **Hata Yakalama**: 422 hatalarında `errors` listesi üzerinden form validasyonu yapılmalıdır.
+3. **Rol Yönetimi**: `role: "admin"` dışındaki kullanıcılar `/api/products`, `/api/inventory` vb. endpointlere erişemez (403 döner).
+4. **SSE Entegrasyonu**: SSE için `EventSource` kullanılırken cookie gönderimi için `withCredentials: true` eklenmelidir.
+
+---
+*Son Güncelleme: 11 Mayıs 2026*
