@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Request
 
 from app.agent.memory import ConversationMemory
 from app.agent.orchestrator import AgentOrchestrator
-from app.core import openapi_examples
+from app.core import openapi_examples, openapi_responses
 from app.core.dependencies import CurrentUser, get_agent_orchestrator
 from app.core.rate_limit import enforce_chat_message_rate_limit
 from app.core.response_builder import success_response
@@ -33,22 +33,13 @@ def _get_memory() -> ConversationMemory:
                 message="Agent yanıtı alındı.",
             ),
         },
-        401: {
-            "description": "Yetkisiz erişim.",
-            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
-        },
+        **openapi_responses.unauthorized_response(),
         429: {
             "description": "Rate limit aşıldı.",
             "content": {"application/json": {"example": openapi_examples.RATE_LIMIT_RESPONSE}},
         },
-        422: {
-            "description": "Validasyon hatası.",
-            "content": {"application/json": {"example": openapi_examples.VALIDATION_ERROR_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.validation_error_response(),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def send_message(
@@ -95,14 +86,8 @@ async def send_message(
                 message="Konuşma geçmişi başarıyla getirildi.",
             ),
         },
-        401: {
-            "description": "Yetkisiz erişim.",
-            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.unauthorized_response(),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def get_history(
@@ -136,14 +121,8 @@ async def get_history(
                 message="Konuşma geçmişi başarıyla temizlendi.",
             ),
         },
-        401: {
-            "description": "Yetkisiz erişim.",
-            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.unauthorized_response(),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def clear_history(

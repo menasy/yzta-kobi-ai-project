@@ -4,7 +4,7 @@
 
 from fastapi import APIRouter, Depends
 
-from app.core import openapi_examples
+from app.core import openapi_examples, openapi_responses
 from app.core.dependencies import AdminUser, get_product_service
 from app.core.response_builder import success_response
 from app.schemas.product import ProductCreate, ProductUpdate
@@ -31,10 +31,7 @@ router = APIRouter()
                 message="Ürünler listelendi.",
             ),
         },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.public_get_responses(),
     },
 )
 async def get_all(
@@ -50,30 +47,12 @@ async def get_all(
     response_model=None,
     summary="Yeni ürün oluştur",
     responses={
-        201: {
-            "description": "Ürün başarıyla oluşturuldu.",
-            "content": openapi_examples.example_content(
-                data=openapi_examples.PRODUCT_EXAMPLE,
-                message="Ürün başarıyla oluşturuldu.",
-                status_code=201,
-            ),
-        },
-        401: {
-            "description": "Yetkisiz erişim.",
-            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
-        },
-        403: {
-            "description": "Admin yetkisi gerekli.",
-            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
-        },
-        422: {
-            "description": "Validasyon hatası.",
-            "content": {"application/json": {"example": openapi_examples.VALIDATION_ERROR_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.created_responses(
+            data=openapi_examples.PRODUCT_EXAMPLE,
+            message="Ürün başarıyla oluşturuldu.",
+            description="Ürün başarıyla oluşturuldu.",
+        ),
+        **openapi_responses.admin_mutation_responses(),
     },
 )
 async def create(
@@ -97,18 +76,9 @@ async def create(
                 message="Kritik stok seviyesindeki ürünler getirildi.",
             ),
         },
-        401: {
-            "description": "Yetkisiz erişim.",
-            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
-        },
-        403: {
-            "description": "Admin yetkisi gerekli.",
-            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.unauthorized_response(),
+        **openapi_responses.forbidden_response(),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def get_low_stock(
@@ -132,14 +102,8 @@ async def get_low_stock(
                 message="Ürün detayı getirildi.",
             ),
         },
-        404: {
-            "description": "Ürün bulunamadı.",
-            "content": {"application/json": {"example": openapi_examples.NOT_FOUND_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.not_found_responses(description="Ürün bulunamadı."),
+        **openapi_responses.public_get_responses(),
     },
 )
 async def get_by_id(
@@ -162,26 +126,8 @@ async def get_by_id(
                 message="Ürün güncellendi.",
             ),
         },
-        401: {
-            "description": "Yetkisiz erişim.",
-            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
-        },
-        403: {
-            "description": "Admin yetkisi gerekli.",
-            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
-        },
-        404: {
-            "description": "Ürün bulunamadı.",
-            "content": {"application/json": {"example": openapi_examples.NOT_FOUND_RESPONSE}},
-        },
-        422: {
-            "description": "Validasyon hatası.",
-            "content": {"application/json": {"example": openapi_examples.VALIDATION_ERROR_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.not_found_responses(description="Ürün bulunamadı."),
+        **openapi_responses.admin_mutation_responses(),
     },
 )
 async def update(
@@ -206,22 +152,10 @@ async def update(
                 message="Ürün silindi.",
             ),
         },
-        401: {
-            "description": "Yetkisiz erişim.",
-            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
-        },
-        403: {
-            "description": "Admin yetkisi gerekli.",
-            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
-        },
-        404: {
-            "description": "Ürün bulunamadı.",
-            "content": {"application/json": {"example": openapi_examples.NOT_FOUND_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.not_found_responses(description="Ürün bulunamadı."),
+        **openapi_responses.unauthorized_response(),
+        **openapi_responses.forbidden_response(),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def delete(

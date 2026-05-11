@@ -3,7 +3,7 @@
 
 from fastapi import APIRouter, Depends, Query
 
-from app.core import openapi_examples
+from app.core import openapi_examples, openapi_responses
 from app.core.dependencies import AdminUser, CurrentUser, get_order_service
 from app.core.response_builder import success_response
 from app.schemas.order import CustomerOrderCreate, OrderStatusUpdate
@@ -22,34 +22,19 @@ router = APIRouter()
         "direct checkout request'iyle siparişe dönüştürür. Cart/guest sipariş desteklenmez."
     ),
     responses={
-        201: {
-            "description": "Sipariş oluşturuldu.",
-            "content": openapi_examples.example_content(
-                data=openapi_examples.CUSTOMER_ORDER_RESPONSE_EXAMPLE,
-                message="Sipariş oluşturuldu.",
-                status_code=201,
-            ),
-        },
-        401: {
-            "description": "Login gerekli.",
-            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
-        },
-        403: {
-            "description": "Customer hesabı gerekli.",
-            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
-        },
+        **openapi_responses.created_responses(
+            data=openapi_examples.CUSTOMER_ORDER_RESPONSE_EXAMPLE,
+            message="Sipariş oluşturuldu.",
+            description="Sipariş oluşturuldu.",
+        ),
+        **openapi_responses.unauthorized_response(description="Login gerekli."),
+        **openapi_responses.forbidden_response(description="Customer hesabı gerekli."),
         409: {
             "description": "Stok yetersiz.",
             "content": {"application/json": {"example": openapi_examples.INSUFFICIENT_STOCK_RESPONSE}},
         },
-        422: {
-            "description": "Validasyon hatası.",
-            "content": {"application/json": {"example": openapi_examples.VALIDATION_ERROR_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.validation_error_response(),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def create_customer_order(
@@ -77,18 +62,9 @@ async def create_customer_order(
                 message="Siparişler listelendi.",
             ),
         },
-        401: {
-            "description": "Login gerekli.",
-            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
-        },
-        403: {
-            "description": "Customer hesabı gerekli.",
-            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.unauthorized_response(description="Login gerekli."),
+        **openapi_responses.forbidden_response(description="Customer hesabı gerekli."),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def list_my_orders(
@@ -119,22 +95,10 @@ async def list_my_orders(
                 message="Sipariş detayı alındı.",
             ),
         },
-        401: {
-            "description": "Login gerekli.",
-            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
-        },
-        403: {
-            "description": "Customer hesabı gerekli.",
-            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
-        },
-        404: {
-            "description": "Sipariş bulunamadı.",
-            "content": {"application/json": {"example": openapi_examples.NOT_FOUND_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.unauthorized_response(description="Login gerekli."),
+        **openapi_responses.forbidden_response(description="Customer hesabı gerekli."),
+        **openapi_responses.not_found_responses(description="Sipariş bulunamadı."),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def get_my_order_detail(
@@ -158,18 +122,9 @@ async def get_my_order_detail(
                 message="Siparişler listelendi.",
             ),
         },
-        401: {
-            "description": "Yetkisiz erişim.",
-            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
-        },
-        403: {
-            "description": "Admin yetkisi gerekli.",
-            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.unauthorized_response(),
+        **openapi_responses.forbidden_response(),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def list_orders(
@@ -195,18 +150,9 @@ async def list_orders(
                 message="Günlük özet hazır.",
             ),
         },
-        401: {
-            "description": "Yetkisiz erişim.",
-            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
-        },
-        403: {
-            "description": "Admin yetkisi gerekli.",
-            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.unauthorized_response(),
+        **openapi_responses.forbidden_response(),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def get_today_summary(
@@ -229,22 +175,10 @@ async def get_today_summary(
                 message="Sipariş detayı alındı.",
             ),
         },
-        401: {
-            "description": "Yetkisiz erişim.",
-            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
-        },
-        403: {
-            "description": "Admin yetkisi gerekli.",
-            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
-        },
-        404: {
-            "description": "Sipariş bulunamadı.",
-            "content": {"application/json": {"example": openapi_examples.NOT_FOUND_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.unauthorized_response(),
+        **openapi_responses.forbidden_response(),
+        **openapi_responses.not_found_responses(description="Sipariş bulunamadı."),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def get_order_detail(
@@ -268,26 +202,8 @@ async def get_order_detail(
                 message="Sipariş durumu güncellendi.",
             ),
         },
-        401: {
-            "description": "Yetkisiz erişim.",
-            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
-        },
-        403: {
-            "description": "Admin yetkisi gerekli.",
-            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
-        },
-        404: {
-            "description": "Sipariş bulunamadı.",
-            "content": {"application/json": {"example": openapi_examples.NOT_FOUND_RESPONSE}},
-        },
-        422: {
-            "description": "Validasyon hatası.",
-            "content": {"application/json": {"example": openapi_examples.VALIDATION_ERROR_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.not_found_responses(description="Sipariş bulunamadı."),
+        **openapi_responses.admin_mutation_responses(),
     },
 )
 async def update_order_status(

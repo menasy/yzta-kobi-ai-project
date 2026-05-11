@@ -7,7 +7,11 @@ from fastapi import APIRouter, Depends, Query
 
 from app.core.dependencies import AdminUser, get_inventory_service
 from app.core.response_builder import success_response
-from app.core import openapi_examples
+from app.core import openapi_examples, openapi_responses
+from app.mappers.inventory_mapper import (
+    to_inventory_response,
+    to_inventory_with_product_responses,
+)
 from app.schemas.inventory import InventoryUpdate
 from app.services.inventory_service import InventoryService
 
@@ -30,9 +34,9 @@ router = APIRouter()
                 }
             },
         },
-        401: {"description": "Yetkisiz erişim.", "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}}},
-        403: {"description": "Admin yetkisi gerekli.", "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}}},
-        500: {"description": "Beklenmeyen sunucu hatası.", "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}}},
+        **openapi_responses.unauthorized_response(),
+        **openapi_responses.forbidden_response(),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def list_inventory(
@@ -48,7 +52,7 @@ async def list_inventory(
     """
     items = await service.get_all_with_product(skip=skip, limit=limit)
     return success_response(
-        data=items,
+        data=to_inventory_with_product_responses(items),
         message="Stok kayıtları listelendi.",
     )
 
@@ -69,9 +73,9 @@ async def list_inventory(
                 }
             },
         },
-        401: {"description": "Yetkisiz erişim.", "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}}},
-        403: {"description": "Admin yetkisi gerekli.", "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}}},
-        500: {"description": "Beklenmeyen sunucu hatası.", "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}}},
+        **openapi_responses.unauthorized_response(),
+        **openapi_responses.forbidden_response(),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def get_low_stock_alerts(
@@ -86,7 +90,7 @@ async def get_low_stock_alerts(
     """
     items = await service.get_low_stock_items()
     return success_response(
-        data=items,
+        data=to_inventory_with_product_responses(items),
         message="Kritik stok uyarıları getirildi.",
     )
 
@@ -107,25 +111,8 @@ async def get_low_stock_alerts(
                 }
             },
         },
-        404: {
-            "description": "Stok kaydı bulunamadı.",
-            "content": {
-                "application/json": {
-                    "example": openapi_examples.NOT_FOUND_RESPONSE
-                }
-            },
-        },
-        401: {"description": "Yetkisiz erişim.", "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}}},
-        403: {"description": "Admin yetkisi gerekli.", "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}}},
-        422: {
-            "description": "Validasyon hatası.",
-            "content": {
-                "application/json": {
-                    "example": openapi_examples.VALIDATION_ERROR_RESPONSE
-                }
-            },
-        },
-        500: {"description": "Beklenmeyen sunucu hatası.", "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}}},
+        **openapi_responses.not_found_responses(description="Stok kaydı bulunamadı."),
+        **openapi_responses.admin_mutation_responses(),
     },
 )
 async def update_inventory(
@@ -147,6 +134,6 @@ async def update_inventory(
         low_stock_threshold=data.low_stock_threshold,
     )
     return success_response(
-        data=inventory,
+        data=to_inventory_response(inventory),
         message="Stok güncellendi.",
     )

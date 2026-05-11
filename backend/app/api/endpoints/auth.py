@@ -4,7 +4,7 @@
 
 from fastapi import APIRouter, Depends, Request
 
-from app.core import openapi_examples
+from app.core import openapi_examples, openapi_responses
 from app.core.cookie import (
     clear_auth_cookies,
     read_refresh_token,
@@ -29,14 +29,11 @@ router = APIRouter()
         "Parola hashlenerek saklanır, response'ta hassas veri dönmez."
     ),
     responses={
-        201: {
-            "description": "Kullanıcı başarıyla oluşturuldu.",
-            "content": openapi_examples.example_content(
-                data=openapi_examples.USER_EXAMPLE,
-                message="Kullanıcı başarıyla oluşturuldu.",
-                status_code=201,
-            ),
-        },
+        **openapi_responses.created_responses(
+            data=openapi_examples.USER_EXAMPLE,
+            message="Kullanıcı başarıyla oluşturuldu.",
+            description="Kullanıcı başarıyla oluşturuldu.",
+        ),
         409: {
             "description": "Email zaten kayıtlı.",
             "content": {
@@ -49,14 +46,8 @@ router = APIRouter()
                 }
             },
         },
-        422: {
-            "description": "Validasyon hatası.",
-            "content": {"application/json": {"example": openapi_examples.VALIDATION_ERROR_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.validation_error_response(),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def register(
@@ -81,22 +72,10 @@ async def register(
             "description": "Giriş başarılı. HttpOnly cookie'ler set edildi.",
             "content": openapi_examples.example_content(message="Giriş başarılı."),
         },
-        401: {
-            "description": "Hatalı şifre veya email.",
-            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
-        },
-        403: {
-            "description": "Kullanıcı pasif.",
-            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
-        },
-        422: {
-            "description": "Validasyon hatası.",
-            "content": {"application/json": {"example": openapi_examples.VALIDATION_ERROR_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.unauthorized_response(description="Hatalı şifre veya email."),
+        **openapi_responses.forbidden_response(description="Kullanıcı pasif."),
+        **openapi_responses.validation_error_response(),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def login(
@@ -133,18 +112,9 @@ async def login(
             "description": "Token başarıyla yenilendi.",
             "content": openapi_examples.example_content(message="Token başarıyla yenilendi."),
         },
-        401: {
-            "description": "Refresh token bulunamadı veya geçersiz.",
-            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
-        },
-        403: {
-            "description": "Kullanıcı pasif.",
-            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.unauthorized_response(description="Refresh token bulunamadı veya geçersiz."),
+        **openapi_responses.forbidden_response(description="Kullanıcı pasif."),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def refresh(
@@ -182,10 +152,7 @@ async def refresh(
             "description": "Çıkış başarılı.",
             "content": openapi_examples.example_content(message="Çıkış başarılı."),
         },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.internal_error_response(),
     },
 )
 async def logout():
@@ -210,18 +177,9 @@ async def logout():
                 message="Kullanıcı bilgisi başarıyla getirildi.",
             ),
         },
-        401: {
-            "description": "Yetkisiz erişim.",
-            "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}},
-        },
-        403: {
-            "description": "Kullanıcı pasif.",
-            "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}},
-        },
-        500: {
-            "description": "Beklenmeyen sunucu hatası.",
-            "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}},
-        },
+        **openapi_responses.unauthorized_response(),
+        **openapi_responses.forbidden_response(description="Kullanıcı pasif."),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def get_me(

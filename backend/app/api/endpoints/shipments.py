@@ -4,7 +4,7 @@
 
 from fastapi import APIRouter
 
-from app.core import openapi_examples
+from app.core import openapi_examples, openapi_responses
 from app.core.dependencies import AdminUser
 from app.core.response_builder import success_response
 
@@ -20,9 +20,9 @@ router = APIRouter()
             "description": "Sevkiyat kaydı oluşturuldu.",
             "content": openapi_examples.example_content(message="Sevkiyat kaydı oluşturuldu."),
         },
-        401: {"description": "Yetkisiz erişim.", "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}}},
-        403: {"description": "Admin yetkisi gerekli.", "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}}},
-        500: {"description": "Beklenmeyen sunucu hatası.", "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}}},
+        **openapi_responses.unauthorized_response(),
+        **openapi_responses.forbidden_response(),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def create_shipment(
@@ -43,9 +43,9 @@ async def create_shipment(
                 message="Kargo bilgisi alındı.",
             ),
         },
-        401: {"description": "Yetkisiz erişim.", "content": {"application/json": {"example": openapi_examples.UNAUTHORIZED_RESPONSE}}},
-        403: {"description": "Admin yetkisi gerekli.", "content": {"application/json": {"example": openapi_examples.FORBIDDEN_RESPONSE}}},
-        500: {"description": "Beklenmeyen sunucu hatası.", "content": {"application/json": {"example": openapi_examples.INTERNAL_ERROR_RESPONSE}}},
+        **openapi_responses.unauthorized_response(),
+        **openapi_responses.forbidden_response(),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def track_shipment(

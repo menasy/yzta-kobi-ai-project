@@ -10,7 +10,11 @@ from app.core.config import get_settings
 from app.core.dependencies import AdminUser, get_notification_service
 from app.core.logger import get_logger
 from app.core.response_builder import success_response
-from app.core import openapi_examples
+from app.core import openapi_examples, openapi_responses
+from app.mappers.notification_mapper import (
+    to_notification_list_items,
+    to_notification_mark_read_response,
+)
 from app.services.notification_publisher import NOTIFICATION_CHANNEL
 from app.services.notification_service import NotificationService
 
@@ -21,7 +25,19 @@ router = APIRouter()
 # Endpoint adını 'daily-summary' olarak güncelledim ki çakışma ihtimali kalmasın
 @router.get(
     "/daily-summary",
-    summary="Günlük gecikme özeti getir"
+    summary="Günlük gecikme özeti getir",
+    responses={
+        200: {
+            "description": "Özet rapor hazırlandı.",
+            "content": openapi_examples.example_content(
+                data={"summary": "Bugun 2 kargo gecikmesi tespit edildi."},
+                message="Özet rapor hazırlandı.",
+            ),
+        },
+        **openapi_responses.unauthorized_response(),
+        **openapi_responses.forbidden_response(),
+        **openapi_responses.internal_error_response(),
+    },
 )
 async def get_delay_summary(
     admin: AdminUser,
@@ -40,6 +56,18 @@ async def get_delay_summary(
     "/unread",
     response_model=None,
     summary="Okunmamış bildirimleri listele",
+    responses={
+        200: {
+            "description": "Okunmamış bildirimler listelendi.",
+            "content": openapi_examples.example_content(
+                data=[openapi_examples.NOTIFICATION_LIST_ITEM_EXAMPLE],
+                message="Okunmamış bildirimler listelendi.",
+            ),
+        },
+        **openapi_responses.unauthorized_response(),
+        **openapi_responses.forbidden_response(),
+        **openapi_responses.internal_error_response(),
+    },
 )
 async def list_unread_notifications(
     admin: AdminUser,
@@ -48,7 +76,10 @@ async def list_unread_notifications(
     service: NotificationService = Depends(get_notification_service),
 ):
     notifications = await service.list_unread(skip=skip, limit=limit)
-    return success_response(data=notifications, message="Okunmamış bildirimler listelendi.")
+    return success_response(
+        data=to_notification_list_items(notifications),
+        message="Okunmamış bildirimler listelendi.",
+    )
 
 
 @router.get(
@@ -67,6 +98,9 @@ async def list_unread_notifications(
                 }
             }
         },
+        **openapi_responses.unauthorized_response(),
+        **openapi_responses.forbidden_response(),
+        **openapi_responses.internal_error_response(),
     },
 )
 async def list_notifications(
@@ -76,7 +110,10 @@ async def list_notifications(
     service: NotificationService = Depends(get_notification_service),
 ):
     notifications = await service.list_notifications(skip=skip, limit=limit)
-    return success_response(data=notifications, message="Bildirimler listelendi.")
+    return success_response(
+        data=to_notification_list_items(notifications),
+        message="Bildirimler listelendi.",
+    )
 
 
 @router.get(
@@ -137,7 +174,22 @@ async def notification_stream(
     )
 
 
-@router.patch("/read-all", summary="Tüm bildirimleri okundu işaretle")
+@router.patch(
+    "/read-all",
+    summary="Tüm bildirimleri okundu işaretle",
+    responses={
+        200: {
+            "description": "Bildirimler okundu olarak işaretlendi.",
+            "content": openapi_examples.example_content(
+                data={"updated_count": 12},
+                message="12 bildirim okundu.",
+            ),
+        },
+        **openapi_responses.unauthorized_response(),
+        **openapi_responses.forbidden_response(),
+        **openapi_responses.internal_error_response(),
+    },
+)
 async def mark_all_notifications_read(
     admin: AdminUser,
     service: NotificationService = Depends(get_notification_service),
@@ -146,11 +198,30 @@ async def mark_all_notifications_read(
     return success_response(data={"updated_count": count}, message=f"{count} bildirim okundu.")
 
 
-@router.patch("/{notification_id}/read", summary="Bildirimi okundu işaretle")
+@router.patch(
+    "/{notification_id}/read",
+    summary="Bildirimi okundu işaretle",
+    responses={
+        200: {
+            "description": "Bildirim okundu olarak işaretlendi.",
+            "content": openapi_examples.example_content(
+                data=openapi_examples.NOTIFICATION_MARK_READ_EXAMPLE,
+                message="Bildirim okundu olarak işaretlendi.",
+            ),
+        },
+        **openapi_responses.unauthorized_response(),
+        **openapi_responses.forbidden_response(),
+        **openapi_responses.not_found_responses(description="Bildirim bulunamadı."),
+        **openapi_responses.internal_error_response(),
+    },
+)
 async def mark_notification_read(
     notification_id: int,
     admin: AdminUser,
     service: NotificationService = Depends(get_notification_service),
 ):
     notification = await service.mark_read(notification_id)
-    return success_response(data=notification, message="Bildirim okundu olarak işaretlendi.")
+    return success_response(
+        data=to_notification_mark_read_response(notification),
+        message="Bildirim okundu olarak işaretlendi.",
+    )
