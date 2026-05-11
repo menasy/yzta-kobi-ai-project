@@ -1,18 +1,23 @@
 import { ResponsiveContainer, ResponsiveSection } from "@repo/ui-web";
 import type { Metadata } from "next";
+import { CustomerProductDetail } from "./_components/CustomerProductDetail";
+
 
 export const metadata: Metadata = {
   title: "Ürün Detayı | KOBİ AI",
 };
 
-export default function ProductDetailPage() {
+export default async function ProductDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  
   return (
     <ResponsiveContainer>
-      <ResponsiveSection className="flex min-h-[400px] items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-extrabold tracking-tight opacity-20">Ürün Detayı TODO</h1>
-          <p className="mt-4 text-muted-foreground">Müşteri ürün detay ve satın alma ekranı yakında burada olacak.</p>
-        </div>
+      <ResponsiveSection className="pt-10 pb-20">
+        <CustomerProductDetail productId={id} />
       </ResponsiveSection>
     </ResponsiveContainer>
   );

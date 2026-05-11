@@ -8,15 +8,17 @@ export const metadata: Metadata = {
   description: "Müşteri siparişi detayları",
 };
 
-export default function MyOrderDetailsPage({
+export default async function MyOrderDetailsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
+
   return (
     <ResponsiveContainer>
       <ResponsiveSection>
-        <CustomerOrderDetail orderId={params.id} />
+        <CustomerOrderDetail orderId={id} />
       </ResponsiveSection>
     </ResponsiveContainer>
   );

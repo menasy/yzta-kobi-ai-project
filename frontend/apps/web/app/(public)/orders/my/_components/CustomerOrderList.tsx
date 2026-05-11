@@ -13,7 +13,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  Skeleton,
+  GlobalLoader,
 } from "@repo/ui-web";
 import { AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -44,11 +44,7 @@ export function CustomerOrderList() {
           <CardTitle>Siparişlerim</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
+          <GlobalLoader className="py-12" />
         </CardContent>
       </Card>
     );

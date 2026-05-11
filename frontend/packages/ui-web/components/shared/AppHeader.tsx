@@ -10,6 +10,7 @@ import { Menu } from "lucide-react";
 import { Logo } from "../brand/logo";
 import { Avatar, AvatarFallback, AvatarImage } from "../shadcn/avatar";
 import { Button } from "../shadcn/button";
+import { Skeleton } from "../shadcn/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../shadcn/dropdown-menu";
+
 import {
   Sheet,
   SheetContent,
@@ -171,7 +173,11 @@ export function AppHeader({
                 {item.label}
               </Link>
             )) : (
-              <span className="text-xs text-muted-foreground px-4">Menü Yükleniyor...</span>
+              <div className="flex items-center gap-4 px-4">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-14" />
+              </div>
             )}
 
             {/* Premium Indicator System */}

@@ -1,9 +1,11 @@
+import type { ApiResponse } from "@repo/core";
 import { productsClient } from "../../clients/products-client";
 import { toRequestParams } from "../../clients/request-params";
 import type {
   CreateProductResponse,
   DeleteProductResponse,
   LowStockProductsResponse,
+  Product,
   ProductCreateRequest,
   ProductId,
   ProductListParams,
@@ -11,6 +13,8 @@ import type {
   ProductsResponse,
   UpdateProductResponse,
 } from "../types/products.types";
+
+export type ProductResponse = ApiResponse<Product>;
 
 const PRODUCTS_ENDPOINTS = {
   list: "",
@@ -24,6 +28,12 @@ export function getProducts(
   return productsClient.get<ProductsResponse["data"]>(
     PRODUCTS_ENDPOINTS.list,
     { params: toRequestParams(params) },
+  );
+}
+
+export function getProduct(id: ProductId): Promise<ProductResponse> {
+  return productsClient.get<ProductResponse["data"]>(
+    PRODUCTS_ENDPOINTS.byId(id),
   );
 }
 

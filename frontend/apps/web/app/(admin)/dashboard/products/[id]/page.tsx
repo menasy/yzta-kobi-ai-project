@@ -1,13 +1,12 @@
 import { ResponsiveContainer, ResponsiveSection } from "@repo/ui-web";
 import type { Metadata } from "next";
-
-import { AdminOrderDetail } from "./_components/AdminOrderDetail";
+import { AdminProductDetail } from "./_components/AdminProductDetail";
 
 export const metadata: Metadata = {
-  title: "Sipariş Detayı | KOBİ AI",
+  title: "Ürün Detayı | KOBİ AI",
 };
 
-export default async function OrderDetailsPage({
+export default async function ProductDetailsPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -17,7 +16,7 @@ export default async function OrderDetailsPage({
   return (
     <ResponsiveContainer>
       <ResponsiveSection>
-        <AdminOrderDetail orderId={id} />
+        <AdminProductDetail productId={id} />
       </ResponsiveSection>
     </ResponsiveContainer>
   );

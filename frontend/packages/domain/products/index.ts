@@ -22,5 +22,13 @@ export {
 export { useCreateProduct } from "./hooks/useCreateProduct";
 export { useDeleteProduct } from "./hooks/useDeleteProduct";
 export { useLowStockProducts } from "./hooks/useLowStockProducts";
+export { useProduct } from "./hooks/useProduct";
 export { useProducts } from "./hooks/useProducts";
 export { useUpdateProduct } from "./hooks/useUpdateProduct";
+
+export {
+  ProductCreateSchema,
+  ProductUpdateSchema,
+  type ProductCreateFormValues,
+  type ProductUpdateFormValues,
+} from "./schemas/product.schema";
