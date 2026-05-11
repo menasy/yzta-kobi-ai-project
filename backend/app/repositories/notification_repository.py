@@ -1,4 +1,3 @@
-# repositories/notification_repository.py
 # Notification tablosuna özel DB sorguları.
 # Sadece veri erişimi — iş mantığı yok.
 
@@ -126,4 +125,49 @@ class NotificationRepository(BaseRepository[Notification]):
             .limit(1)
         )
         return result.scalar_one_or_none() is not None
+    
 
+    async def has_recent_unread_for_shipment(
+        self,
+        shipment_id: int,
+        *,
+        notification_type: str = "SHIPMENT_DELAY",
+        hours: int = 1,
+    ) -> bool:
+        """
+        Belirli bir kargo için son N saat içinde okunmamış bildirim var mı kontrol eder.
+        
+        payload JSONB alanındaki shipment_id değerine göre kontrol yapar.
+        """
+        since = datetime.now(tz=timezone.utc) - timedelta(hours=hours)
+        result = await self.session.execute(
+            select(Notification.id)
+            .where(
+                and_(
+                    Notification.type == notification_type,
+                    Notification.is_read.is_(False),
+                    Notification.created_at >= since,
+                    cast(
+                        Notification.payload["shipment_id"].as_string(),
+                        SqlInteger,
+                    )
+                    == shipment_id,
+                )
+            )
+            .limit(1)
+        )
+        return result.scalar_one_or_none() is not None
+
+
+   
+    async def get_notifications_by_type_and_date(self, notification_type: str, since_date: datetime):
+        """Belirli bir türdeki ve tarihten sonraki bildirimleri getirir."""
+        from sqlalchemy import select
+        
+        query = select(self.model).where(
+            self.model.type == notification_type,
+            self.model.created_at >= since_date
+        ).order_by(self.model.created_at.desc())
+        
+        result = await self.session.execute(query)
+        return result.scalars().all()
