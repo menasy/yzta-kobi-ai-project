@@ -1,0 +1,61 @@
+import pandas as pd
+from sqlalchemy import text
+from sklearn.ensemble import RandomForestRegressor
+from datetime import datetime, timedelta
+
+class ForecastEngine:
+    def __init__(self, session):
+        self.session = session
+
+    async def get_sales_data(self):
+        # 1. Veritabanından satış verilerini çek
+        result = await self.session.execute(text("""
+            SELECT product_id, quantity, sale_date 
+            FROM sales 
+            ORDER BY sale_date ASC
+        """))
+        columns = ['product_id', 'quantity', 'sale_date']
+        return pd.DataFrame(result.fetchall(), columns=columns)
+
+    def prepare_data(self, df):
+        # 2. Zaman özelliklerini çıkar (Feature Engineering)
+        df['sale_date'] = pd.to_datetime(df['sale_date'])
+        df['day_of_week'] = df['sale_date'].dt.dayofweek  # 0=Pazartesi, 6=Pazar
+        df['is_weekend'] = df['day_of_week'].apply(lambda x: 1 if x >= 5 else 0)
+        return df
+
+    async def predict_next_week(self, product_id):
+        # Veriyi al ve hazırla
+        raw_data = await self.get_sales_data()
+        df = self.prepare_data(raw_data)
+        
+        # Sadece ilgili ürünün verisine odaklan
+        product_df = df[df['product_id'] == product_id].copy()
+        
+        if len(product_df) < 7:
+            return "Yetersiz veri."
+
+        # Model Eğitimi (X: Özellikler, y: Hedef satış miktarı)
+        X = product_df[['day_of_week', 'is_weekend']]
+        y = product_df['quantity']
+        
+        model = RandomForestRegressor(n_estimators=100, random_state=42)
+        model.fit(X, y)
+
+        # Gelecek 7 gün için tahmin oluştur
+        predictions = []
+        today = datetime.now()
+        
+        for i in range(1, 8):
+            next_day = today + timedelta(days=i)
+            day_of_week = next_day.weekday()
+            is_weekend = 1 if day_of_week >= 5 else 0
+            
+            # Tahmin yap
+            pred_qty = model.predict([[day_of_week, is_weekend]])[0]
+            predictions.append({
+                "date": next_day.strftime('%Y-%m-%d'),
+                "estimated_sales": round(pred_qty, 2)
+            })
+            
+        return predictions

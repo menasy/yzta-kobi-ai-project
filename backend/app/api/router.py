@@ -11,6 +11,7 @@ from app.api.endpoints import shipments
 from app.api.endpoints import chat
 from app.api.endpoints import inventory
 from app.api.endpoints import notifications
+from app.api.endpoints import forecast
 
 api_router = APIRouter()
 
@@ -28,6 +29,5 @@ api_router.include_router(notifications.router, prefix="/notifications", tags=["
 api_router.include_router(orders.router, prefix="/orders", tags=["Sipariş Yönetimi"])
 api_router.include_router(shipments.router, prefix="/shipments", tags=["Sevkiyat Yönetimi"])
 
-
-
-
+#api_router.include_router(forecast.router, prefix="/api/v1/forecast", tags=["Forecast"])
+api_router.include_router(forecast.router, prefix="/forecast", tags=["Tahminleme"])
