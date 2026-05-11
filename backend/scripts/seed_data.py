@@ -2,7 +2,7 @@
 # Geliştirme ve demo için örnek veri oluşturma scripti.
 # Async SQLAlchemy session kullanır.
 # Mevcut models ve security altyapısı ile uyumludur.
-# İdempotent: tekrar çalıştırıldığında duplicate veri üretmez (admin email kontrolü).
+# İdempotent: tekrar çalıştırıldığında duplicate veri üretmez.
 # Admin bilgisi .env üzerinden override edilebilir.
 # print() yerine kontrollü çıktı üretimi (logging + stdout özet).
 
@@ -29,6 +29,7 @@ from app.models.inventory_movement import InventoryMovement
 from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.order_status_history import OrderStatusHistory
+from app.models.product import Product
 from app.models.shipment import Shipment
 from app.models.shipment_event import ShipmentEvent
 from app.models.user import User
@@ -42,57 +43,87 @@ logger = get_logger("seed_data")
 
 SEED_ADMIN_EMAIL = os.environ.get("SEED_ADMIN_EMAIL", "admin@kobi.local")
 SEED_ADMIN_PASSWORD = os.environ.get("SEED_ADMIN_PASSWORD", "Admin123!")
+SEED_CUSTOMER_PASSWORD = os.environ.get("SEED_CUSTOMER_PASSWORD", "Customer123!")
 
 # ── Ürün Verileri ────────────────────────────────────────
+# Sadece birim bazlı satılan, demo için sade kadın kooperatifi ürünleri.
+# Kategoriler frontend kategori yapısına uygun tutulmuştur:
+# Baharatlar, Reçel, Zeytinyağı, Pekmez.
 
 PRODUCTS_DATA: list[dict] = [
-    {"name": "Domates", "sku": "GDA-001", "description": "Taze salkım domates, 1 kg", "price": Decimal("24.90"), "category": "Gıda"},
-    {"name": "Salatalık", "sku": "GDA-002", "description": "Taze çıtır salatalık, 1 kg", "price": Decimal("18.50"), "category": "Gıda"},
-    {"name": "Zeytinyağı (1L)", "sku": "GDA-003", "description": "Soğuk sıkım natürel sızma zeytinyağı", "price": Decimal("189.00"), "category": "Gıda"},
-    {"name": "Peynir (500g)", "sku": "GDA-004", "description": "Taze beyaz peynir, inek sütünden", "price": Decimal("79.90"), "category": "Gıda"},
-    {"name": "Bal (450g)", "sku": "GDA-005", "description": "Süzme çiçek balı, doğal", "price": Decimal("159.00"), "category": "Gıda"},
-    {"name": "Çay (1kg)", "sku": "GDA-006", "description": "Rize çayı, siyah dökme çay", "price": Decimal("89.00"), "category": "Gıda"},
-    {"name": "Un (5kg)", "sku": "GDA-007", "description": "Genel amaçlı buğday unu", "price": Decimal("54.90"), "category": "Gıda"},
-    {"name": "Pirinç (2kg)", "sku": "GDA-008", "description": "Baldo pirinç, yerli üretim", "price": Decimal("69.90"), "category": "Gıda"},
-    {"name": "Makarna (500g)", "sku": "GDA-009", "description": "Burgu makarna, durum buğdayı", "price": Decimal("14.90"), "category": "Gıda"},
-    {"name": "Tereyağı (250g)", "sku": "GDA-010", "description": "Doğal inek tereyağı", "price": Decimal("64.90"), "category": "Gıda"},
-    {"name": "Kablosuz Mouse", "sku": "ELK-001", "description": "Ergonomik kablosuz mouse, 2.4GHz", "price": Decimal("149.90"), "category": "Elektronik"},
-    {"name": "USB-C Kablo (1m)", "sku": "ELK-002", "description": "Hızlı şarj uyumlu USB-C kablo", "price": Decimal("49.90"), "category": "Elektronik"},
-    {"name": "Bluetooth Kulaklık", "sku": "ELK-003", "description": "Kulak üstü aktif gürültü engellemeli", "price": Decimal("599.00"), "category": "Elektronik"},
-    {"name": "Powerbank 10000mAh", "sku": "ELK-004", "description": "Taşınabilir şarj cihazı, çift çıkış", "price": Decimal("299.90"), "category": "Elektronik"},
-    {"name": "LED Masa Lambası", "sku": "ELK-005", "description": "Ayarlanabilir ışık, göz koruma", "price": Decimal("189.90"), "category": "Elektronik"},
-    {"name": "A4 Fotokopi Kağıdı (500 yaprak)", "sku": "OFS-001", "description": "80gr beyaz kağıt", "price": Decimal("84.90"), "category": "Ofis"},
-    {"name": "Tükenmez Kalem (10lu)", "sku": "OFS-002", "description": "Mavi tükenmez kalem seti", "price": Decimal("29.90"), "category": "Ofis"},
-    {"name": "Dosya Klasörü", "sku": "OFS-003", "description": "A4 geniş kapasiteli plastik klasör", "price": Decimal("24.90"), "category": "Ofis"},
-    {"name": "Post-it Not (5 renk)", "sku": "OFS-004", "description": "Yapışkanlı not kağıdı seti, 5x100 yaprak", "price": Decimal("39.90"), "category": "Ofis"},
-    {"name": "Silikon Kılıf (Telefon)", "sku": "AKS-001", "description": "Şeffaf telefon kılıfı, darbe emici", "price": Decimal("59.90"), "category": "Aksesuar"},
+    {
+        "name": "Nane 100 Gr",
+        "sku": "BHR-001",
+        "description": "Belen Kadın Kooperatifi üretimi kurutulmuş nane, 100 gram paket.",
+        "price": Decimal("135.00"),
+        "category": "Baharatlar",
+    },
+    {
+        "name": "Acı Pul Biber 250 Gr",
+        "sku": "BHR-002",
+        "description": "Belen Kadın Kooperatifi üretimi acı pul biber, 250 gram paket.",
+        "price": Decimal("203.00"),
+        "category": "Baharatlar",
+    },
+    {
+        "name": "Çilek Reçeli 460 Gr",
+        "sku": "RCL-001",
+        "description": "Rimmen Kadın Kooperatifi üretimi çilek reçeli, cam kavanozda 460 gram.",
+        "price": Decimal("187.50"),
+        "category": "Reçel",
+    },
+    {
+        "name": "Zeytinyağı 750 Ml",
+        "sku": "ZYT-001",
+        "description": "Rimmen Kadın Kooperatifi üretimi zeytinyağı, cam şişede 750 ml.",
+        "price": Decimal("432.00"),
+        "category": "Zeytinyağı",
+    },
+    {
+        "name": "Üzüm Pekmezi 400 Gr",
+        "sku": "PKM-001",
+        "description": "Defne Ağacı Kadın Kooperatifi üretimi üzüm pekmezi, cam kavanozda 400 gram.",
+        "price": Decimal("195.00"),
+        "category": "Pekmez",
+    },
 ]
+
+# Eski demo seed ürünleri varsa aktif listeden düşürmek için kullanılır.
+# Silme yapılmaz; eski sipariş/fk güvenliği için yalnızca pasifleştirilir.
+LEGACY_SEED_SKUS: set[str] = {
+    "GDA-001",
+    "GDA-002",
+    "GDA-003",
+    "GDA-004",
+    "GDA-005",
+    "GDA-006",
+    "GDA-007",
+    "GDA-008",
+    "GDA-009",
+    "GDA-010",
+    "ELK-001",
+    "ELK-002",
+    "ELK-003",
+    "ELK-004",
+    "ELK-005",
+    "OFS-001",
+    "OFS-002",
+    "OFS-003",
+    "OFS-004",
+    "AKS-001",
+}
 
 # ── Stok Miktarları ──────────────────────────────────────
-# İndeksi ürün sırasıyla eşleşir. Bazıları düşük stok.
+# sku bazlı tutulur; ürün sırasına bağımlı değildir.
+# PKM-001 bilinçli olarak kritik stok altında başlatılır.
 
-INVENTORY_DATA: list[dict] = [
-    {"quantity": 150, "low_stock_threshold": 20},   # Domates
-    {"quantity": 80, "low_stock_threshold": 15},     # Salatalık
-    {"quantity": 45, "low_stock_threshold": 10},     # Zeytinyağı
-    {"quantity": 60, "low_stock_threshold": 10},     # Peynir
-    {"quantity": 8, "low_stock_threshold": 10},      # Bal — DÜŞÜK STOK
-    {"quantity": 35, "low_stock_threshold": 15},     # Çay
-    {"quantity": 5, "low_stock_threshold": 10},      # Un — DÜŞÜK STOK
-    {"quantity": 40, "low_stock_threshold": 10},     # Pirinç
-    {"quantity": 200, "low_stock_threshold": 30},    # Makarna
-    {"quantity": 3, "low_stock_threshold": 10},      # Tereyağı — DÜŞÜK STOK
-    {"quantity": 25, "low_stock_threshold": 5},      # Mouse
-    {"quantity": 100, "low_stock_threshold": 20},    # USB-C Kablo
-    {"quantity": 12, "low_stock_threshold": 5},      # Kulaklık
-    {"quantity": 7, "low_stock_threshold": 5},       # Powerbank
-    {"quantity": 18, "low_stock_threshold": 5},      # Lamba
-    {"quantity": 300, "low_stock_threshold": 50},    # Kağıt
-    {"quantity": 150, "low_stock_threshold": 20},    # Kalem
-    {"quantity": 2, "low_stock_threshold": 5},       # Klasör — DÜŞÜK STOK
-    {"quantity": 90, "low_stock_threshold": 15},     # Post-it
-    {"quantity": 55, "low_stock_threshold": 10},     # Kılıf
-]
+INVENTORY_DATA: dict[str, dict] = {
+    "BHR-001": {"quantity": 25, "low_stock_threshold": 8},
+    "BHR-002": {"quantity": 18, "low_stock_threshold": 6},
+    "RCL-001": {"quantity": 10, "low_stock_threshold": 5},
+    "ZYT-001": {"quantity": 7, "low_stock_threshold": 4},
+    "PKM-001": {"quantity": 3, "low_stock_threshold": 5},
+}
 
 # ── Müşteri Verileri ─────────────────────────────────────
 
@@ -149,55 +180,102 @@ async def _seed_admin(session: AsyncSession) -> User | None:
     session.add(admin)
     await session.flush()
     await session.refresh(admin)
+
     logger.info("Admin kullanıcı oluşturuldu: %s", SEED_ADMIN_EMAIL)
     return admin
 
 
-async def _seed_products(session: AsyncSession) -> list:
-    """Ürünleri oluşturur. SKU ile duplicate kontrolü yapar."""
-    # Mevcut SKU'ları kontrol et
-    result = await session.execute(select(User).limit(1))  # simple check
-    result = await session.execute(
-        select(Inventory).limit(1)
-    )
-    existing_inv = result.scalar_one_or_none()
-    if existing_inv is not None:
-        logger.info("Ürünler zaten mevcut, atlanıyor.")
-        # Mevcut ürünleri döndür
-        result = await session.execute(select(Inventory))
-        return list(result.scalars().all())
+async def _deactivate_legacy_seed_products(session: AsyncSession) -> int:
+    """Eski demo seed ürünlerini silmeden pasifleştirir."""
+    desired_skus = {product["sku"] for product in PRODUCTS_DATA}
+    legacy_skus = LEGACY_SEED_SKUS - desired_skus
 
-    products = []
-    inventories = []
-    for idx, prod_data in enumerate(PRODUCTS_DATA):
-        product = Product(
-            name=prod_data["name"],
-            sku=prod_data["sku"],
-            description=prod_data["description"],
-            price=prod_data["price"],
-            category=prod_data["category"],
-            is_active=True,
-        )
-        session.add(product)
+    if not legacy_skus:
+        return 0
+
+    result = await session.execute(
+        select(Product).where(Product.sku.in_(legacy_skus))
+    )
+    legacy_products = list(result.scalars().all())
+
+    count = 0
+    for product in legacy_products:
+        if product.is_active:
+            product.is_active = False
+            count += 1
+
+    if count:
         await session.flush()
-        await session.refresh(product)
+        logger.info("Pasifleştirilen eski demo ürün sayısı: %d", count)
+
+    return count
+
+
+async def _seed_products(session: AsyncSession) -> list[Product]:
+    """Ürünleri ve stok kayıtlarını SKU bazlı idempotent şekilde oluşturur/günceller."""
+    await _deactivate_legacy_seed_products(session)
+
+    products: list[Product] = []
+    inventory_count = 0
+
+    for prod_data in PRODUCTS_DATA:
+        result = await session.execute(
+            select(Product).where(Product.sku == prod_data["sku"])
+        )
+        product = result.scalar_one_or_none()
+
+        if product is None:
+            product = Product(
+                name=prod_data["name"],
+                sku=prod_data["sku"],
+                description=prod_data["description"],
+                price=prod_data["price"],
+                category=prod_data["category"],
+                is_active=True,
+            )
+            session.add(product)
+            await session.flush()
+            await session.refresh(product)
+            logger.info("Ürün oluşturuldu: %s", product.sku)
+        else:
+            product.name = prod_data["name"]
+            product.description = prod_data["description"]
+            product.price = prod_data["price"]
+            product.category = prod_data["category"]
+            product.is_active = True
+            await session.flush()
+            await session.refresh(product)
+            logger.info("Ürün güncellendi: %s", product.sku)
+
         products.append(product)
 
-        # Stok kaydı oluştur
-        inv_data = INVENTORY_DATA[idx]
-        inventory = Inventory(
-            product_id=product.id,
-            quantity=inv_data["quantity"],
-            reserved_quantity=0,
-            low_stock_threshold=inv_data["low_stock_threshold"],
+        inv_data = INVENTORY_DATA[prod_data["sku"]]
+        result = await session.execute(
+            select(Inventory).where(Inventory.product_id == product.id)
         )
-        session.add(inventory)
-        await session.flush()
-        await session.refresh(inventory)
-        inventories.append(inventory)
+        inventory = result.scalar_one_or_none()
 
-    logger.info("Oluşturulan ürün sayısı: %d", len(products))
-    logger.info("Oluşturulan stok kaydı: %d", len(inventories))
+        if inventory is None:
+            inventory = Inventory(
+                product_id=product.id,
+                quantity=inv_data["quantity"],
+                reserved_quantity=0,
+                low_stock_threshold=inv_data["low_stock_threshold"],
+            )
+            session.add(inventory)
+            inventory_count += 1
+            logger.info("Stok kaydı oluşturuldu: %s", product.sku)
+        else:
+            inventory.quantity = inv_data["quantity"]
+            inventory.reserved_quantity = 0
+            inventory.low_stock_threshold = inv_data["low_stock_threshold"]
+            inventory_count += 1
+            logger.info("Stok kaydı güncellendi: %s", product.sku)
+
+        await session.flush()
+
+    logger.info("Aktif seed ürün sayısı: %d", len(products))
+    logger.info("Hazırlanan stok kaydı sayısı: %d", inventory_count)
     return products
 
 
@@ -205,12 +283,13 @@ async def _seed_customers(session: AsyncSession) -> list[Customer]:
     """Müşterileri oluşturur. Telefon ile duplicate kontrolü yapar."""
     result = await session.execute(select(Customer).limit(1))
     existing = result.scalar_one_or_none()
+
     if existing is not None:
         logger.info("Müşteriler zaten mevcut, atlanıyor.")
         result = await session.execute(select(Customer))
         return list(result.scalars().all())
 
-    customers = []
+    customers: list[Customer] = []
     for cust_data in CUSTOMERS_DATA:
         customer = Customer(
             full_name=cust_data["full_name"],
@@ -227,21 +306,31 @@ async def _seed_customers(session: AsyncSession) -> list[Customer]:
     return customers
 
 
-async def _seed_customer_users(session: AsyncSession, customers: list[Customer]) -> dict[int, User]:
+async def _seed_customer_users(
+    session: AsyncSession,
+    customers: list[Customer],
+) -> dict[int, User]:
     """Legacy müşteri kayıtları için login olabilen customer user kayıtları oluşturur."""
     customer_users: dict[int, User] = {}
 
     for customer in customers:
         email = customer.email or f"seed-customer-{customer.id}@kobi.local"
+
         result = await session.execute(select(User).where(User.email == email))
         existing = result.scalar_one_or_none()
+
         if existing is not None:
+            if existing.role != "customer":
+                logger.info(
+                    "Mevcut user customer role değil, değiştirilmeden kullanılacak: %s",
+                    existing.email,
+                )
             customer_users[customer.id] = existing
             continue
 
         user = User(
             email=email,
-            hashed_password=hash_password("Customer123!"),
+            hashed_password=hash_password(SEED_CUSTOMER_PASSWORD),
             full_name=customer.full_name,
             role="customer",
             is_active=True,
@@ -260,41 +349,41 @@ async def _seed_orders(
     admin: User,
     customers: list[Customer],
     customer_users: dict[int, User],
-    products: list,
+    products: list[Product],
 ) -> list[Order]:
     """Sipariş, sipariş kalemleri ve ilişkili kayıtları oluşturur."""
     result = await session.execute(select(Order).limit(1))
     existing = result.scalar_one_or_none()
+
     if existing is not None:
         logger.info("Siparişler zaten mevcut, atlanıyor.")
         result = await session.execute(select(Order))
         return list(result.scalars().all())
 
-    # Ürünleri DB'den çek (gerçek product nesneleri)
-    result = await session.execute(select(Product))
-    db_products = list(result.scalars().all())
-
-    if not db_products:
+    if not products:
         logger.warning("Ürün bulunamadı, sipariş oluşturma atlanıyor.")
         return []
 
-    # Sipariş tanımları: (customer_idx, status, days_ago, items: [(product_idx, qty)])
-    order_defs: list[tuple[int, str, int, list[tuple[int, int]]]] = [
-        (0, "delivered", 10, [(0, 3), (2, 1)]),
-        (1, "delivered", 8, [(3, 2), (5, 1)]),
-        (2, "shipped", 5, [(10, 1), (11, 2)]),
-        (3, "shipped", 4, [(6, 2), (7, 1), (8, 3)]),
-        (4, "processing", 3, [(12, 1)]),
-        (5, "processing", 2, [(14, 2), (15, 1)]),
-        (6, "pending", 1, [(1, 5), (9, 2)]),
-        (7, "pending", 1, [(4, 1), (16, 3)]),
-        (8, "pending", 0, [(17, 2), (18, 1)]),
-        (9, "cancelled", 6, [(19, 4)]),
-        (10, "delivered", 12, [(0, 2), (3, 1), (5, 2)]),
-        (11, "shipped", 3, [(13, 1), (11, 3)]),
+    product_by_sku = {product.sku: product for product in products}
+
+    # Sipariş tanımları:
+    # (customer_idx, status, days_ago, items: [(sku, qty)])
+    order_defs: list[tuple[int, str, int, list[tuple[str, int]]]] = [
+        (0, "delivered", 10, [("BHR-001", 2), ("RCL-001", 1)]),
+        (1, "delivered", 8, [("ZYT-001", 1), ("PKM-001", 2)]),
+        (2, "shipped", 5, [("BHR-002", 2), ("RCL-001", 1)]),
+        (3, "shipped", 4, [("BHR-001", 1), ("ZYT-001", 1)]),
+        (4, "processing", 3, [("PKM-001", 1), ("BHR-002", 1)]),
+        (5, "processing", 2, [("RCL-001", 2)]),
+        (6, "pending", 1, [("ZYT-001", 1), ("BHR-001", 3)]),
+        (7, "pending", 1, [("PKM-001", 1)]),
+        (8, "pending", 0, [("BHR-002", 1), ("RCL-001", 1)]),
+        (9, "cancelled", 6, [("BHR-001", 1)]),
+        (10, "delivered", 12, [("ZYT-001", 1), ("RCL-001", 2)]),
+        (11, "shipped", 3, [("PKM-001", 2), ("BHR-002", 1)]),
     ]
 
-    orders = []
+    orders: list[Order] = []
     total_items = 0
     total_movements = 0
     total_history = 0
@@ -303,14 +392,11 @@ async def _seed_orders(
         customer = customers[cust_idx % len(customers)]
         customer_user = customer_users[customer.id]
         placed_at = _days_ago(days)
-
-        # Sipariş numarası
         order_number = f"ORD-2026-{order_idx + 1:04d}"
 
-        # Toplam tutar hesapla
         total = Decimal("0.00")
-        for prod_idx, qty in items:
-            product = db_products[prod_idx % len(db_products)]
+        for sku, qty in items:
+            product = product_by_sku[sku]
             total += product.price * qty
 
         order = Order(
@@ -321,7 +407,7 @@ async def _seed_orders(
             notes=f"Demo sipariş #{order_idx + 1}",
             shipping_full_name=customer.full_name,
             shipping_phone=customer.phone or "0000000000",
-            shipping_address="Demo Mah. Örnek Sok. No: 1",
+            shipping_address="Demo Mah. Kooperatif Sok. No: 1",
             shipping_city="İstanbul",
             shipping_district="Kadıköy",
             shipping_postal_code="34710",
@@ -335,9 +421,8 @@ async def _seed_orders(
         await session.refresh(order)
         orders.append(order)
 
-        # Sipariş kalemleri
-        for prod_idx, qty in items:
-            product = db_products[prod_idx % len(db_products)]
+        for sku, qty in items:
+            product = product_by_sku[sku]
             item_total = product.price * qty
             order_item = OrderItem(
                 order_id=order.id,
@@ -349,31 +434,38 @@ async def _seed_orders(
             session.add(order_item)
             total_items += 1
 
-        # Sipariş durum geçmişi
         status_flow = _get_status_flow(status)
-        for flow_idx, (old_st, new_st) in enumerate(status_flow):
+        for old_status, new_status in status_flow:
             history = OrderStatusHistory(
                 order_id=order.id,
-                old_status=old_st,
-                new_status=new_st,
+                old_status=old_status,
+                new_status=new_status,
                 changed_by_user_id=admin.id,
-                reason=f"Otomatik geçiş — {new_st}",
+                reason=f"Otomatik geçiş — {new_status}",
             )
             session.add(history)
             total_history += 1
 
-        # Stok hareketleri (teslim edilen ve sevk edilen siparişler için)
         if status in ("shipped", "delivered", "processing"):
-            for prod_idx, qty in items:
-                product = db_products[prod_idx % len(db_products)]
+            for sku, qty in items:
+                product = product_by_sku[sku]
+
+                result = await session.execute(
+                    select(Inventory).where(Inventory.product_id == product.id)
+                )
+                inventory = result.scalar_one_or_none()
+
+                current_quantity = inventory.quantity if inventory is not None else 100
+                previous_quantity = current_quantity + qty
+
                 movement = InventoryMovement(
                     product_id=product.id,
                     order_id=order.id,
                     movement_type="order_deducted",
                     quantity_change=-qty,
-                    previous_quantity=100,  # Demo değer
-                    new_quantity=100 - qty,
-                    reason=f"Sipariş #{order.order_number} düşümü",
+                    previous_quantity=previous_quantity,
+                    new_quantity=current_quantity,
+                    reason=f"Sipariş #{order.order_number} düşümü — seed data",
                     created_by_user_id=admin.id,
                 )
                 session.add(movement)
@@ -412,6 +504,7 @@ async def _seed_shipments(
     """Sevk edilen ve teslim edilen siparişler için kargo ve olay kaydı oluşturur."""
     result = await session.execute(select(Shipment).limit(1))
     existing = result.scalar_one_or_none()
+
     if existing is not None:
         logger.info("Kargo kayıtları zaten mevcut, atlanıyor.")
         return 0
@@ -424,11 +517,7 @@ async def _seed_shipments(
             continue
 
         tracking = f"YK{1000000 + order.id}"
-
-        if order.status == "delivered":
-            ship_status = "delivered"
-        else:
-            ship_status = "in_transit"
+        ship_status = "delivered" if order.status == "delivered" else "in_transit"
 
         shipment = Shipment(
             order_id=order.id,
@@ -444,7 +533,6 @@ async def _seed_shipments(
         await session.refresh(shipment)
         shipment_count += 1
 
-        # Kargo olayları
         events_data = _get_shipment_events(shipment, order)
         for ev_data in events_data:
             event = ShipmentEvent(
@@ -503,18 +591,12 @@ async def _seed_initial_stock_movements(
     session: AsyncSession,
     admin: User,
 ) -> int:
-    """Her ürün için başlangıç stok girişi hareketi oluşturur."""
-    result = await session.execute(
-        select(InventoryMovement).where(
-            InventoryMovement.movement_type == "stock_in"
-        ).limit(1)
-    )
-    existing = result.scalar_one_or_none()
-    if existing is not None:
-        logger.info("Başlangıç stok hareketleri zaten mevcut, atlanıyor.")
-        return 0
+    """Her aktif seed ürünü için başlangıç stok girişi hareketi oluşturur."""
+    seed_skus = {product["sku"] for product in PRODUCTS_DATA}
 
-    result = await session.execute(select(Product))
+    result = await session.execute(
+        select(Product).where(Product.sku.in_(seed_skus))
+    )
     products = list(result.scalars().all())
 
     result = await session.execute(select(Inventory))
@@ -524,6 +606,17 @@ async def _seed_initial_stock_movements(
     for product in products:
         inv = inventories.get(product.id)
         if inv is None:
+            continue
+
+        result = await session.execute(
+            select(InventoryMovement).where(
+                InventoryMovement.product_id == product.id,
+                InventoryMovement.movement_type == "stock_in",
+            ).limit(1)
+        )
+        existing = result.scalar_one_or_none()
+
+        if existing is not None:
             continue
 
         movement = InventoryMovement(
@@ -544,10 +637,6 @@ async def _seed_initial_stock_movements(
     return count
 
 
-# ── Import Product model lazily to avoid issues ──────────
-from app.models.product import Product  # noqa: E402
-
-
 # ── Main Runner ──────────────────────────────────────────
 
 
@@ -559,35 +648,32 @@ async def run_seed() -> None:
 
     async for session in get_db_session():
         try:
-            # 1. Admin kullanıcı
             admin = await _seed_admin(session)
             if admin is None:
                 logger.error("Admin kullanıcı oluşturulamadı.")
                 return
 
-            # 2. Ürünler + Stok
-            await _seed_products(session)
+            products = await _seed_products(session)
 
-            # 3. Müşteriler
             customers = await _seed_customers(session)
             customer_users = await _seed_customer_users(session, customers)
 
-            # 4. Başlangıç stok hareketleri
             await _seed_initial_stock_movements(session, admin)
 
-            # 5. Siparişler (kalem, durum geçişi, stok hareketi dahil)
-            # Ürünleri DB'den çek
-            result = await session.execute(select(Product))
-            db_products = list(result.scalars().all())
-            orders = await _seed_orders(session, admin, customers, customer_users, db_products)
+            orders = await _seed_orders(
+                session=session,
+                admin=admin,
+                customers=customers,
+                customer_users=customer_users,
+                products=products,
+            )
 
-            # 6. Kargolar
             await _seed_shipments(session, orders)
 
-            # Session commit get_db_session dependency'si tarafından yapılır
             logger.info("=" * 60)
             logger.info("Seed data başarıyla oluşturuldu!")
             logger.info("Admin: %s (development password ile giriş yapılabilir)", SEED_ADMIN_EMAIL)
+            logger.info("Seed customer password: %s", SEED_CUSTOMER_PASSWORD)
             logger.info("=" * 60)
 
         except Exception:
