@@ -1,0 +1,436 @@
+.card {
+  width: 360px;
+  max-width: calc(100vw - 2rem);
+  min-height: 72px;
+  border-radius: var(--radius, 10px);
+  box-sizing: border-box;
+  padding: 12px 16px;
+  background-color: hsl(var(--card));
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  border: 1px solid hsl(var(--border));
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: auto;
+
+  animation: messageSlideIn 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+}
+
+.cardExiting {
+  animation: messageSlideOut 0.25s ease-in forwards;
+}
+
+.wave {
+  position: absolute;
+  transform: rotate(90deg);
+  left: -31px;
+  top: 50%;
+  margin-top: -40px;
+  width: 80px;
+  pointer-events: none;
+}
+
+.iconContainer {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  margin-left: 8px;
+}
+
+.icon {
+  width: 17px;
+  height: 17px;
+}
+
+.textContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  cursor: default;
+  word-break: break-word;
+  color: hsl(var(--foreground));
+}
+
+.description {
+  margin: 0;
+  margin-top: 2px;
+  font-size: 13px;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.3;
+  cursor: default;
+  word-break: break-word;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: hsl(var(--muted-foreground));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(var(--radius, 10px) - 2px);
+  transition: color 0.15s ease, background-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.closeButton:hover {
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--muted));
+}
+
+.closeIcon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Success Type */
+.typeSuccess .wave {
+  fill: hsla(var(--success) / 0.15);
+}
+.typeSuccess .iconContainer {
+  background-color: hsla(var(--success) / 0.18);
+}
+.typeSuccess .icon {
+  color: hsl(var(--success));
+}
+.typeSuccess .title {
+  color: hsl(var(--success));
+}
+
+/* Error Type */
+.typeError .wave {
+  fill: hsla(var(--destructive) / 0.15);
+}
+.typeError .iconContainer {
+  background-color: hsla(var(--destructive) / 0.18);
+}
+.typeError .icon {
+  color: hsl(var(--destructive));
+}
+.typeError .title {
+  color: hsl(var(--destructive));
+}
+
+/* Notification Type */
+.typeNotification .wave {
+  fill: hsla(var(--primary) / 0.15);
+}
+.typeNotification .iconContainer {
+  background-color: hsla(var(--primary) / 0.18);
+}
+.typeNotification .icon {
+  color: hsl(var(--primary));
+}
+.typeNotification .title {
+  color: hsl(var(--primary));
+}
+
+
+.container {
+  position: fixed;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  padding: 1rem;
+
+  --msg-navbar-h: 4rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    --msg-navbar-h: 4.75rem;
+  }
+}
+
+.posTopRight {
+  top: var(--msg-navbar-h);
+  right: 0;
+  align-items: flex-end;
+}
+
+.posTopLeft {
+  top: var(--msg-navbar-h);
+  left: 0;
+  align-items: flex-start;
+}
+
+.posTopCenter {
+  top: var(--msg-navbar-h);
+  left: 50%;
+  transform: translateX(-50%);
+  align-items: center;
+}
+
+.posBottomRight {
+  bottom: 0.5rem;
+  right: 0;
+  align-items: flex-end;
+}
+
+.posBottomLeft {
+  bottom: 0.5rem;
+  left: 0;
+  align-items: flex-start;
+}
+
+.posBottomCenter {
+  bottom: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  align-items: center;
+}
+
+@keyframes messageSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes messageSlideOut {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
+}
+
+.posTopLeft .card,
+.posBottomLeft .card {
+  animation-name: messageSlideInLeft;
+}
+
+.posTopLeft .cardExiting,
+.posBottomLeft .cardExiting {
+  animation-name: messageSlideOutLeft;
+}
+
+@keyframes messageSlideInLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-100%) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes messageSlideOutLeft {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-100%) scale(0.95);
+  }
+}
+
+.posTopCenter .card,
+.posBottomCenter .card {
+  animation-name: messageSlideInCenter;
+}
+
+.posTopCenter .cardExiting,
+.posBottomCenter .cardExiting {
+  animation-name: messageSlideOutCenter;
+}
+
+@keyframes messageSlideInCenter {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes messageSlideOutCenter {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+}
+
+.progressBar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  border-radius: 0 0 var(--radius, 10px) var(--radius, 10px);
+  animation: progressShrink linear forwards;
+}
+
+.typeSuccess .progressBar {
+  background-color: hsl(var(--success));
+}
+
+.typeError .progressBar {
+  background-color: hsl(var(--destructive));
+}
+
+.typeNotification .progressBar {
+  background-color: hsl(var(--primary));
+}
+
+@keyframes progressShrink {
+  0% {
+    width: 100%;
+  }
+  100% {
+    width: 0%;
+  }
+}
+
+@media (max-width: 639px) {
+  .posTopRight {
+    left: auto;
+    right: 0;
+    align-items: flex-end;
+  }
+  .posTopLeft {
+    left: 0;
+    right: auto;
+    align-items: flex-start;
+  }
+  .posTopCenter {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    align-items: center;
+  }
+  .posBottomRight {
+    left: auto;
+    right: 0;
+    align-items: flex-end;
+  }
+  .posBottomLeft {
+    left: 0;
+    right: auto;
+    align-items: flex-start;
+  }
+  .posBottomCenter {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    align-items: center;
+  }
+
+  .card {
+    width: calc(100vw - 1.5rem);
+    max-width: 360px;
+  }
+  .container {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .posTopRight .card,
+  .posBottomRight .card {
+    animation-name: messageSlideIn;
+  }
+  .posTopRight .cardExiting,
+  .posBottomRight .cardExiting {
+    animation-name: messageSlideOut;
+  }
+
+  .posTopLeft .card,
+  .posBottomLeft .card {
+    animation-name: messageSlideInLeft;
+  }
+  .posTopLeft .cardExiting,
+  .posBottomLeft .cardExiting {
+    animation-name: messageSlideOutLeft;
+  }
+
+  .title {
+    font-size: 14px;
+  }
+  .description {
+    font-size: 12px;
+  }
+  .iconContainer {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+  }
+  .icon {
+    width: 15px;
+    height: 15px;
+  }
+  .card {
+    min-height: 64px;
+    padding: 10px 12px;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 374px) {
+  .card {
+    width: calc(100vw - 1rem);
+  }
+  .container {
+    padding: 0.5rem;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .card {
+    width: 340px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .card {
+    width: 360px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+  .cardExiting {
+    animation: none !important;
+    opacity: 0;
+  }
+  .progressBar {
+    animation: none !important;
+    width: 0;
+  }
+}

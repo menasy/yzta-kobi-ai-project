@@ -3,6 +3,7 @@
 import {
   AuthStoreProvider,
   ChatStoreProvider,
+  MessageStoreProvider,
   QueryProvider,
   UIStoreProvider,
 } from "@repo/state";
@@ -22,7 +23,9 @@ export function Providers({ children }: { children: ReactNode }) {
       <QueryProvider>
         <AuthStoreProvider>
           <UIStoreProvider>
-            <ChatStoreProvider>{children}</ChatStoreProvider>
+            <MessageStoreProvider>
+              <ChatStoreProvider>{children}</ChatStoreProvider>
+            </MessageStoreProvider>
           </UIStoreProvider>
         </AuthStoreProvider>
       </QueryProvider>

@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Toaster } from "sonner";
 
 import { Providers } from "@/components/providers";
+import { MessageContainer } from "@repo/ui-web";
 
 import "./globals.css";
 
@@ -83,6 +84,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-background font-sans antialiased">
         <Providers>
           {children}
+          <MessageContainer position="top-right" />
         </Providers>
         <Toaster richColors position="top-right" />
       </body>

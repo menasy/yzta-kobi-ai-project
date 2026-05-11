@@ -12,3 +12,6 @@ export * from "./home";
 
 // Responsive
 export * from "./responsive";
+
+// Message
+export * from "./message";
