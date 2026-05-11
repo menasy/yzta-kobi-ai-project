@@ -63,7 +63,7 @@ Backend, yapay zeka destekli bir operasyon merkezi sunar. Frontend bu merkezin i
 | Ekran | Kullanıcı | Rendering | Öncelik |
 |-------|-----------|-----------|---------|
 | Landing / Ana Sayfa | Herkese açık | SSR | P0 |
-| Chat (AI Asistan) | Herkese açık | SSR shell + CSR | P0 |
+| Chat (AI Asistan) | Müşteri/Admin | SSR shell + CSR | P0 |
 | Ürünler Listesi | Herkese açık | SSR | P0 |
 | Ürün Detayı | Herkese açık | SSR | P0 |
 | Siparişlerim (Müşteri) | Müşteri | SSR | P0 |
@@ -214,11 +214,14 @@ kobi-agent/
 │       │   ├── not-found.tsx                   # Global 404
 │       │   ├── error.tsx                       # Global error
 │       │   │
+│       │   ├── (authenticated)/                # Authenticated group
+│       │   │   ├── layout.tsx                  # Authenticated layout
+│       │   │   └── chat/
+│       │   │       └── page.tsx                # AI Asistan (Protected)
+│       │   │
 │       │   ├── (public)/                       # Public/Storefront group
 │       │   │   ├── layout.tsx                  # Public layout: header + footer
 │       │   │   ├── page.tsx                    # Landing page
-│       │   │   ├── chat/
-│       │   │   │   └── page.tsx                # AI Asistan (Public)
 │       │   │   └── products/
 │       │   │       ├── page.tsx                # Ürün listesi (Public)
 │       │   │       └── [id]/

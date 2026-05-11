@@ -150,11 +150,12 @@ Tüm rotalar `packages/domain/auth/access/policy.ts` içinde merkezi olarak yön
 - `/auth/register`
 - `/products` (Ürün listeleme)
 - `/products/[id]` (Ürün detayı)
-- `/chat` (AI Asistan - Giriş zorunlu değildir)
+
 
 **Customer (Müşteri):**
 - `/orders/my` (Siparişlerim listesi)
 - `/orders/my/[id]` (Sipariş detayı)
+- `/chat` (AI Asistan)
 
 **Admin / Operator (Yönetici):**
 - `/dashboard` (Genel özet)
@@ -168,7 +169,7 @@ Tüm rotalar `packages/domain/auth/access/policy.ts` içinde merkezi olarak yön
 **Kurallar:**
 - Rota politikaları `middleware.ts` üzerinden enforce edilir.
 - `/orders/my` tanımı `/orders` tanımından önce gelmelidir.
-- `/chat` her zaman public kalmalı, kişisel veri sorgularında backend seviyesinde session kontrolü yapılmalıdır.
+- `/chat` korumalı bir rotadır, giriş yapılması gereklidir. Backend seviyesinde de session kontrolü yapılır.
 - Admin ürün yönetimi `/dashboard/products` üzerinden yapılır, `/products` sadece storefront içindir.
 
 ---

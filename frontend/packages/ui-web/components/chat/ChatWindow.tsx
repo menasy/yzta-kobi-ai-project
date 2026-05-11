@@ -112,9 +112,9 @@ export function ChatWindow({ className }: ChatWindowProps) {
 
   // A better way to handle duplicate is just map by ID if possible, but our `serverMessages` don't have ID.
   // So we just show server messages + only optimistic messages that haven't been saved to server yet.
-  const uniqueMessages = serverMessages.concat(
-      optimisticMessages.filter(m => m.isOptimistic)
-  );
+  const uniqueMessages = serverMessages.length > 0
+    ? serverMessages.concat(optimisticMessages.filter(m => m.isOptimistic))
+    : optimisticMessages;
 
   return (
     <div

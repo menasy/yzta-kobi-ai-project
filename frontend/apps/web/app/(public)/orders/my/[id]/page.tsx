@@ -1,13 +1,14 @@
 import { ResponsiveContainer, ResponsiveSection } from "@repo/ui-web";
 import type { Metadata } from "next";
 
-import { AdminOrderDetail } from "./_components/AdminOrderDetail";
+import { CustomerOrderDetail } from "./_components/CustomerOrderDetail";
 
 export const metadata: Metadata = {
   title: "Sipariş Detayı | KOBİ AI",
+  description: "Müşteri siparişi detayları",
 };
 
-export default function OrderDetailsPage({
+export default function MyOrderDetailsPage({
   params,
 }: {
   params: { id: string };
@@ -15,7 +16,7 @@ export default function OrderDetailsPage({
   return (
     <ResponsiveContainer>
       <ResponsiveSection>
-        <AdminOrderDetail orderId={params.id} />
+        <CustomerOrderDetail orderId={params.id} />
       </ResponsiveSection>
     </ResponsiveContainer>
   );

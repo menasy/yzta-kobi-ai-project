@@ -3,6 +3,7 @@ export * from "./components/home";
 export * from "./components/layout";
 export * from "./components/message";
 export * from "./components/chat";
+export * from "./components/orders";
 export { Button, buttonVariants } from "./components/shadcn/button";
 export { Input } from "./components/shadcn/input";
 export { Label } from "./components/shadcn/label";

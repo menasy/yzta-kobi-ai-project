@@ -59,7 +59,8 @@ const ROUTE_ACCESS_POLICIES = [
   {
     path: "/chat",
     matchMode: "prefix",
-    kind: "public",
+    kind: "protected",
+    allowedRoles: AUTHENTICATED_ACCESS_ROLES,
   },
 
   // Customer Routes
@@ -106,7 +107,6 @@ const ROUTE_ACCESS_POLICIES = [
 const PUBLIC_NAV_ITEMS = [
   { label: "Ana Sayfa", href: "/" },
   { label: "Ürünler", href: "/products" },
-  { label: "Chat", href: "/chat" },
 ] as const satisfies readonly AccessNavItem[];
 
 const CUSTOMER_NAV_ITEMS = [
@@ -119,6 +119,7 @@ const CUSTOMER_NAV_ITEMS = [
 const ADMIN_NAV_ITEMS = [
   { label: "Panel", href: "/dashboard" },
   { label: "Ürünler", href: "/dashboard/products" },
+  { label: "Chat", href: "/chat" },
   { label: "Siparişler", href: "/orders" },
   { label: "Envanter", href: "/inventory" },
   { label: "Kargo", href: "/shipments" },

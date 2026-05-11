@@ -1,6 +1,8 @@
 import { ResponsiveContainer, ResponsiveSection } from "@repo/ui-web";
 import type { Metadata } from "next";
 
+import { DailyOrderSummaryWidget } from "./_components/DailyOrderSummaryWidget";
+
 export const metadata: Metadata = {
   title: "Dashboard | KOBİ AI",
   description: "Yönetici paneli özeti",
@@ -9,8 +11,9 @@ export const metadata: Metadata = {
 export default function DashboardPage() {
   return (
     <ResponsiveContainer>
-      <ResponsiveSection className="flex min-h-[400px] items-center justify-center">
-        <h1 className="text-4xl font-extrabold tracking-tight opacity-20">TODO</h1>
+      <ResponsiveSection className="space-y-6">
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <DailyOrderSummaryWidget />
       </ResponsiveSection>
     </ResponsiveContainer>
   );

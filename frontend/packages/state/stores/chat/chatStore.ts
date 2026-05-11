@@ -4,7 +4,15 @@ import type { ChatStore, ChatStoreInitialState } from "./types";
 
 const defaultChatState = {
   sessionId: null,
-  optimisticMessages: [],
+  optimisticMessages: [
+    {
+      id: "welcome-message",
+      role: "assistant",
+      content: "Merhaba! Ben KOBİ AI asistanınız. Size nasıl yardımcı olabilirim? İşletmenizle ilgili sorularınızı sorabilir, ürün veya siparişleriniz hakkında bilgi alabilirsiniz.",
+      createdAt: new Date().toISOString(),
+      isOptimistic: false,
+    },
+  ],
   isTyping: false,
   pendingMessage: "",
 } satisfies ChatStoreInitialState;
