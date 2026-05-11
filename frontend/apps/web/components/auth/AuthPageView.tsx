@@ -1,7 +1,14 @@
 "use client";
 
 import { cn } from "@repo/core";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Logo } from "@repo/ui";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Logo,
+} from "@repo/ui-web";
 import { motion } from "framer-motion";
 import Link from "next/link";
 

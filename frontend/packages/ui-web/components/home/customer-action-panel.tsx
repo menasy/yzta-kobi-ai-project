@@ -2,10 +2,11 @@
 
 import React from 'react';
 import { CustomerActionType } from '@repo/ui-contracts';
+
+import { Card, CardContent } from '../shadcn/card';
 import { OrderLookupForm } from './order-lookup-form';
 import { StockQueryForm } from './stock-query-form';
 import { CargoTrackingForm } from './cargo-tracking-form';
-import { Card, CardContent } from '@repo/ui/components/shadcn/card';
 
 interface CustomerActionPanelProps {
   activeType: CustomerActionType;

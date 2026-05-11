@@ -2,8 +2,9 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Avatar, AvatarFallback } from "@repo/ui";
 import { Bot } from "lucide-react";
+
+import { Avatar, AvatarFallback } from "../shadcn/avatar";
 
 export function TypingIndicator() {
   return (

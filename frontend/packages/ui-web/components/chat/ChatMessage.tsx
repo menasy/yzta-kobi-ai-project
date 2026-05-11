@@ -3,8 +3,9 @@
 import React from "react";
 import { cn } from "@repo/core";
 import type { ChatMessageProps } from "@repo/ui-contracts";
-import { Avatar, AvatarFallback } from "@repo/ui";
 import { Bot, User } from "lucide-react";
+
+import { Avatar, AvatarFallback } from "../shadcn/avatar";
 
 export function ChatMessage({ message, isOptimistic }: ChatMessageProps) {
   const isUser = message.role === "user";

@@ -7,7 +7,6 @@ const nextConfig: NextConfig = {
     "@repo/domain",
     "@repo/state",
     "@repo/theme",
-    "@repo/ui",
     "@repo/i18n",
     "@repo/ui-contracts",
     "@repo/ui-web",

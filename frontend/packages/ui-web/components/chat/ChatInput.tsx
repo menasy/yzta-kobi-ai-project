@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Button, Input } from "@repo/ui";
 import type { ChatInputProps } from "@repo/ui-contracts";
 import { SendHorizonal } from "lucide-react";
+
+import { Button } from "../shadcn/button";
+import { Input } from "../shadcn/input";
 
 export function ChatInput({
   onSendMessage,

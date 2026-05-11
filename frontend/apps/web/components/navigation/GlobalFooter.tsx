@@ -1,4 +1,4 @@
-import { Logo } from "@repo/ui";
+import { Logo } from "@repo/ui-web";
 
 export function GlobalFooter() {
   return (

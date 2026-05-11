@@ -16,7 +16,7 @@ import {
   FormLabel,
   FormMessage,
   Input,
-} from "@repo/ui";
+} from "@repo/ui-web";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";

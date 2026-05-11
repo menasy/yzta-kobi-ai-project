@@ -1,5 +1,5 @@
-import { GlobalHeader } from "@/components/navigation/GlobalHeader";
 import { GlobalFooter } from "@/components/navigation/GlobalFooter";
+import { GlobalHeader } from "@/components/navigation/GlobalHeader";
 
 export default function PublicLayout({
   children,

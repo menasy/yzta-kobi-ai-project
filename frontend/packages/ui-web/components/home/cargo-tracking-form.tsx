@@ -3,11 +3,12 @@
 import React, { useState } from 'react';
 import { Loader2, Truck, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Button } from '@repo/ui/components/shadcn/button';
-import { Input } from '@repo/ui/components/shadcn/input';
-import { Label } from '@repo/ui/components/shadcn/label';
-import { Alert, AlertDescription } from '@repo/ui/components/shadcn/alert';
 import { useCargoTracking } from '@repo/domain/customer';
+
+import { Alert, AlertDescription } from '../shadcn/alert';
+import { Button } from '../shadcn/button';
+import { Input } from '../shadcn/input';
+import { Label } from '../shadcn/label';
 import { CustomerResultCard } from './customer-result-card';
 
 export function CargoTrackingForm() {

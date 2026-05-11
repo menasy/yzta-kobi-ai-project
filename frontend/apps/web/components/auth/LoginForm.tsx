@@ -18,7 +18,7 @@ import {
   FormLabel,
   FormMessage,
   Input,
-} from "@repo/ui";
+} from "@repo/ui-web";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";

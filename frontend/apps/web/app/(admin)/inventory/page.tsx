@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
 import { ResponsiveContainer, ResponsiveSection } from "@repo/ui-web";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Stok Yönetimi | KOBİ AI",

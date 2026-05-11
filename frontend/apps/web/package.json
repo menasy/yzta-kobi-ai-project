@@ -16,7 +16,6 @@
     "@repo/i18n": "workspace:*",
     "@repo/state": "workspace:*",
     "@repo/theme": "workspace:*",
-    "@repo/ui": "workspace:*",
     "@repo/ui-contracts": "workspace:*",
     "@repo/ui-web": "workspace:*",
     "@tanstack/react-query": "^5.90.0",

@@ -1,7 +1,9 @@
 "use client";
 
 import React from "react";
+
 import { cn } from "@repo/core";
+
 import styles from "./header-menu.module.css";
 
 export interface HeaderMenuItem {
@@ -21,24 +23,15 @@ const DEFAULT_ITEMS: HeaderMenuItem[] = [
   { label: "FAQ", href: "/faq" },
 ];
 
-/**
- * Animated Header Menu Component
- * Features a dynamic SVG outline animation on hover.
- * Colors are derived from the global semantic token system.
- */
-export const HeaderMenu: React.FC<HeaderMenuProps> = ({ 
+export const HeaderMenu: React.FC<HeaderMenuProps> = ({
   items = DEFAULT_ITEMS,
-  className 
+  className,
 }) => {
   return (
     <div className={cn(styles.nav, className)}>
       <div className={styles.container}>
-        {items.slice(0, 4).map((item, index) => (
-          <a
-            key={index}
-            href={item.href}
-            className={styles.btn}
-          >
+        {items.slice(0, 4).map((item) => (
+          <a key={item.href} href={item.href} className={styles.btn}>
             {item.label}
           </a>
         ))}
@@ -58,10 +51,9 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
             width="400"
             height="60"
             rx="8"
-          ></rect>
+          />
         </svg>
       </div>
     </div>
   );
 };
-

@@ -5,24 +5,25 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@repo/core";
 import { AppHeaderProps } from "@repo/ui-contracts";
-import { 
-  Button, 
-  Avatar, 
-  AvatarFallback, 
-  AvatarImage,
+import { Menu } from "lucide-react";
+
+import { Logo } from "../brand/logo";
+import { Avatar, AvatarFallback, AvatarImage } from "../shadcn/avatar";
+import { Button } from "../shadcn/button";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  Logo,
+} from "../shadcn/dropdown-menu";
+import {
   Sheet,
   SheetContent,
-  SheetTrigger,
   SheetHeader,
-  SheetTitle
-} from "@repo/ui";
-import { Menu } from "lucide-react";
+  SheetTitle,
+  SheetTrigger,
+} from "../shadcn/sheet";
 
 /**
  * AppHeader — Global, Auth-Aware Navigation

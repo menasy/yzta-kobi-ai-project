@@ -1,5 +1,6 @@
-import { AuthPageView } from "@/components/auth/AuthPageView";
 import type { Metadata } from "next";
+
+import { AuthPageView } from "@/components/auth/AuthPageView";
 
 export const metadata: Metadata = {
   title: "Hesap Oluştur | KOBİ AI",
