@@ -1,17 +1,24 @@
 export type {
+  DailySummaryData,
+  DailySummaryResponse,
   MarkAllNotificationsReadData,
   MarkAllNotificationsReadResponse,
   NotificationId,
   NotificationListItem,
+  NotificationListParams,
   NotificationMarkReadData,
   NotificationMarkReadResponse,
   NotificationSeverity,
+  NotificationStreamEvent,
   NotificationsResponse,
+  NotificationType,
+  SummaryUpdateData,
   UnreadNotificationsResponse,
 } from "./types/notifications.types";
 
 export {
   createNotificationsEventSource,
+  getNotificationDailySummary,
   getNotifications,
   getNotificationsStreamUrl,
   getUnreadNotifications,
@@ -19,6 +26,7 @@ export {
   markNotificationRead,
 } from "./api/notifications.api";
 
+export { useNotificationDailySummary } from "./hooks/useDailySummary";
 export { useMarkAllNotificationsRead } from "./hooks/useMarkAllNotificationsRead";
 export { useMarkNotificationRead } from "./hooks/useMarkNotificationRead";
 export { useNotifications } from "./hooks/useNotifications";

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@repo/core";
 import { AppHeaderProps } from "@repo/ui-contracts";
-import { Menu } from "lucide-react";
+import { Menu, Bell } from "lucide-react";
 
 import { Logo } from "../brand/logo";
 import { Avatar, AvatarFallback, AvatarImage } from "../shadcn/avatar";
@@ -38,6 +38,7 @@ export function AppHeader({
   navItems,
   logoHref,
   onLogout,
+  unreadNotificationCount = 0,
 }: AppHeaderProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -226,6 +227,21 @@ export function AppHeader({
 
         {/* Sağ: Auth Aksiyon Alanı */}
         <div className="flex items-center gap-4 flex-shrink-0">
+          {isAuthenticated && (
+            <Link
+              href="/notifications"
+              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-border/50 text-muted-foreground transition-all hover:bg-accent hover:text-primary"
+              aria-label="Bildirimler"
+            >
+              <Bell className="h-5 w-5" />
+              {unreadNotificationCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground ring-2 ring-background">
+                  {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
+                </span>
+              )}
+            </Link>
+          )}
+
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

@@ -45,6 +45,11 @@ export interface AppHeaderProps {
    * Çıkış yap butonuna tıklandığında çalışacak fonksiyon
    */
   onLogout: () => void;
+
+  /**
+   * Okunmamış bildirim sayısı (bell icon badge için)
+   */
+  unreadNotificationCount?: number;
   
   /**
    * Ekstra class'lar

@@ -169,6 +169,7 @@ export const queryKeys = {
     all: notifications.all,
     list: () => notifications.scope("list"),
     unread: () => notifications.scope("unread"),
+    dailySummary: () => notifications.scope("dailySummary"),
   },
   health: {
     all: health.all,

@@ -5,6 +5,7 @@ export * from "./components/message";
 export * from "./components/chat";
 export * from "./components/orders";
 export * from "./components/products";
+export * from "./components/notifications";
 export { Button, buttonVariants } from "./components/shadcn/button";
 export { Input } from "./components/shadcn/input";
 export { Label } from "./components/shadcn/label";

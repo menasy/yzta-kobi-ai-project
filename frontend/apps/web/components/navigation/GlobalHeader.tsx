@@ -5,6 +5,7 @@ import {
   getPrimaryNavigationItems,
   useLogout,
 } from "@repo/domain/auth";
+import { useUnreadNotifications } from "@repo/domain/notifications";
 import {
   useAuthActions,
   useIsAuthenticated,
@@ -43,6 +44,10 @@ export function GlobalHeader() {
     ? getDefaultPathForRole(userRole)
     : "/";
 
+  const { unreadCount } = useUnreadNotifications({
+    enabled: isAuthenticated,
+  });
+
   return (
     <AppHeader
       isAuthenticated={isAuthenticated}
@@ -59,6 +64,7 @@ export function GlobalHeader() {
       }
       activePathname={pathname}
       onLogout={handleLogout}
+      unreadNotificationCount={unreadCount}
     />
   );
 }
