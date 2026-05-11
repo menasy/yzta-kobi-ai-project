@@ -172,32 +172,56 @@ class NotificationService:
 
     async def get_daily_delay_summary(self) -> str:
         """
-        Son 24 saat içindeki geciken kargoları analiz eder ve özet rapor hazırlar.
+        Son 24 saat içindeki gecikmeleri analiz eder, AgentOrchestrator (Gemini) 
+        ile özetler ve sonucu bir Sistem Bildirimi olarak kaydeder.
         """
         from datetime import datetime, timedelta, timezone
-        
+        from app.agent.orchestrator import AgentOrchestrator # AIService yerine bunu ekledik
+
         since_24h = datetime.now(timezone.utc) - timedelta(days=1)
         
-        # Repository üzerinden son 24 saatteki SHIPMENT_DELAY bildirimlerini çek
+        # 1. Gecikme verilerini çek
         notifications = await self._repo.get_notifications_by_type_and_date(
             notification_type="SHIPMENT_DELAY",
             since_date=since_24h
         )
         
         if not notifications:
-            return "Son 24 saat içinde herhangi bir kargo gecikmesi tespit edilmedi."
+            return "✅ Son 24 saat içinde herhangi bir kargo gecikmesi tespit edilmedi."
         
-        count = len(notifications)
-        summary = f"📢 **Kargo Gecikme Raporu ({count} Adet)**\n\n"
-        
+        # 2. Agent'a gönderilecek ham metni hazırla
+        raw_data = ""
         for n in notifications:
-            p = n.payload  # JSON payload
-            summary += f"• **Sipariş:** {p.get('order_number')} | **Takip:** {p.get('tracking_number')}\n"
-            summary += f"  - Sebep: {p.get('delay_reason')}\n"
-            summary += f"  - Yeni Teslimat: {p.get('new_estimated_date')}\n\n"
+            p = n.payload
+            raw_data += f"- Sipariş: {p.get('order_number')}, Takip: {p.get('tracking_number')}, Sebep: {p.get('delay_reason')}\n"
+
+        # 3. AgentOrchestrator ile Analiz Yap
+        try:
+            orchestrator = AgentOrchestrator(db=self._repo.session) 
             
-        return summary
-    
+            user_prompt = (
+                f"Aşağıdaki kargo gecikme verilerini profesyonelce analiz et, "
+                f"nedenlerini gruplandır ve yönetici özeti çıkar:\n\n{raw_data}"
+            )
+            
+            summary_text = await orchestrator.run(user_prompt, session_id="system_delay_report")
+        except Exception as e:
+            logger.error(f"AI Analiz hatası: {e}", exc_info=True)
+            summary_text = f"📊 Toplam {len(notifications)} gecikme var ancak rapor oluşturulamadı."
 
-
-    
+        # 4. Analiz sonucunu veritabanına bir "SYSTEM_REPORT" bildirimi olarak kaydet
+        report_notification_data = {
+            "type": "SYSTEM_REPORT",
+            "title": "📊 Günlük Kargo Gecikme Analizi (Agent)",
+            "message": summary_text,
+            "severity": "info",
+            "payload": {
+                "total_delayed": len(notifications),
+                "generated_at": str(datetime.now(timezone.utc))
+            }
+        }
+        
+        # DB'ye kaydet
+        await self._repo.create_notification(report_notification_data)
+        
+        return summary_text
