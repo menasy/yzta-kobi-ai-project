@@ -62,8 +62,8 @@ class InventoryResponse(BaseModel):
     reserved_quantity: int
     available_quantity: int
     low_stock_threshold: int
-    last_updated_at: datetime
-    updated_at: datetime
+    last_updated_at: datetime | None = None
+    updated_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -77,7 +77,7 @@ class InventoryWithProductResponse(BaseModel):
     reserved_quantity: int
     available_quantity: int
     low_stock_threshold: int
-    last_updated_at: datetime
+    last_updated_at: datetime | None = None
 
     # Ürün bilgisi
     product_name: str | None = None

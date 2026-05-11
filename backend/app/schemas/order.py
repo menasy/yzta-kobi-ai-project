@@ -101,12 +101,29 @@ class OrderStatusUpdate(BaseModel):
 # ── Response Schemas ─────────────────────────────────────
 
 
+class OrderShippingResponse(BaseModel):
+    """Sipariş teslimat bilgisi response."""
+
+    full_name: str
+    phone: str
+    address: str
+    city: str
+    district: str
+    postal_code: str | None = None
+    country: str
+    note: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class OrderItemResponse(BaseModel):
     """Sipariş kalemi response."""
 
     id: int
     order_id: int
     product_id: int
+    product_name: str | None = None
+    sku: str | None = None
     quantity: int
     unit_price: Decimal
     total_price: Decimal
@@ -135,19 +152,12 @@ class CustomerOrderResponse(BaseModel):
     status: str
     total_amount: Decimal
     notes: str | None = None
-    shipping_full_name: str
-    shipping_phone: str
-    shipping_address: str
-    shipping_city: str
-    shipping_district: str
-    shipping_postal_code: str | None = None
-    shipping_country: str
-    shipping_note: str | None = None
     placed_at: datetime
     cancelled_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
-    order_items: list[OrderItemResponse] = Field(default_factory=list)
+    items: list[OrderItemResponse] = Field(default_factory=list, validation_alias="order_items")
+    shipping: OrderShippingResponse
 
     model_config = ConfigDict(
         from_attributes=True,

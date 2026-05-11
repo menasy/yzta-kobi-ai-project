@@ -27,7 +27,7 @@ class OrderRepository(BaseRepository[Order]):
             select(Order)
             .where(Order.id == order_id)
             .options(
-                joinedload(Order.order_items),
+                joinedload(Order.order_items).joinedload(OrderItem.product),
                 joinedload(Order.customer),
             )
         )
@@ -80,7 +80,7 @@ class OrderRepository(BaseRepository[Order]):
         stmt = (
             select(Order)
             .where(Order.customer_id == customer_id)
-            .options(joinedload(Order.order_items))
+            .options(joinedload(Order.order_items).joinedload(OrderItem.product))
             .offset(skip)
             .limit(limit)
             .order_by(Order.id.desc())
@@ -110,7 +110,7 @@ class OrderRepository(BaseRepository[Order]):
             select(Order)
             .where(Order.id == order_id, Order.customer_id == customer_id)
             .options(
-                joinedload(Order.order_items),
+                joinedload(Order.order_items).joinedload(OrderItem.product),
                 joinedload(Order.customer),
             )
         )
@@ -127,7 +127,7 @@ class OrderRepository(BaseRepository[Order]):
         stmt = (
             select(Order)
             .options(
-                joinedload(Order.order_items),
+                joinedload(Order.order_items).joinedload(OrderItem.product),
                 joinedload(Order.customer),
             )
             .offset(skip)

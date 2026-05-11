@@ -25,3 +25,11 @@ class OrderItem(Base, IDMixin, TimestampMixin):
     # İlişkiler
     order: Mapped["Order"] = relationship(back_populates="order_items")
     product: Mapped["Product"] = relationship(back_populates="order_items")
+
+    @property
+    def product_name(self) -> str | None:
+        return self.product.name if self.product else None
+
+    @property
+    def sku(self) -> str | None:
+        return self.product.sku if self.product else None

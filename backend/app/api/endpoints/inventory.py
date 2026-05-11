@@ -11,6 +11,7 @@ from app.core import openapi_examples, openapi_responses
 from app.mappers.inventory_mapper import (
     to_inventory_response,
     to_inventory_with_product_responses,
+    to_low_stock_alert_responses,
 )
 from app.schemas.inventory import InventoryUpdate
 from app.services.inventory_service import InventoryService
@@ -90,7 +91,7 @@ async def get_low_stock_alerts(
     """
     items = await service.get_low_stock_items()
     return success_response(
-        data=to_inventory_with_product_responses(items),
+        data=to_low_stock_alert_responses(items),
         message="Kritik stok uyarıları getirildi.",
     )
 

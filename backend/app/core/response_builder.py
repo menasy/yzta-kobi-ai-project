@@ -10,14 +10,31 @@ from typing import Any
 
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import inspect as sa_inspect
 
 from .responses import ApiResponse, PaginatedData
 
 
 def _serialize(obj: Any) -> Any:
-    """Pydantic model, datetime, Decimal gibi tipleri JSON-safe hale getirir."""
+    """Pydantic model, datetime, Decimal, SQLAlchemy model gibi tipleri JSON-safe hale getirir."""
     if isinstance(obj, BaseModel):
         return obj.model_dump(mode="json")
+    if isinstance(obj, DeclarativeBase):
+        # SQLAlchemy ORM model → sütun değerlerini dict olarak döndür
+        mapper = sa_inspect(type(obj))
+        data: dict[str, Any] = {}
+        for col in mapper.columns:
+            data[col.key] = _serialize(getattr(obj, col.key, None))
+        # Computed property'leri de dahil et (ör: available_quantity)
+        for prop_name in dir(type(obj)):
+            prop = getattr(type(obj), prop_name, None)
+            if isinstance(prop, property) and not prop_name.startswith("_"):
+                try:
+                    data[prop_name] = _serialize(getattr(obj, prop_name))
+                except Exception:
+                    pass
+        return data
     if isinstance(obj, datetime):
         return obj.isoformat()
     if isinstance(obj, date):

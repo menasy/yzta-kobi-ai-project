@@ -1,7 +1,7 @@
 # models/order.py
 from datetime import datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from sqlalchemy import DateTime, ForeignKey, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -50,3 +50,16 @@ class Order(Base, IDMixin, TimestampMixin):
         back_populates="order", cascade="all, delete-orphan"
     )
     inventory_movements: Mapped[list["InventoryMovement"]] = relationship(back_populates="order")
+
+    @property
+    def shipping(self) -> dict[str, Any]:
+        return {
+            "full_name": self.shipping_full_name,
+            "phone": self.shipping_phone,
+            "address": self.shipping_address,
+            "city": self.shipping_city,
+            "district": self.shipping_district,
+            "postal_code": self.shipping_postal_code,
+            "country": self.shipping_country,
+            "note": self.shipping_note,
+        }
