@@ -26,7 +26,12 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"  # development | staging | production
     DEBUG: bool = True
     API_PREFIX: str = "/api"
-    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
 
     # ── Veritabanı ────────────────────────────────────────
     DATABASE_URL: str  # .env dosyasında tanımlı olmalı
@@ -49,8 +54,8 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 gün
 
     # ── Cookie Ayarları ───────────────────────────────────
-    COOKIE_SECURE: bool = True
-    COOKIE_SAMESITE: str = "none"  # 'lax', 'strict', 'none'
+    COOKIE_SECURE: bool = False
+    COOKIE_SAMESITE: str = "lax"  # 'lax', 'strict', 'none'
     COOKIE_DOMAIN: str | None = None
 
     # ── LLM ───────────────────────────────────────────────
@@ -77,6 +82,26 @@ class Settings(BaseSettings):
     def is_development(self) -> bool:
         return self.ENVIRONMENT == "development"
 
+    @property
+    def cors_allow_origin_regex(self) -> str | None:
+        """
+        Development ortamında tipik local origin'leri port bağımsız kabul eder.
+        Cookie auth nedeniyle production'da regex fallback kapalı tutulur.
+        """
+        if not self.is_development:
+            return None
+        return (
+            r"^https?://("
+            r"localhost|"
+            r"127\.0\.0\.1|"
+            r"0\.0\.0\.0|"
+            r"[a-zA-Z0-9-]+\.local|"
+            r"192\.168\.\d{1,3}\.\d{1,3}|"
+            r"10\.\d{1,3}\.\d{1,3}\.\d{1,3}|"
+            r"172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}"
+            r")(:\d{1,5})?$"
+        )
+
     # ── Validators ────────────────────────────────────────
 
     @field_validator("SECRET_KEY")
@@ -95,9 +120,20 @@ class Settings(BaseSettings):
         if "*" in self.CORS_ORIGINS:
             raise ValueError("Cookie auth kullanıldığı için CORS_ORIGINS içinde wildcard (*) kullanılamaz.")
 
+        allowed_samesite = {"lax", "strict", "none"}
+        if self.COOKIE_SAMESITE.lower() not in allowed_samesite:
+            raise ValueError("COOKIE_SAMESITE yalnızca lax, strict veya none olabilir.")
+
+        self.COOKIE_SAMESITE = self.COOKIE_SAMESITE.lower()
+
+        if self.COOKIE_SAMESITE == "none" and not self.COOKIE_SECURE:
+            raise ValueError("COOKIE_SAMESITE=none kullanılırsa COOKIE_SECURE=true olmalıdır.")
+
         if self.is_production:
             if self.DEBUG:
                 raise ValueError("Production ortamında DEBUG=true olmamalıdır.")
+            if not self.COOKIE_SECURE:
+                raise ValueError("Production ortamında COOKIE_SECURE=true olmalıdır.")
         return self
 
 

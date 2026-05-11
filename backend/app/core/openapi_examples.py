@@ -94,9 +94,10 @@ PRODUCT_EXAMPLE = {
     "id": 101,
     "name": "Kablosuz Mouse",
     "sku": "MS-001",
-    "price": 250.00,
-    "stock_quantity": 45,
+    "description": "Ergonomik tasarıma sahip, 2.4 GHz bağlantılı kablosuz mouse.",
+    "price": "250.00",
     "category": "Elektronik",
+    "image_url": "https://cdn.kobi.local/products/ms-001.png",
     "is_active": True,
     "created_at": "2024-02-15T09:30:00Z",
     "updated_at": "2024-05-09T16:45:00Z",
@@ -105,9 +106,10 @@ PRODUCT_EXAMPLE = {
 PRODUCT_CREATE_EXAMPLE = {
     "name": "Kablosuz Mouse",
     "sku": "MS-001",
+    "description": "Ergonomik tasarıma sahip, 2.4 GHz bağlantılı kablosuz mouse.",
     "price": 250.00,
-    "stock_quantity": 50,
     "category": "Elektronik",
+    "image_url": "https://cdn.kobi.local/products/ms-001.png",
 }
 
 # ── Chat Örnekleri ─────────────────────────────────────
