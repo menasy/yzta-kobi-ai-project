@@ -13,7 +13,7 @@ import type { ApiRequestConfig, ApiResponse } from "./types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
-function resolveBaseUrl(baseUrl: string): string {
+export function resolveApiBaseUrl(baseUrl: string): string {
   if (/^https?:\/\//.test(baseUrl)) {
     return baseUrl;
   }
@@ -24,12 +24,12 @@ function resolveBaseUrl(baseUrl: string): string {
   return `${normalizedRootUrl}${normalizedBasePath}`;
 }
 
-function buildUrl(
+export function buildApiUrl(
   baseUrl: string,
   path: string,
   params?: ApiRequestConfig["params"],
 ): string {
-  const normalizedBaseUrl = resolveBaseUrl(baseUrl).replace(/\/$/, "");
+  const normalizedBaseUrl = resolveApiBaseUrl(baseUrl).replace(/\/$/, "");
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const url = new URL(`${normalizedBaseUrl}${normalizedPath}`);
 
@@ -93,7 +93,7 @@ export class ApiClient {
     init?: ApiRequestConfig,
   ): Promise<ApiResponse<TData>> {
     const { params, ...requestInit } = init ?? {};
-    const response = await fetch(buildUrl(this.baseUrl, path, params), {
+    const response = await fetch(buildApiUrl(this.baseUrl, path, params), {
       ...requestInit,
       headers: buildHeaders(requestInit),
       credentials: "include",

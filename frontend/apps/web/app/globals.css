@@ -78,6 +78,22 @@
     --sidebar-accent-foreground:   174 46% 25%;
     --sidebar-border:              0 0% 90%;
     --sidebar-ring:                174 46% 35%;
+
+    /* ── Responsive Spacing (Fluid) ──────────────────────────────────── */
+    --space-page-x:         clamp(1rem, 3vw, 2rem);
+    --space-page-y:         clamp(1.5rem, 4vw, 3rem);
+    --space-section-y:      clamp(2rem, 5vw, 4rem);
+    --space-card:           clamp(1rem, 2vw, 1.5rem);
+    --space-compact-card:   clamp(0.75rem, 1.5vw, 1rem);
+    --space-panel-gap:      clamp(1rem, 2vw, 1.5rem);
+
+    /* ── Responsive Typography (Fluid) ───────────────────────────────── */
+    --text-display:         clamp(2.5rem, 5vw + 1rem, 4.5rem);
+    --text-page-title:      clamp(1.875rem, 4vw + 0.5rem, 3rem);
+    --text-section-title:   clamp(1.5rem, 3vw + 0.5rem, 2.25rem);
+    --text-card-title:      clamp(1.125rem, 2vw + 0.5rem, 1.5rem);
+    --text-body:            clamp(0.875rem, 1vw + 0.5rem, 1rem);
+    --text-caption:         clamp(0.75rem, 0.8vw + 0.5rem, 0.875rem);
   }
 
   .dark {

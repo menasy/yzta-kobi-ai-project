@@ -9,10 +9,24 @@ import type {
   RegisterResponse,
 } from "../types/auth.types";
 
+interface RegisterPayload {
+  email: string;
+  password: string;
+  full_name: string;
+}
+
+function toRegisterPayload(data: RegisterRequest): RegisterPayload {
+  return {
+    email: data.email,
+    password: data.password,
+    full_name: data.full_name,
+  };
+}
+
 export function register(data: RegisterRequest): Promise<RegisterResponse> {
-  return authClient.post<RegisterResponse["data"], RegisterRequest>(
+  return authClient.post<RegisterResponse["data"], RegisterPayload>(
     "register",
-    data,
+    toRegisterPayload(data),
   );
 }
 

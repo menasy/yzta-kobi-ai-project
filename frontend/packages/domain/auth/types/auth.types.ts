@@ -3,12 +3,12 @@ import type { z } from "zod";
 
 import type { loginSchema, registerSchema } from "../schemas/auth.schema";
 
-export type AuthRole = "admin" | "operator";
+export type AuthRole = "admin" | "customer" | "operator" | (string & {});
 
 export interface AuthUser {
   id: number;
   email: string;
-  full_name: string | null;
+  full_name: string;
   role: AuthRole;
   is_active: boolean;
   last_login_at: string | null;
@@ -19,7 +19,11 @@ export interface AuthUser {
 export interface RegisterRequest {
   email: string;
   password: string;
-  full_name?: string | null;
+  full_name: string;
+  /**
+   * Legacy UI compatibility only. The auth API strips this field before
+   * sending the documented register payload.
+   */
   role?: AuthRole;
 }
 
@@ -29,7 +33,7 @@ export interface LoginRequest {
 }
 
 export type RegisterResponse = ApiResponse<AuthUser>;
-export type LoginResponse = ApiResponse<AuthUser | null>;
+export type LoginResponse = ApiResponse<null>;
 export type RefreshResponse = ApiResponse<null>;
 export type LogoutResponse = ApiResponse<null>;
 export type MeResponse = ApiResponse<AuthUser>;

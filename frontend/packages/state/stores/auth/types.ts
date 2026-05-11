@@ -1,9 +1,9 @@
-export type AuthRole = "admin" | "operator" | (string & {});
+export type AuthRole = "admin" | "customer" | "operator" | (string & {});
 
 export interface AuthUser {
   id: number;
   email: string;
-  full_name: string | null;
+  full_name: string;
   role: AuthRole;
   is_active: boolean;
   last_login_at: string | null;

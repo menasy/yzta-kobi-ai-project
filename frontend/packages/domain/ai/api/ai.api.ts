@@ -5,14 +5,14 @@ import type {
 } from "../types/ai.types";
 
 const AI_ENDPOINTS = {
-  chat: "chat",
+  message: "message",
 } as const;
 
 export function sendAiChatMessage(
   data: AiChatRequest,
 ): Promise<AiChatResponse> {
   return aiClient.post<AiChatResponse["data"], AiChatRequest>(
-    AI_ENDPOINTS.chat,
+    AI_ENDPOINTS.message,
     data,
   );
 }

@@ -38,6 +38,14 @@ export const spacing = {
   72:   "288px",
   80:   "320px",
   96:   "384px",
+
+  // Responsive Logical Spacing
+  "page-x": "var(--space-page-x)",
+  "page-y": "var(--space-page-y)",
+  "section-y": "var(--space-section-y)",
+  "card": "var(--space-card)",
+  "compact-card": "var(--space-compact-card)",
+  "panel-gap": "var(--space-panel-gap)",
 } as const;
 
 export type SpacingKey = keyof typeof spacing;

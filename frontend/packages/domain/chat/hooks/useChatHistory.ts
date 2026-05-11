@@ -10,19 +10,22 @@ import type { ChatHistoryResponse } from "../types/chat.types";
 interface UseChatHistoryOptions {
   enabled?: boolean;
   refetchInterval?: number | false;
-  sessionId?: string;
 }
 
-export function useChatHistory(options: UseChatHistoryOptions = {}) {
+export function useChatHistory(
+  sessionId: string,
+  options: UseChatHistoryOptions = {},
+) {
   const query = useQuery<ChatHistoryResponse, ApiError>({
-    queryKey: queryKeys.chat.history(options.sessionId),
-    queryFn: getChatHistory,
-    enabled: options.enabled,
+    queryKey: queryKeys.chat.history(sessionId),
+    queryFn: () => getChatHistory(sessionId),
+    enabled: options.enabled ?? Boolean(sessionId),
     refetchInterval: options.refetchInterval,
   });
 
   return {
-    messages: query.data?.data ?? [],
+    history: query.data?.data ?? null,
+    messages: query.data?.data.messages ?? [],
     data: query.data,
     refetch: query.refetch,
     isLoading: query.isLoading,

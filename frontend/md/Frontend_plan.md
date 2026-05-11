@@ -1385,11 +1385,23 @@ Page (RSC)
   └── HydrationBoundary
         └── ContentComponent (CC — "use client")
               ├── shadcn/ui primitive'leri
+              ├── packages/ui-web/components/layout/
+              │     PageShell, AdaptiveGrid, SplitLayout... (Responsive Primitives)
               ├── packages/ui/components/shared/
               │     DataTable, PageHeader, EmptyState...
               └── packages/ui/components/{domain}/
                     OrderTable, StatCard, ChatWindow...
 ```
+
+### Responsive Design & Layout Sistemi
+
+Sistem genelinde responsive davranışları rastgele class'larla (`sm:flex-col md:w-1/2`) kontrol etmek yerine merkezi yapı kullanılır:
+
+- **Theme & Token**: `packages/theme` responsive breakpoint, spacing, typography ve density tokenlarını sağlar.
+- **CSS Değişkenleri**: `globals.css` bu tokenları CSS variable olarak tanımlar; `tailwind.config.ts` utility classlara bağlar (örn. `px-card`, `text-display`).
+- **Layout Primitives**: Sayfalar, esnek ve mobil-öncelikli olan `PageShell`, `AdaptiveGrid`, `ResponsiveSection`, `ResponsiveStack` ve `SplitLayout` primitive'lerini kullanarak şekillenir.
+- **Mobile First**: Tablolar, formlar ve dialog/sheet yapıları ilk aşamada mobile uyumlu olacak şekilde geliştirilir, desktop görünümü container'ın genişlemesi ile ele alınır.
+- Componentlerde hardcode padding/margin yerine `density`, `size`, `variant` gibi prop tabanlı konfigürasyon tercih edilir.
 
 ### Generic DataTable — TanStack Table Wrapper
 

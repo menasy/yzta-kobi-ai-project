@@ -6,26 +6,33 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { updateStock } from "../api/inventory.api";
 import type {
-  UpdateStockRequest,
+  UpdateStockVariables,
   UpdateStockResponse,
 } from "../types/inventory.types";
 
 interface UseUpdateStockOptions {
-  onSuccess?: (data: UpdateStockResponse, variables: UpdateStockRequest) => void;
-  onError?: (error: ApiError, variables: UpdateStockRequest) => void;
+  onSuccess?: (
+    data: UpdateStockResponse,
+    variables: UpdateStockVariables,
+  ) => void;
+  onError?: (error: ApiError, variables: UpdateStockVariables) => void;
   onSettled?: (
     data: UpdateStockResponse | undefined,
     error: ApiError | null,
-    variables: UpdateStockRequest,
+    variables: UpdateStockVariables,
   ) => void;
 }
 
 export function useUpdateStock(options: UseUpdateStockOptions = {}) {
   const queryClient = useQueryClient();
-  const mutation = useMutation<UpdateStockResponse, ApiError, UpdateStockRequest>(
+  const mutation = useMutation<
+    UpdateStockResponse,
+    ApiError,
+    UpdateStockVariables
+  >(
     {
       mutationKey: [...queryKeys.inventory.all, "updateStock"] as const,
-      mutationFn: updateStock,
+      mutationFn: ({ productId, data }) => updateStock(productId, data),
       onSuccess: (data, variables) => {
         void queryClient.invalidateQueries({
           queryKey: queryKeys.inventory.all,

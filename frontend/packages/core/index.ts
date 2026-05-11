@@ -26,6 +26,7 @@ export {
   ApiClient,
   apiClient,
   apiDataClient,
+  buildApiUrl,
   del,
   delData,
   get,
@@ -36,6 +37,7 @@ export {
   postData,
   put,
   putData,
+  resolveApiBaseUrl,
 } from "./client/client";
 export { ApiError } from "./client/api-error";
 export { handleResponse, unwrapResponseData } from "./client/response-handler";

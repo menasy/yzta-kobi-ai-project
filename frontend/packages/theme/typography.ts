@@ -17,6 +17,14 @@ export const typography = {
     "2xl":["1.5rem",   { lineHeight: "2rem" }],
     "3xl":["1.875rem", { lineHeight: "2.25rem" }],
     "4xl":["2.25rem",  { lineHeight: "2.5rem" }],
+    
+    // Fluid / Logical Typography Tokens
+    "display": ["var(--text-display)", { lineHeight: "1.1" }],
+    "page-title": ["var(--text-page-title)", { lineHeight: "1.2" }],
+    "section-title": ["var(--text-section-title)", { lineHeight: "1.3" }],
+    "card-title": ["var(--text-card-title)", { lineHeight: "1.4" }],
+    "body-fluid": ["var(--text-body)", { lineHeight: "1.5" }],
+    "caption-fluid": ["var(--text-caption)", { lineHeight: "1.4" }],
   },
 
   fontWeight: {

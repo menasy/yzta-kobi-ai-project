@@ -9,6 +9,7 @@ export interface Product {
   price: number;
   description?: string | null;
   category: string | null;
+  image_url?: string | null;
   is_active: boolean;
   created_at: string;
   updated_at?: string;
@@ -20,6 +21,7 @@ export interface ProductCreateRequest {
   price: number;
   description?: string | null;
   category?: string | null;
+  image_url?: string | null;
 }
 
 export type ProductUpdateRequest = Partial<ProductCreateRequest>;
@@ -38,4 +40,4 @@ export type ProductsResponse = ApiResponse<Product[]>;
 export type LowStockProductsResponse = ApiResponse<Product[]>;
 export type CreateProductResponse = ApiResponse<Product>;
 export type UpdateProductResponse = ApiResponse<Product>;
-export type DeleteProductResponse = ApiResponse<null>;
+export type DeleteProductResponse = ApiResponse<{ id: ProductId }>;

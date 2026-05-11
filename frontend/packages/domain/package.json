@@ -20,6 +20,10 @@
     "./inventory/*": "./inventory/*",
     "./shipments": "./shipments/index.ts",
     "./shipments/*": "./shipments/*",
+    "./notifications": "./notifications/index.ts",
+    "./notifications/*": "./notifications/*",
+    "./health": "./health/index.ts",
+    "./health/*": "./health/*",
     "./clients/*": "./clients/*"
   },
   "dependencies": {

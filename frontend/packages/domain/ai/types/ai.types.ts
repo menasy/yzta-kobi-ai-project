@@ -1,11 +1,13 @@
 import type { ApiResponse } from "@repo/core";
 
 export interface AiChatRequest {
-  message: string;
+  session_id: string;
+  content: string;
 }
 
 export interface AiChatData {
-  response: string;
+  reply: string;
+  session_id: string;
 }
 
 export type AiChatResponse = ApiResponse<AiChatData>;

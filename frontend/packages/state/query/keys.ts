@@ -28,13 +28,7 @@ function isSerializableArray(
 }
 
 export interface OrderListFilterParams extends KeyParams {
-  page?: number;
-  pageSize?: number;
   status?: string;
-  search?: string;
-  customerId?: number | string;
-  dateFrom?: string;
-  dateTo?: string;
 }
 
 export interface ProductListFilterParams extends KeyParams {
@@ -48,28 +42,7 @@ export interface ProductListFilterParams extends KeyParams {
 
 export interface InventoryListFilterParams extends KeyParams {
   page?: number;
-  pageSize?: number;
-  search?: string;
-  productId?: number | string;
-  belowThreshold?: boolean;
-}
-
-export interface InventoryReportFilterParams extends KeyParams {
-  dateFrom?: string;
-  dateTo?: string;
-  productId?: number | string;
-  groupBy?: "day" | "week" | "month";
-}
-
-export interface ShipmentListFilterParams extends KeyParams {
-  page?: number;
-  pageSize?: number;
-  status?: string;
-  carrier?: string;
-  search?: string;
-  delayed?: boolean;
-  dateFrom?: string;
-  dateTo?: string;
+  size?: number;
 }
 
 function normalizeValue(
@@ -149,6 +122,8 @@ const orders = createQueryKeys("orders");
 const products = createQueryKeys("products");
 const inventory = createQueryKeys("inventory");
 const shipments = createQueryKeys("shipments");
+const notifications = createQueryKeys("notifications");
+const health = createQueryKeys("health");
 
 export const queryKeys = {
   auth: {
@@ -168,6 +143,9 @@ export const queryKeys = {
   },
   orders: {
     all: orders.all,
+    myList: () => orders.scope("myList"),
+    myDetail: (orderId: number | string) =>
+      orders.detail("myDetail", { orderId }),
     list: (filters?: OrderListFilterParams) => orders.detail("list", filters),
     detail: (orderId: number | string) => orders.detail("detail", { orderId }),
     summaryToday: () => orders.scope("summaryToday"),
@@ -185,17 +163,20 @@ export const queryKeys = {
     list: (filters?: InventoryListFilterParams) =>
       inventory.detail("list", filters),
     lowStock: () => inventory.scope("lowStock"),
-    report: (filters?: InventoryReportFilterParams) =>
-      inventory.detail("report", filters),
   },
   shipments: {
     all: shipments.all,
-    list: (filters?: ShipmentListFilterParams) =>
-      shipments.detail("list", filters),
     detail: (shipmentId: number | string) =>
       shipments.detail("detail", { shipmentId }),
-    delayed: (filters?: ShipmentListFilterParams) =>
-      shipments.detail("delayed", filters),
+  },
+  notifications: {
+    all: notifications.all,
+    list: () => notifications.scope("list"),
+    unread: () => notifications.scope("unread"),
+  },
+  health: {
+    all: health.all,
+    status: () => health.scope("status"),
   },
 } as const;
 

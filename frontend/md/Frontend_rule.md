@@ -20,11 +20,15 @@ Bu proje KOBİ'ler için yapay zeka destekli bir operasyon platformudur. `apps/w
 - Component'ler `packages/ui` altında oluşturulur; sayfalarda buradan import edilir. Page veya layout içinde component tanımlanmaz.
 - Yardımcı fonksiyonlar ilgili domain'in `utils/` klasöründe tanımlanır; component veya page içinde tanımlanmaz.
 
-**Renk ve Tema**
+**Renk, Tema ve Responsive Düzen**
 
 - Hiçbir dosyada `text-red-500`, `bg-blue-600`, `border-gray-200` gibi hardcode Tailwind renk sınıfı kullanılmaz.
 - Tüm renkler yalnızca `globals.css`'teki CSS değişkenleri üzerinden gelir: `text-destructive`, `bg-primary`, `text-muted-foreground` vb.
 - Yeni bir renk ihtiyacında önce `globals.css`'e CSS değişkeni eklenir, ardından `tailwind.config.ts`'e kaydedilir.
+- Base stiller her zaman mobile-first yazılır. Mobile’da kullanılabilirlik, desktop’ta bilgi yoğunluğu hedeflenir.
+- Responsive davranışlar (padding, margin, width vb.) rastgele component içine dağılmaz; spacing ve typography tokenları `packages/theme` ve CSS variable sisteminden gelir.
+- Hardcoded breakpoint karmaşası (`sm:p-4 md:p-8 lg:p-12`) yerine `ResponsiveContainer`, `AdaptiveGrid`, `SplitLayout`, `PageShell` gibi layout primitive’leri kullanılır.
+- Componentler `density`, `size`, `variant` gibi prop’larla ölçeklenir. Tablolar, formlar, dialog/sheet yapıları mobile davranışı düşünülerek tasarlanır.
 
 **State Yönetimi**
 
@@ -120,3 +124,24 @@ Tüm domain API çağrıları aşağıdaki akışı izler. Endpoint ve token man
 - Auth HttpOnly cookie ile yürür.
 - Token localStorage/sessionStorage/Zustand içine yazılmaz.
 - Backend cookie set/clear eder; frontend sadece `credentials: "include"` ile cookie'yi taşır.
+
+Sen, Next.js (App Router) tabanlı, modern frontend mimarilerinde uzman, monorepo (Turborepo + pnpm), Zustand, TanStack Query design system konularında deneyimli kıdemli bir frontend mimarı ve geliştiricisin. Tüm kararlarını bu uzmanlık doğrultusunda, production-grade kaliteyi hedefleyerek ver.
+
+Öncelikle mevcut proje yapısını dikkatlice ve bütünsel olarak analiz et. Geliştirme yapmadan önce md  dosyalarını plan ve rule oku  tüm proje akışı açıklanmakta; bu dosyayı mutlaka analiz et. Projenin mimarisini, veri akışını, state yönetimini, query yapısını, responsive sistemini, tema yapısını, dosya organizasyonunu, genel klasör mimarisini ve i18n sistemini tam olarak anlayarak hareket et.
+
+Yapılacak her değişiklik mevcut proje yapısı, mimari kararlar ve sistem akışı ile tamamen uyumlu olmalı; hiçbir değişiklik var olan akışı, dosya yapısını veya mimari bütünlüğü bozmamalıdır.
+
+Aşağıdaki kurallara kesinlikle uy:
+
+Component unmount olduktan sonra hiçbir timer, listener, observer, subscription, animation ve async callback yaşamaya devam etmemeli
+Büyük veriler yanlış yerde tutulmamalı
+Server state ile client state birbirine karıştırılmamalı
+Query cache kontrollü ve bilinçli yönetilmeli
+SSR mümkün olan her yerde korunmalı
+Mevcut monorepo mimarisi, Zustand, React Query, i18n, tema ve responsive sistem bozulmamalı
+
+Sayfa yapısı oluşturulurken olabildiğince atomic yapı kullanılmalı. shadcn ui yda compoenent varsa kesinlikle ocnelikle bu kullanılmalı. Componentler packages altında oluşturulmalı ve sayfalarda buradan kullanılmalı. Bu yapı ui-contracts, ui-web katmanlarına uygun şekilde uygulanmalı.
+
+Yardımcı fonksiyonlar ilgili domain alanının utils/ klasörü altında tanımlanmalı; page veya component içinde tanımlanmamalı.
+
+Tüm geliştirmeleri DRY prensibine uygun, temiz, modüler, yeniden kullanılabilir, okunabilir ve sürdürülebilir bir yapıda gerçekleştir. Mevcut mimariyi güçlendiren, ölçeklenebilir ve bakım kolaylığı sağlayan çözümler üret. 

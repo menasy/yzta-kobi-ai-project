@@ -1,7 +1,13 @@
 import type { ApiResponse } from "@repo/core";
 
 export type TrackingNumber = string;
-export type ShipmentStatus = string;
+export type ShipmentStatus =
+  | "created"
+  | "in_transit"
+  | "delivered"
+  | "delayed"
+  | "failed"
+  | "cancelled";
 export type Carrier = string;
 
 export interface Shipment extends Record<string, unknown> {
@@ -11,7 +17,7 @@ export interface Shipment extends Record<string, unknown> {
   carrier?: Carrier | null;
   status?: ShipmentStatus;
   location: string;
-  estimated_delivery_at?: string | null;
+  estimated_delivery_date?: string | null;
   created_at?: string;
   updated_at?: string;
 }

@@ -1,37 +1,44 @@
 import type { ApiResponse } from "@repo/core";
 
-export interface InventoryItem extends Record<string, unknown> {
-  product_id?: number;
-  product_name?: string;
-  sku?: string;
-  quantity?: number;
-  stock?: number;
-  threshold?: number;
-  low_stock_threshold?: number;
-  updated_at?: string;
-}
+export type InventoryProductId = number | string;
+export type InventorySeverity = "info" | "warning" | "critical";
 
-export type LowStockAlert = InventoryItem;
-
-export interface StockUpdateItem {
+export interface InventoryItem {
+  id: number;
   product_id: number;
   quantity: number;
+  reserved_quantity: number;
+  available_quantity: number;
+  low_stock_threshold: number;
+  product_name: string;
+  product_sku: string;
 }
 
-export interface BulkUpdateStockRequest {
-  updates: StockUpdateItem[];
+export interface LowStockAlert {
+  product_id: number;
+  product_name: string;
+  product_sku: string;
+  current_quantity: number;
+  threshold: number;
+  severity: InventorySeverity;
 }
 
-export type UpdateStockRequest = StockUpdateItem | BulkUpdateStockRequest;
+export interface UpdateStockRequest {
+  quantity: number;
+  low_stock_threshold?: number;
+}
+
+export interface UpdateStockVariables {
+  productId: InventoryProductId;
+  data: UpdateStockRequest;
+}
 
 export interface InventoryListParams
   extends Record<string, string | number | boolean | null | undefined> {
   page?: number;
-  pageSize?: number;
-  search?: string;
-  productId?: number | string;
-  belowThreshold?: boolean;
+  size?: number;
 }
 
+export type InventoryResponse = ApiResponse<InventoryItem[]>;
 export type LowStockResponse = ApiResponse<LowStockAlert[]>;
-export type UpdateStockResponse = ApiResponse<InventoryItem[] | InventoryItem | null>;
+export type UpdateStockResponse = ApiResponse<InventoryItem>;

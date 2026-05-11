@@ -2,7 +2,7 @@
 
 import type { ApiError } from "@repo/core";
 import { queryKeys } from "@repo/state/query";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { login } from "../api/auth.api";
 import type { LoginRequest, LoginResponse } from "../types/auth.types";
@@ -18,10 +18,12 @@ interface UseLoginOptions {
 }
 
 export function useLogin(options: UseLoginOptions = {}) {
+  const queryClient = useQueryClient();
   const mutation = useMutation<LoginResponse, ApiError, LoginRequest>({
     mutationKey: [...queryKeys.auth.all, "login"] as const,
     mutationFn: login,
     onSuccess: (data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.auth.me() });
       options.onSuccess?.(data, variables);
     },
     onError: (error, variables) => {

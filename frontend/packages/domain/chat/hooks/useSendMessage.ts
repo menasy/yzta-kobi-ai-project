@@ -28,7 +28,10 @@ export function useSendMessage(options: UseSendMessageOptions = {}) {
       mutationFn: sendMessage,
       onSuccess: (data, variables) => {
         void queryClient.invalidateQueries({
-          queryKey: queryKeys.chat.history(variables.session_id ?? undefined),
+          queryKey: queryKeys.chat.history(data.data.session_id),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.chat.history(variables.session_id),
         });
         options.onSuccess?.(data, variables);
       },

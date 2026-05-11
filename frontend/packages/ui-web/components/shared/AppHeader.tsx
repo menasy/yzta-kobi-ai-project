@@ -15,8 +15,14 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  Logo
+  Logo,
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetHeader,
+  SheetTitle
 } from "@repo/ui";
+import { Menu } from "lucide-react";
 
 const PUBLIC_NAV_ITEMS: NavItem[] = [
   { label: "Ana Sayfa", href: "/" },
@@ -63,11 +69,63 @@ export function AppHeader({
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 lg:px-8">
         
-        {/* Sol: Logo Alanı */}
-        <Logo variant="header" href={logoHref} />
+        {/* Sol: Logo Alanı & Mobil Menü */}
+        <div className="flex items-center gap-2">
+          {/* Mobil Menü (Hamburger) */}
+          <div className="md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden text-foreground">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Menüyü Aç</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[300px] sm:w-[350px] p-6 bg-background/95 backdrop-blur-md">
+                <SheetHeader className="mb-8 text-left">
+                  <SheetTitle>
+                    <Logo variant="header" href={logoHref} />
+                  </SheetTitle>
+                </SheetHeader>
+                <nav className="flex flex-col gap-4">
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "text-lg font-medium transition-colors hover:text-primary p-2 rounded-md hover:bg-accent/50",
+                        activePathname === item.href ? "text-primary bg-primary/5" : "text-foreground"
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </nav>
+                {!isAuthenticated && (
+                  <div className="mt-8 flex flex-col gap-3">
+                    <Button variant="outline" asChild className="w-full justify-start">
+                      <Link href="/auth/login">Giriş Yap</Link>
+                    </Button>
+                    <Button asChild className="w-full justify-start bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/20">
+                      <Link href="/auth/register">Kayıt Ol</Link>
+                    </Button>
+                  </div>
+                )}
+              </SheetContent>
+            </Sheet>
+          </div>
 
-        {/* Orta: Animated Navigation */}
-        <nav className="flex items-center justify-center flex-1 px-4 min-w-[300px]">
+          {/* Masaüstü Logo */}
+          <div className="hidden md:flex">
+            <Logo variant="header" href={logoHref} />
+          </div>
+          {/* Mobil ortalanmış Logo - Opsiyonel, eğer logo ortada istenirse. Şimdilik solda kalsın */}
+          <div className="md:hidden flex ml-2">
+             <Logo variant="header" href={logoHref} />
+          </div>
+        </div>
+
+        {/* Orta: Animated Navigation (Sadece Masaüstü) */}
+        <nav className="hidden md:flex items-center justify-center flex-1 px-4 min-w-[300px]">
           <div className="relative max-w-[500px] w-full h-[44px] bg-muted/30 rounded-xl border border-border/50 p-1 flex items-center justify-around">
             {navItems.length > 0 ? navItems.map((item, index) => (
               <Link
@@ -159,7 +217,7 @@ export function AppHeader({
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2">
               <Button variant="ghost" asChild className="hidden sm:inline-flex hover:bg-accent/50">
                 <Link href="/auth/login">Giriş Yap</Link>
               </Button>

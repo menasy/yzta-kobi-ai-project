@@ -3,25 +3,29 @@ import type { ApiResponse } from "@repo/core";
 export type MessageRole = "user" | "assistant" | "system";
 
 export interface SendMessageRequest {
-  message: string;
-  session_id?: string | null;
+  session_id: string;
+  content: string;
 }
 
-export interface ChatMessage extends Record<string, unknown> {
-  id?: number | string;
-  role?: MessageRole | string;
-  message?: string;
-  content?: string;
-  response?: string;
-  session_id?: string | null;
-  created_at?: string;
+export interface ChatMessage {
+  role: MessageRole;
+  content: string;
 }
 
-export interface SendMessageData extends Record<string, unknown> {
-  response?: string;
-  message?: string;
-  session_id?: string | null;
+export interface SendMessageData {
+  reply: string;
+  session_id: string;
+}
+
+export interface ChatHistoryData {
+  session_id: string;
+  messages: ChatMessage[];
+}
+
+export interface ClearChatHistoryData {
+  session_id: string;
 }
 
 export type SendMessageResponse = ApiResponse<SendMessageData>;
-export type ChatHistoryResponse = ApiResponse<ChatMessage[]>;
+export type ChatHistoryResponse = ApiResponse<ChatHistoryData>;
+export type ClearChatHistoryResponse = ApiResponse<ClearChatHistoryData>;

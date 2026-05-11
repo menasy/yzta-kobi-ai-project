@@ -3,6 +3,7 @@
  * Tailwind'in varsayılan breakpoint'leriyle birebir uyumlu
  */
 export const breakpoints = {
+  xs:  "360px",
   sm:  "640px",
   md:  "768px",
   lg:  "1024px",
@@ -16,6 +17,7 @@ export type BreakpointKey = keyof typeof breakpoints;
  * Container max-width'leri — sayfa içerik alanı için
  */
 export const containerMaxWidth = {
+  xs:  "360px",
   sm:  "640px",
   md:  "768px",
   lg:  "1024px",
