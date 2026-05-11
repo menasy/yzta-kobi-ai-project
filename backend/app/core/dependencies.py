@@ -133,15 +133,6 @@ async def get_auth_service(db: DBSession) -> "AuthService":
 #     )
 #
 #
-# async def get_inventory_service(db: DBSession) -> "InventoryService":
-#     from app.services.inventory_service import InventoryService
-#     return InventoryService(
-#         inventory_repo=InventoryRepository(db),
-#         movement_repo=InventoryMovementRepository(db),
-#         product_repo=ProductRepository(db),
-#     )
-#
-#
 # async def get_shipment_service(db: DBSession) -> "ShipmentService":
 #     from app.services.shipment_service import ShipmentService
 #     return ShipmentService(
@@ -149,6 +140,20 @@ async def get_auth_service(db: DBSession) -> "AuthService":
 #         event_repo=ShipmentEventRepository(db),
 #         order_repo=OrderRepository(db),
 #     )
+
+
+async def get_inventory_service(db: DBSession) -> "InventoryService":
+    """InventoryService dependency — stok güncelleme ve threshold trigger."""
+    from app.services.inventory_service import InventoryService
+
+    return InventoryService(db=db)
+
+
+async def get_notification_service(db: DBSession) -> "NotificationService":
+    """NotificationService dependency — bildirim CRUD ve Redis event publish."""
+    from app.services.notification_service import NotificationService
+
+    return NotificationService(db=db)
 
 
 # ── Agent Orchestrator Dependency ────────────────────────

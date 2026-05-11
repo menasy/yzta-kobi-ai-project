@@ -1,24 +1,27 @@
+# services/product_service.py
+# Ürün CRUD iş mantığı servisi.
+# Stok (Inventory) güncelleme işlemleri InventoryService'e taşınmıştır.
+# Bu servis sadece Product tablosuyla ilgilenir.
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+
 from app.models.product import Product
-from app.schemas.product import ProductCreate,ProductUpdate
 from app.models.inventory import Inventory
+from app.schemas.product import ProductCreate, ProductUpdate
+
 
 class ProductService:
+
     @staticmethod
     async def get_all_products(db: AsyncSession):
-        # tum urunleri vt den ceker
+        """Tüm ürünleri veritabanından çeker."""
         result = await db.execute(select(Product))
         return result.scalars().all()
 
     @staticmethod
-    async def update_stock_quantity(db: AsyncSession, product_id: int, stock_data: ProductUpdate):
-        # stok miktarını gunceller ve kritik esigi kontrol eder
-        result = await db.execute(select(Product).where(Product.id == product_id))
-        product = result.scalar_one_or_none()
-        
-    @staticmethod
     async def create_product(db: AsyncSession, product_data: ProductCreate):
+        """Yeni ürün oluşturur."""
         db_product = Product(**product_data.model_dump())
         db.add(db_product)
         await db.commit()
@@ -27,17 +30,26 @@ class ProductService:
 
     @staticmethod
     async def get_low_stock_products(db: AsyncSession):
-    # Product ve Inventory tablolarını birleştirip stok kontrolü yapıyoruz
+        """Product ve Inventory tablolarını birleştirip kritik stoktaki ürünleri getirir."""
         query = (
             select(Product)
-            .join(Inventory) # Envanter tablosuna bağlan
-            .where(Inventory.quantity <= Inventory.low_stock_threshold) 
+            .join(Inventory)
+            .where(Inventory.quantity <= Inventory.low_stock_threshold)
         )
         result = await db.execute(query)
         return result.scalars().all()
-    
+
+    @staticmethod
+    async def get_product_by_id(db: AsyncSession, product_id: int):
+        """ID ile ürün getirir."""
+        result = await db.execute(
+            select(Product).where(Product.id == product_id)
+        )
+        return result.scalar_one_or_none()
+
     @staticmethod
     async def update_product(db: AsyncSession, product_id: int, update_data: ProductUpdate):
+        """Ürün bilgilerini günceller (stok hariç — stok için InventoryService kullanın)."""
         product = await ProductService.get_product_by_id(db, product_id)
         if product:
             update_dict = update_data.model_dump(exclude_unset=True)
@@ -46,18 +58,7 @@ class ProductService:
             await db.commit()
             await db.refresh(product)
         return product
-    
-    @staticmethod
-    async def check_and_update_stock(db: AsyncSession, product_id: int, quantity: int):
-        """
-        Sipariş sırasında stok kontrolü yapar ve uygunsa düşer.
-        quantity: Düşülecek miktar (pozitif tam sayı).
-        """
-        product = await ProductService.get_product_by_id(db, product_id)
-        if not product or product.stock_quantity < quantity:
-            return None # Stok yetersiz veya ürün yok
-        
-        product.stock_quantity -= quantity
-        await db.commit()
-        await db.refresh(product)
-        return product
+
+    # NOT: Stok güncelleme işlemleri InventoryService'e taşınmıştır.
+    # update_stock_quantity() ve check_and_update_stock() kaldırıldı.
+    # Stok güncellemesi için: InventoryService.update_stock() kullanın.

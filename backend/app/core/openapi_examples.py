@@ -88,6 +88,62 @@ PRODUCT_CREATE_EXAMPLE = {
     "category": "Elektronik"
 }
 
+# ── Notification Örnekleri ────────────────────────────
+
+NOTIFICATION_EXAMPLE = {
+    "id": 1204,
+    "type": "LOW_STOCK_ALERT",
+    "title": "Kritik stok uyarısı: Kablosuz Mouse",
+    "message": "MS-001 kodlu ürün için stok 3 adede düştü. Eşik değeri: 10.",
+    "severity": "warning",
+    "payload": {
+        "product_id": 101,
+        "product_name": "Kablosuz Mouse",
+        "sku": "MS-001",
+        "current_quantity": 3,
+        "threshold": 10,
+    },
+    "is_read": False,
+    "read_at": None,
+    "created_at": "2026-05-10T22:00:00Z",
+    "updated_at": "2026-05-10T22:00:00Z",
+}
+
+NOTIFICATION_LIST_ITEM_EXAMPLE = {
+    "id": 1204,
+    "type": "LOW_STOCK_ALERT",
+    "title": "Kritik stok uyarısı: Kablosuz Mouse",
+    "severity": "warning",
+    "is_read": False,
+    "read_at": None,
+    "created_at": "2026-05-10T22:00:00Z",
+}
+
+NOTIFICATION_MARK_READ_EXAMPLE = {
+    "id": 1204,
+    "is_read": True,
+    "read_at": "2026-05-10T22:15:00Z",
+    "updated_at": "2026-05-10T22:15:00Z",
+}
+
+# ── Envanter Örnekleri ────────────────────────────────
+
+INVENTORY_EXAMPLE = {
+    "id": 1,
+    "product_id": 101,
+    "quantity": 45,
+    "reserved_quantity": 5,
+    "available_quantity": 40,
+    "low_stock_threshold": 10,
+    "last_updated_at": "2026-05-09T16:45:00Z",
+    "updated_at": "2026-05-09T16:45:00Z",
+}
+
+INVENTORY_UPDATE_EXAMPLE = {
+    "quantity": 5,
+    "low_stock_threshold": 10,
+}
+
 # ── Helper Fonksiyonlar ───────────────────────────────
 
 def get_api_response_example(

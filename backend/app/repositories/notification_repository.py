@@ -2,10 +2,11 @@
 # Notification tablosuna özel DB sorguları.
 # Sadece veri erişimi — iş mantığı yok.
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import Integer as SqlInteger, and_, cast, select, update
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.notification import Notification
@@ -93,3 +94,36 @@ class NotificationRepository(BaseRepository[Notification]):
         )
         await self.session.flush()
         return int(result.rowcount or 0)
+
+    async def has_recent_unread_for_product(
+        self,
+        product_id: int,
+        *,
+        notification_type: str = "LOW_STOCK_ALERT",
+        hours: int = 1,
+    ) -> bool:
+        """
+        Belirli bir ürün için son N saat içinde okunmamış bildirim var mı kontrol eder.
+
+        Duplicate notification üretimini önlemek için kullanılır.
+        payload JSONB alanındaki product_id değerine göre kontrol yapar.
+        """
+        since = datetime.now(tz=timezone.utc) - timedelta(hours=hours)
+        result = await self.session.execute(
+            select(Notification.id)
+            .where(
+                and_(
+                    Notification.type == notification_type,
+                    Notification.is_read.is_(False),
+                    Notification.created_at >= since,
+                    cast(
+                        Notification.payload["product_id"].as_string(),
+                        SqlInteger,
+                    )
+                    == product_id,
+                )
+            )
+            .limit(1)
+        )
+        return result.scalar_one_or_none() is not None
+
