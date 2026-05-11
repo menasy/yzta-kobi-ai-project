@@ -15,3 +15,6 @@ export * from "./responsive";
 
 // Message
 export * from "./message";
+
+// Chat
+export * from "./chat";

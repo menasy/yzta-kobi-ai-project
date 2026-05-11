@@ -243,7 +243,7 @@ export function getAdminNavigationItems(
 ): AccessNavItem[] {
   const knownRole = resolveKnownAuthRole(role);
 
-  if (!knownRole || !ADMIN_ACCESS_ROLES.includes(knownRole)) {
+  if (!knownRole || !(ADMIN_ACCESS_ROLES as readonly string[]).includes(knownRole)) {
     return [];
   }
 
