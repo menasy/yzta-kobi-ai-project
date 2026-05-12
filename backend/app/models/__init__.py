@@ -4,6 +4,7 @@
 
 from app.db.base import Base
 from .user import User
+from .user_address import UserAddress
 from .customer import Customer
 from .product import Product
 from .inventory import Inventory
@@ -20,6 +21,7 @@ from .audit_log import AuditLog
 __all__ = [
     "Base",
     "User",
+    "UserAddress",
     "Customer",
     "Product",
     "Inventory",

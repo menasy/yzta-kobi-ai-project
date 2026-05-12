@@ -132,3 +132,36 @@ def validate_status(value: str, allowed: frozenset[str], field_name: str = "stat
         allowed_str = ", ".join(sorted(allowed))
         raise ValueError(f"Geçersiz {field_name}: '{value}'. İzin verilenler: {allowed_str}")
     return value
+
+
+# ── Teslimat Adresi ──────────────────────────────────────
+
+
+class ShippingAddressBase(BaseModel):
+    """Order shipping ve user default address akışlarının ortak adres sözleşmesi."""
+
+    full_name: str = Field(..., min_length=2, max_length=255, description="Teslim alacak kişi")
+    phone: str = Field(..., min_length=10, max_length=20, description="Teslimat telefonu")
+    address: str = Field(..., min_length=5, max_length=1000, description="Açık adres")
+    city: str = Field(..., min_length=2, max_length=100, description="İl")
+    district: str = Field(..., min_length=2, max_length=100, description="İlçe")
+    postal_code: str | None = Field(default=None, max_length=20, description="Posta kodu")
+    country: str = Field(default="Türkiye", min_length=2, max_length=100, description="Ülke")
+    note: str | None = Field(default=None, max_length=1000, description="Teslimat notu")
+
+    @field_validator("phone", mode="before")
+    @classmethod
+    def normalize_shipping_phone(cls, value: object) -> str:
+        return normalize_phone(str(value))
+
+    @field_validator("phone")
+    @classmethod
+    def validate_shipping_phone(cls, value: str) -> str:
+        if not re.fullmatch(PHONE_PATTERN, value):
+            raise ValueError("Telefon numarası 10-15 rakam içermelidir.")
+        return value
+
+    @field_validator("full_name", "address", "city", "district", "postal_code", "country", "note")
+    @classmethod
+    def sanitize_shipping_text(cls, value: str | None) -> str | None:
+        return validate_sanitized_field(value)

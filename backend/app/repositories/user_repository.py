@@ -2,6 +2,8 @@
 # User tablosuna özel DB sorguları.
 # Sadece veri erişimi — iş mantığı yok.
 
+from typing import Any
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -43,3 +45,7 @@ class UserRepository(BaseRepository[User]):
         """E-posta adresi zaten kullanılıyor mu kontrol eder."""
         user = await self.get_by_email(email)
         return user is not None
+
+    async def update_profile(self, user_id: int, data: dict[str, Any]) -> User | None:
+        """Kullanıcının kendi profil alanlarını günceller."""
+        return await self.update(user_id, data)

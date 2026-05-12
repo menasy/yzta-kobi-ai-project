@@ -2,7 +2,6 @@
 # Sipariş ve sipariş kalemleri schema'ları.
 # Direct checkout request'lerinde cart/guest alanları bulunmaz.
 
-import re
 from datetime import datetime
 from decimal import Decimal
 
@@ -12,8 +11,7 @@ from app.core import openapi_examples
 
 from .common import (
     ORDER_STATUSES,
-    PHONE_PATTERN,
-    normalize_phone,
+    ShippingAddressBase,
     validate_sanitized_field,
     validate_status,
 )
@@ -28,34 +26,8 @@ class CustomerOrderItemCreate(BaseModel):
     quantity: int = Field(..., gt=0, le=10000, description="Sipariş miktarı")
 
 
-class CustomerShippingCreate(BaseModel):
+class CustomerShippingCreate(ShippingAddressBase):
     """Sipariş teslimat adresi snapshot isteği."""
-
-    full_name: str = Field(..., min_length=2, max_length=255, description="Teslim alacak kişi")
-    phone: str = Field(..., min_length=10, max_length=20, description="Teslimat telefonu")
-    address: str = Field(..., min_length=5, max_length=1000, description="Açık adres")
-    city: str = Field(..., min_length=2, max_length=100, description="İl")
-    district: str = Field(..., min_length=2, max_length=100, description="İlçe")
-    postal_code: str | None = Field(default=None, max_length=20, description="Posta kodu")
-    country: str = Field(default="Türkiye", min_length=2, max_length=100, description="Ülke")
-    note: str | None = Field(default=None, max_length=1000, description="Teslimat notu")
-
-    @field_validator("phone", mode="before")
-    @classmethod
-    def normalize_shipping_phone(cls, value: object) -> str:
-        return normalize_phone(str(value))
-
-    @field_validator("phone")
-    @classmethod
-    def validate_shipping_phone(cls, value: str) -> str:
-        if not re.fullmatch(PHONE_PATTERN, value):
-            raise ValueError("Telefon numarası 10-15 rakam içermelidir.")
-        return value
-
-    @field_validator("full_name", "address", "city", "district", "postal_code", "country", "note")
-    @classmethod
-    def sanitize_shipping_text(cls, value: str | None) -> str | None:
-        return validate_sanitized_field(value)
 
 
 class CustomerOrderCreate(BaseModel):
@@ -101,17 +73,8 @@ class OrderStatusUpdate(BaseModel):
 # ── Response Schemas ─────────────────────────────────────
 
 
-class OrderShippingResponse(BaseModel):
+class OrderShippingResponse(ShippingAddressBase):
     """Sipariş teslimat bilgisi response."""
-
-    full_name: str
-    phone: str
-    address: str
-    city: str
-    district: str
-    postal_code: str | None = None
-    country: str
-    note: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

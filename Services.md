@@ -97,6 +97,76 @@ Sistem **Cookie-based JWT** kullanır.
 
 ---
 
+## 2.1 Kullanıcı Ayarları (`/api/user`)
+
+Tüm endpointler login olmuş kullanıcı ister ve HttpOnly cookie tabanlı auth kullanır. Guest kullanıcı erişemez. Kullanıcı sadece kendi profilini ve varsayılan teslimat adresini yönetir; admin için başka kullanıcı adresi yönetimi bu kapsamda yoktur.
+
+### GET `/api/user/profile`
+- **Açıklama**: Login olmuş kullanıcının kendi profilini getirir.
+- **Response Data**:
+  ```json
+  {
+    "id": 42,
+    "email": "ahmet.demir@example.com",
+    "full_name": "Ahmet Demir",
+    "role": "customer",
+    "is_active": true,
+    "last_login_at": "2026-05-12T09:15:00Z",
+    "created_at": "2026-05-01T10:00:00Z",
+    "updated_at": "2026-05-12T09:15:00Z"
+  }
+  ```
+
+### PATCH `/api/user/profile`
+- **Açıklama**: Kullanıcının kendi profil bilgisini günceller.
+- **Request Body**:
+  ```json
+  {
+    "full_name": "Ahmet Demir"
+  }
+  ```
+- **Response Data**: Güncel `UserProfileResponse`.
+
+### GET `/api/user/address`
+- **Açıklama**: Kullanıcının varsayılan teslimat adresini getirir.
+- **Response Data**:
+  ```json
+  {
+    "id": 12,
+    "full_name": "Ahmet Demir",
+    "phone": "05321234567",
+    "address": "Atatürk Mah. Cumhuriyet Cad. No: 12 D: 4",
+    "city": "İstanbul",
+    "district": "Kadıköy",
+    "postal_code": "34710",
+    "country": "Türkiye",
+    "note": "Mesai saatlerinde teslim edilebilir.",
+    "created_at": "2026-05-12T09:20:00Z",
+    "updated_at": "2026-05-12T09:20:00Z"
+  }
+  ```
+
+### PUT `/api/user/address`
+- **Açıklama**: Kullanıcının tek varsayılan teslimat adresini oluşturur veya günceller.
+- **Request Body**: Order create requestindeki `shipping` formatıyla aynıdır.
+  ```json
+  {
+    "full_name": "Ahmet Demir",
+    "phone": "05321234567",
+    "address": "Atatürk Mah. Cumhuriyet Cad. No: 12 D: 4",
+    "city": "İstanbul",
+    "district": "Kadıköy",
+    "postal_code": "34710",
+    "country": "Türkiye",
+    "note": "Mesai saatlerinde teslim edilebilir."
+  }
+  ```
+- **Response Data**: Güncel `UserAddressResponse`.
+
+> Not: `UserAddressUpsert` ve sipariş oluşturmadaki `CustomerShippingCreate` ortak `ShippingAddressBase` şemasını kullanır. AI order flow ileride bu adresi doğrudan order `shipping` payload'una map edebilir.
+
+---
+
 ## 3. AI Agent & Chat (`/api/chat`)
 
 ### POST `/api/chat/message`

@@ -89,6 +89,41 @@ COOKIE_AUTH_DESCRIPTION = (
     "Frontend isteklerinde credentials/include veya withCredentials=true kullanılmalıdır."
 )
 
+# ── Kullanıcı Ayarları Örnekleri ────────────────────────
+
+USER_PROFILE_EXAMPLE = {
+    "id": 42,
+    "email": "ahmet.demir@example.com",
+    "full_name": "Ahmet Demir",
+    "role": "customer",
+    "is_active": True,
+    "last_login_at": "2026-05-12T09:15:00Z",
+    "created_at": "2026-05-01T10:00:00Z",
+    "updated_at": "2026-05-12T09:15:00Z",
+}
+
+USER_PROFILE_UPDATE_EXAMPLE = {
+    "full_name": "Ahmet Demir",
+}
+
+USER_ADDRESS_UPSERT_EXAMPLE = {
+    "full_name": "Ahmet Demir",
+    "phone": "05321234567",
+    "address": "Atatürk Mah. Cumhuriyet Cad. No: 12 D: 4",
+    "city": "İstanbul",
+    "district": "Kadıköy",
+    "postal_code": "34710",
+    "country": "Türkiye",
+    "note": "Mesai saatlerinde teslim edilebilir.",
+}
+
+USER_ADDRESS_EXAMPLE = {
+    "id": 12,
+    **USER_ADDRESS_UPSERT_EXAMPLE,
+    "created_at": "2026-05-12T09:20:00Z",
+    "updated_at": "2026-05-12T09:20:00Z",
+}
+
 # ── Ürün Örnekleri ─────────────────────────────────────
 
 PRODUCT_EXAMPLE = {

@@ -14,11 +14,13 @@ from .order_status_history_repository import OrderStatusHistoryRepository
 from .product_repository import ProductRepository
 from .shipment_event_repository import ShipmentEventRepository
 from .shipment_repository import ShipmentRepository
+from .user_address_repository import UserAddressRepository
 from .user_repository import UserRepository
 
 __all__ = [
     "BaseRepository",
     "UserRepository",
+    "UserAddressRepository",
     "CustomerRepository",
     "ProductRepository",
     "InventoryRepository",

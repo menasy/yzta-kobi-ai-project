@@ -19,6 +19,7 @@ from .common import (
     IdResponse,
     MessageResponse,
     PaginationParams,
+    ShippingAddressBase,
     TimestampResponseMixin,
     sanitize_html,
 )
@@ -66,6 +67,12 @@ from .shipment import (
     ShipmentResponse,
     ShipmentStatusUpdate,
 )
+from .user import (
+    UserAddressResponse,
+    UserAddressUpsert,
+    UserProfileResponse,
+    UserProfileUpdate,
+)
 
 __all__ = [
     # Auth
@@ -74,6 +81,10 @@ __all__ = [
     "UserUpdate",
     "UserResponse",
     "ChangePasswordRequest",
+    "UserProfileUpdate",
+    "UserProfileResponse",
+    "UserAddressUpsert",
+    "UserAddressResponse",
     # Product
     "ProductCreate",
     "ProductUpdate",
@@ -120,6 +131,7 @@ __all__ = [
     "ConversationListResponse",
     # Common
     "PaginationParams",
+    "ShippingAddressBase",
     "TimestampResponseMixin",
     "IdResponse",
     "MessageResponse",

@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from app.services.notification_service import NotificationService
     from app.services.order_service import OrderService
     from app.services.product_service import ProductService
+    from app.services.user_service import UserService
 
 # ── Type Aliases ─────────────────────────────────────────
 
@@ -170,6 +171,17 @@ async def get_order_service(db: DBSession) -> OrderService:
     from app.services.order_service import OrderService
 
     return OrderService(db=db)
+
+
+async def get_user_service(db: DBSession) -> UserService:
+    """UserService dependency — kullanıcı profil/adres self-service akışı."""
+    from app.repositories.user_address_repository import UserAddressRepository
+    from app.services.user_service import UserService
+
+    return UserService(
+        user_repo=UserRepository(db),
+        address_repo=UserAddressRepository(db),
+    )
 
 
 # ── Agent Orchestrator Dependency ────────────────────────

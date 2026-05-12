@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from .inventory_movement import InventoryMovement
     from .order import Order
     from .order_status_history import OrderStatusHistory
+    from .user_address import UserAddress
 
 
 class User(Base, IDMixin, TimestampMixin):
@@ -33,3 +34,4 @@ class User(Base, IDMixin, TimestampMixin):
     inventory_movements: Mapped[list["InventoryMovement"]] = relationship(back_populates="created_by_user")
     orders: Mapped[list["Order"]] = relationship(back_populates="customer")
     order_status_history: Mapped[list["OrderStatusHistory"]] = relationship(back_populates="changed_by_user")
+    addresses: Mapped[list["UserAddress"]] = relationship(back_populates="user", cascade="all, delete-orphan")
