@@ -9,11 +9,21 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 from .base_model import IDMixin, TimestampMixin
 
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
+from sqlalchemy.sql import func
+
 
 class Notification(Base, IDMixin, TimestampMixin):
     """Sistem, stok, kargo ve agent bildirimleri."""
 
     __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String)
+    message = Column(String)
+    type = Column(String)  # "stock_alert", "info", "warning"
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
     __table_args__ = (
         Index("ix_notifications_type", "type"),
         Index("ix_notifications_severity", "severity"),

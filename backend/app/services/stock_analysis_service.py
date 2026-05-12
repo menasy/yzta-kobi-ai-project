@@ -1,7 +1,7 @@
-from sqlalchemy import text
+from sqlalchemy import text, select
 from app.services.forecasting_service import ForecastEngine
-from sqlalchemy import select
 from app.models.product import Product
+from app.models.notification import Notification
 
 class StockAnalysisService:
     def __init__(self, session):
@@ -15,7 +15,11 @@ class StockAnalysisService:
         return result.scalar() or 0
 
     async def analyze_stock_health(self, product_id: int):
-        # 1. Mevcut stoğu al
+        # 1. Mevcut stoğu ve ürün bilgilerini al
+        product_query = select(Product).where(Product.id == product_id)
+        product_result = await self.session.execute(product_query)
+        product = product_result.scalar_one_or_none()
+        
         current_qty = await self.get_current_stock(product_id)
         
         # 2. Gelecek 3 günlük tahmini al
@@ -32,6 +36,19 @@ class StockAnalysisService:
 
         if current_qty < safety_stock:
             gap = round(safety_stock - current_qty, 2)
+            
+            # --- BİLDİRİM OLUŞTURMA ---
+            # Ürün ismini kullanarak bildirim oluşturuyoruz
+            product_name = product.name if product else f"Ürün #{product_id}"
+            new_notification = Notification(
+                title="Kritik Stok Uyarısı",
+                message=f"{product_name} ürünü için stok kritik! Mevcut: {current_qty}, Gereken: {round(safety_stock, 2)}",
+                type="stock_alert"
+            )
+            self.session.add(new_notification)
+            await self.session.commit()
+           
+
             return {
                 "status": "danger",
                 "current_stock": current_qty,
@@ -47,8 +64,7 @@ class StockAnalysisService:
             "message": "Stok seviyeniz önümüzdeki 3 gün için güvenli görünüyor.",
             "needs_reorder": False
         }
-    
-    ####
+
     async def get_dashboard_summary(self):
         # 1. Tüm ürünleri veritabanından al
         query = select(Product)
@@ -58,7 +74,6 @@ class StockAnalysisService:
         total_products = len(products)
         critical_count = 0
         total_shortage = 0
-        categories = {}
 
         # 2. Her ürünü analiz et
         for product in products:

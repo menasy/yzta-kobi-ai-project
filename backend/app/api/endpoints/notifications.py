@@ -5,6 +5,8 @@ import json
 import redis.asyncio as redis
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.core.config import get_settings
 from app.core.dependencies import AdminUser, get_notification_service
@@ -13,12 +15,14 @@ from app.core.response_builder import success_response
 from app.core import openapi_examples
 from app.services.notification_publisher import NOTIFICATION_CHANNEL
 from app.services.notification_service import NotificationService
+from app.models.notification import Notification
 
 logger = get_logger(__name__)
 
 router = APIRouter()
 
-# Endpoint adını 'daily-summary' olarak güncelledim ki çakışma ihtimali kalmasın
+# ── 1. GÜNLÜK ÖZET ENDPOINT'İ ───────────────────────────
+
 @router.get(
     "/daily-summary",
     summary="Günlük gecikme özeti getir"
@@ -33,12 +37,10 @@ async def get_delay_summary(
         message="Özet rapor hazırlandı."
     )
 
-
-# ── 2. MEVCUT DİĞER ENDPOINT'LERİN (HİÇBİRİNE DOKUNULMADI) ────
+# ── 2. OKUNMAMIŞ BİLDİRİMLER ───────────────────────────
 
 @router.get(
     "/unread",
-    response_model=None,
     summary="Okunmamış bildirimleri listele",
 )
 async def list_unread_notifications(
@@ -48,26 +50,26 @@ async def list_unread_notifications(
     service: NotificationService = Depends(get_notification_service),
 ):
     notifications = await service.list_unread(skip=skip, limit=limit)
-    return success_response(data=notifications, message="Okunmamış bildirimler listelendi.")
+    
+    # JSON Serializability hatasını önlemek için dict dönüşümü
+    serialized = [
+        {
+            "id": n.id,
+            "title": n.title,
+            "message": n.message,
+            "type": n.type,
+            "is_read": n.is_read,
+            "created_at": n.created_at.isoformat() if n.created_at else None
+        }
+        for n in notifications
+    ]
+    return success_response(data=serialized, message="Okunmamış bildirimler listelendi.")
 
+# ── 3. TÜM BİLDİRİMLERİ LİSTELE (ANA ENDPOINT) ─────────
 
 @router.get(
     "/",
-    response_model=None,
     summary="Tüm bildirimleri listele",
-    responses={
-        200: {
-            "description": "Bildirimler başarıyla listelendi.",
-            "content": {
-                "application/json": {
-                    "example": openapi_examples.get_api_response_example(
-                        data=[openapi_examples.NOTIFICATION_LIST_ITEM_EXAMPLE],
-                        message="Bildirimler listelendi.",
-                    )
-                }
-            }
-        },
-    },
 )
 async def list_notifications(
     admin: AdminUser,
@@ -75,13 +77,34 @@ async def list_notifications(
     limit: int = Query(50, ge=1, le=100, description="Sayfa başına kayıt"),
     service: NotificationService = Depends(get_notification_service),
 ):
+    """
+    Sistemdeki tüm bildirimleri tarih sırasına göre listeler.
+    JSON Serializable hatası giderilmiştir.
+    """
     notifications = await service.list_notifications(skip=skip, limit=limit)
-    return success_response(data=notifications, message="Bildirimler listelendi.")
+    
+    # SQLAlchemy objelerini JSON'un anlayacağı sözlük yapısına çeviriyoruz
+    serialized_notifications = [
+        {
+            "id": n.id,
+            "title": n.title,
+            "message": n.message,
+            "type": n.type,
+            "is_read": n.is_read,
+            "created_at": n.created_at.isoformat() if n.created_at else None
+        }
+        for n in notifications
+    ]
+    
+    return success_response(
+        data=serialized_notifications, 
+        message="Bildirimler başarıyla listelendi."
+    )
 
+# ── 4. CANLI AKIŞ (SSE) ────────────────────────────────
 
 @router.get(
     "/stream",
-    response_model=None,
     summary="Canlı bildirim akışı (SSE)",
 )
 async def notification_stream(
@@ -112,8 +135,7 @@ async def notification_stream(
                     yield f"event: notification\ndata: {json.dumps(data)}\n\n"
                     
                     summary_text = await service.get_daily_delay_summary()
-                    summary_payload = {"summary": summary_text}
-                    yield f"event: summary_update\ndata: {json.dumps(summary_payload)}\n\n"
+                    yield f"event: summary_update\ndata: {json.dumps({'summary': summary_text})}\n\n"
 
                 await asyncio.sleep(0.1)
 
@@ -136,6 +158,7 @@ async def notification_stream(
         },
     )
 
+# ── 5. GÜNCELLEME İŞLEMLERİ ─────────────────────────────
 
 @router.patch("/read-all", summary="Tüm bildirimleri okundu işaretle")
 async def mark_all_notifications_read(
