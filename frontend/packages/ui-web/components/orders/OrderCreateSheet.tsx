@@ -184,26 +184,26 @@ export function OrderCreateSheet({
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent className="w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl flex flex-col h-full p-0">
-        <SheetHeader className="p-6 border-b">
+        <SheetHeader className="p-5 border-b">
           <SheetTitle className="flex items-center gap-2 text-xl font-bold">
             <Package className="h-5 w-5 text-primary" />
             Yeni Sipariş Oluştur
           </SheetTitle>
-          <SheetDescription>
+          <SheetDescription className="text-sm">
             Ürün detaylarını kontrol edin ve teslimat adresini belirleyin.
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-8">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Product Summary */}
-          <section className="space-y-4">
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+          <section className="space-y-3">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
               <Package className="h-4 w-4" />
               Ürün Özeti
             </h4>
-            <div className="rounded-2xl border border-border/50 bg-muted/20 p-4 shadow-sm">
+            <div className="rounded-xl border border-border/50 bg-muted/20 p-4 shadow-sm">
               <div className="flex items-start gap-4">
-                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-muted/30 border border-border/30">
+                <div className="h-18 w-18 shrink-0 overflow-hidden rounded-lg bg-muted/30 border border-border/30">
                   {product.image_url ? (
                     <img
                       src={product.image_url}
@@ -212,13 +212,13 @@ export function OrderCreateSheet({
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">
-                      <Package className="h-8 w-8" />
+                      <Package className="h-7 w-7" />
                     </div>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-bold text-lg leading-tight truncate">{product.name}</h4>
-                  <p className="mt-1 text-sm text-muted-foreground font-medium">{product.sku}</p>
+                  <p className="mt-1 text-xs text-muted-foreground font-medium">{product.sku}</p>
                   <p className="mt-2 text-xl font-black text-primary">
                     {formatCurrency(product.price)}
                   </p>
@@ -232,7 +232,7 @@ export function OrderCreateSheet({
                 value={String(quantity)}
                 onValueChange={(val) => setQuantity(Number(val))}
               >
-                <SelectTrigger id="order-quantity" className="h-12 w-full rounded-xl border-border/50">
+                <SelectTrigger id="order-quantity" className="h-11 w-full rounded-xl border-border/50">
                   <SelectValue placeholder="Adet seçin" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
@@ -249,13 +249,13 @@ export function OrderCreateSheet({
           <Separator className="opacity-50" />
 
           {/* Shipping Form */}
-          <section className="space-y-6">
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+          <section className="space-y-5">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
               <MapPin className="h-4 w-4" />
               Teslimat Bilgileri
             </h4>
 
-            <div className="grid gap-5">
+            <div className="grid gap-4">
               {/* Full Name */}
               <div className="space-y-2">
                 <Label htmlFor="shipping-fullname" className="text-sm font-semibold flex items-center gap-1.5">
@@ -335,7 +335,7 @@ export function OrderCreateSheet({
                   value={shippingForm.address}
                   onChange={(e) => updateField("address", e.target.value)}
                   className={cn(
-                    "min-h-[100px] rounded-xl border-border/50 focus:ring-primary/20 resize-none",
+                    "min-h-[80px] rounded-xl border-border/50 focus:ring-primary/20 resize-none",
                     formErrors.address && "border-destructive",
                   )}
                   disabled={isPending}
@@ -356,7 +356,7 @@ export function OrderCreateSheet({
                   placeholder="Özel talepleriniz..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="min-h-[80px] rounded-xl border-border/50 focus:ring-primary/20 resize-none"
+                  className="min-h-[60px] rounded-xl border-border/50 focus:ring-primary/20 resize-none"
                   disabled={isPending}
                 />
               </div>

@@ -75,7 +75,26 @@ async function parseResponse<T>(response: Response): Promise<ApiResponse<T>> {
   }
 
   try {
-    return JSON.parse(text) as ApiResponse<T>;
+    const json = JSON.parse(text) as Partial<ApiResponse<T>> & {
+      detail?: unknown;
+    };
+
+    if (typeof json.statusCode !== "number") {
+      const detail =
+        typeof json.detail === "string"
+          ? json.detail
+          : response.statusText || "Bir hata oluştu";
+
+      return {
+        statusCode: response.status,
+        key: response.ok ? "SUCCESS" : "UNKNOWN_ERROR",
+        message: detail === "Not Found" ? "Endpoint bulunamadı." : detail,
+        data: null as T,
+        errors: null,
+      };
+    }
+
+    return json as ApiResponse<T>;
   } catch {
     throw new ApiError("Geçersiz API yanıtı", "INVALID_RESPONSE", response.status);
   }
