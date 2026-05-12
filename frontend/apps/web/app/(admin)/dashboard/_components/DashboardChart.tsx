@@ -1,11 +1,22 @@
-import { useDailySummary } from "@repo/domain/orders";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from "recharts";
-import { motion } from "framer-motion";
+import { formatCurrency } from "@repo/core";
+import type { WeeklyPerformanceItem } from "@repo/domain/orders";
 import { Skeleton } from "@repo/ui-web";
+import { motion } from "framer-motion";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from "recharts";
 
-export function DashboardChart() {
-  const { data: summaryResponse, isLoading } = useDailySummary();
+interface DashboardChartProps {
+  performance: WeeklyPerformanceItem[];
+  currency: string;
+  isLoading: boolean;
+  error: unknown;
+}
 
+export function DashboardChart({
+  performance,
+  currency,
+  isLoading,
+  error,
+}: DashboardChartProps) {
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -18,18 +29,20 @@ export function DashboardChart() {
     );
   }
 
-  const summary = summaryResponse?.data;
-  const baseRevenue = summary?.total_revenue || 5000; // Use a reasonable default for visualization if 0
-  
-  const data = [
-    { name: "Pzt", total: baseRevenue * 0.45 },
-    { name: "Sal", total: baseRevenue * 0.75 },
-    { name: "Çar", total: baseRevenue * 0.55 },
-    { name: "Per", total: baseRevenue * 0.90 },
-    { name: "Cum", total: baseRevenue * 1.15 },
-    { name: "Cmt", total: baseRevenue * 1.35 },
-    { name: "Paz", total: baseRevenue },
-  ];
+  if (error) {
+    return (
+      <div className="p-6 border border-destructive/10 bg-destructive/5 rounded-2xl text-destructive text-xs font-bold uppercase tracking-wider">
+        Haftalık performans verisi yüklenemedi.
+      </div>
+    );
+  }
+
+  const data = performance.map((item) => ({
+    name: item.label,
+    total: item.revenue,
+    orderCount: item.order_count,
+  }));
+  const hasData = data.some((item) => item.total > 0 || item.orderCount > 0);
 
   return (
     <motion.div 
@@ -39,41 +52,46 @@ export function DashboardChart() {
     >
       <div className="px-2 space-y-1">
         <h3 className="text-2xl font-black tracking-tight text-foreground/90">Haftalık Performans</h3>
-        <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em]">Tahmini Gelir Dağılımı (TL)</p>
+        <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em]">Gerçek Gelir Dağılımı ({currency})</p>
       </div>
 
       <div className="h-[360px] w-full p-8 bg-background/30 backdrop-blur-md border border-border/40 rounded-[3rem] shadow-sm relative group overflow-hidden">
-        {/* Decorative corner glow */}
-        <div className="absolute -top-24 -right-24 h-48 w-48 bg-emerald-500/5 blur-[100px] rounded-full" />
-        
+        {!hasData && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em]">
+              Son 7 gün için performans verisi yok.
+            </p>
+          </div>
+        )}
+
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="8 8" vertical={false} stroke="rgba(0,0,0,0.03)" />
+            <CartesianGrid strokeDasharray="8 8" vertical={false} stroke="hsl(var(--border))" />
             <XAxis 
               dataKey="name" 
               axisLine={false} 
               tickLine={false} 
-              tick={{ fill: "rgba(0,0,0,0.3)", fontSize: 10, fontWeight: "800" }}
+              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10, fontWeight: "800" }}
               dy={15}
             />
             <YAxis 
               axisLine={false} 
               tickLine={false} 
-              tick={{ fill: "rgba(0,0,0,0.3)", fontSize: 10, fontWeight: "800" }}
+              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10, fontWeight: "800" }}
               tickFormatter={(value) => `${value / 1000}k`}
             />
             <Tooltip 
-              cursor={{ fill: 'rgba(16, 185, 129, 0.04)', radius: 12 }}
+              cursor={{ fill: "hsl(var(--accent))", radius: 12 }}
               contentStyle={{ 
-                backgroundColor: "rgba(255, 255, 255, 0.95)", 
+                backgroundColor: "hsl(var(--background))",
                 backdropFilter: "blur(8px)",
-                border: "1px solid rgba(0,0,0,0.05)", 
+                border: "1px solid hsl(var(--border))",
                 borderRadius: "20px",
-                boxShadow: "0 20px 40px -10px rgba(0,0,0,0.1)",
+                boxShadow: "0 20px 40px -10px hsl(var(--foreground) / 0.1)",
                 padding: "12px 16px"
               }}
               labelStyle={{ 
-                color: "rgba(0,0,0,0.4)", 
+                color: "hsl(var(--muted-foreground))",
                 fontSize: "10px", 
                 fontWeight: "900", 
                 textTransform: "uppercase",
@@ -81,12 +99,15 @@ export function DashboardChart() {
                 marginBottom: "6px"
               }}
               itemStyle={{ 
-                color: "#10b981", 
+                color: "hsl(var(--primary))",
                 fontSize: "14px", 
                 fontWeight: "900",
                 padding: 0 
               }}
-              formatter={(value: number) => [`₺${value.toLocaleString('tr-TR')}`, 'Gelir']}
+              formatter={(value) => [
+                formatCurrency(Number(value), "tr-TR", currency),
+                "Gelir",
+              ]}
             />
             <Bar 
               dataKey="total" 
@@ -94,13 +115,13 @@ export function DashboardChart() {
               barSize={24}
               animationDuration={1500}
             >
-              {data.map((entry, index) => (
+              {data.map((_, index) => (
                 <Cell 
                   key={`cell-${index}`} 
-                  fill={index === data.length - 1 ? "#10b981" : "rgba(16, 185, 129, 0.15)"}
-                  stroke={index === data.length - 1 ? "rgba(16, 185, 129, 0.3)" : "transparent"}
+                  fill={index === data.length - 1 ? "hsl(var(--chart-1))" : "hsl(var(--chart-1) / 0.2)"}
+                  stroke={index === data.length - 1 ? "hsl(var(--chart-1) / 0.35)" : "transparent"}
                   strokeWidth={4}
-                  className="transition-all duration-500 hover:fill-emerald-500 cursor-pointer"
+                  className="cursor-pointer transition-all duration-500 hover:fill-primary"
                 />
               ))}
             </Bar>

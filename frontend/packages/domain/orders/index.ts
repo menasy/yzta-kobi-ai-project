@@ -4,6 +4,8 @@ export type {
   CreateOrderResponse,
   DailyOrderSummary,
   DailyOrderSummaryResponse,
+  DashboardOverview,
+  DashboardOverviewResponse,
   Order,
   OrderId,
   OrderItem,
@@ -14,10 +16,12 @@ export type {
   OrderStatus,
   UpdateOrderStatusRequest,
   UpdateOrderStatusResponse,
+  WeeklyPerformanceItem,
 } from "./types/orders.types";
 
 export {
   createOrder,
+  getDashboardOverview,
   getDailySummary,
   getMyOrder,
   getMyOrders,
@@ -27,6 +31,7 @@ export {
 } from "./api/orders.api";
 
 export { useCreateOrder } from "./hooks/useCreateOrder";
+export { useDashboardOverview } from "./hooks/useDashboardOverview";
 export { useDailySummary } from "./hooks/useDailySummary";
 export { useMyOrder } from "./hooks/useMyOrder";
 export { useMyOrders } from "./hooks/useMyOrders";

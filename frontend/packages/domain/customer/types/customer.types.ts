@@ -1,10 +1,4 @@
-export interface ApiResponse<T> {
-  statusCode: number;
-  key: string;
-  message: string;
-  data: T | null;
-  errors: string[] | null;
-}
+import type { ApiResponse } from "@repo/core";
 
 export interface OrderLookupData {
   orderNumber: string;
@@ -28,3 +22,7 @@ export interface CargoTrackingData {
   estimatedDelivery: string;
   lastUpdate: string;
 }
+
+export type OrderLookupResponse = ApiResponse<OrderLookupData>;
+export type StockQueryResponse = ApiResponse<StockQueryData>;
+export type CargoTrackingResponse = ApiResponse<CargoTrackingData>;

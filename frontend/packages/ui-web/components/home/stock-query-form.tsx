@@ -1,43 +1,74 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Loader2, Search } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useStockQuery } from '@repo/domain/customer';
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  stockQuerySchema,
+  type StockQueryInput,
+  useStockQuery,
+} from "@repo/domain/customer";
+import { useApiMessageActions } from "@repo/state/stores";
+import { Loader2, Search } from "lucide-react";
+import { motion } from "framer-motion";
+import { useForm } from "react-hook-form";
 
-import { Alert, AlertDescription } from '../shadcn/alert';
-import { Button } from '../shadcn/button';
-import { Input } from '../shadcn/input';
-import { Label } from '../shadcn/label';
-import { CustomerResultCard } from './customer-result-card';
+import { Alert, AlertDescription } from "../shadcn/alert";
+import { Button } from "../shadcn/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../shadcn/form";
+import { Input } from "../shadcn/input";
+import { CustomerResultCard } from "./customer-result-card";
 
 export function StockQueryForm() {
-  const [query, setQuery] = useState('');
-  const { mutate, isLoading, data, error, reset } = useStockQuery();
+  const { showApiSuccess, showApiError } = useApiMessageActions();
+  const form = useForm<StockQueryInput>({
+    resolver: zodResolver(stockQuerySchema),
+    defaultValues: { query: "" },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
-    await mutate({ query });
+  const { queryStockAsync, isPending, data, error, reset } = useStockQuery({
+    onSuccess: (response) => showApiSuccess(response, "Stok bilgisi hazır"),
+    onError: (apiError) => showApiError(apiError, "Stok sorgulanamadı"),
+  });
+
+  const result = data?.data ?? null;
+
+  const onSubmit = async (values: StockQueryInput) => {
+    try {
+      await queryStockAsync(values);
+    } catch {
+      // Error state and message are handled by TanStack Query onError.
+    }
   };
 
   const handleReset = () => {
-    setQuery('');
+    form.reset({ query: "" });
     reset();
   };
 
-  if (data) {
+  if (result) {
     return (
       <div className="space-y-6">
         <CustomerResultCard
           title="Stok Durumu"
-          status={data.inStock ? 'success' : 'error'}
-          statusText={data.inStock ? 'Stokta Var' : 'Stokta Yok'}
+          status={result.inStock ? "success" : "error"}
+          statusText={result.inStock ? "Stokta Var" : "Stokta Yok"}
           items={[
-            { label: 'Ürün Adı', value: data.productName },
-            { label: 'SKU (Stok Kodu)', value: data.sku },
-            { label: 'Miktar', value: data.quantity > 0 ? `${data.quantity} Adet` : 'Tükendi' },
-            ...(data.location ? [{ label: 'Depo Konumu', value: data.location }] : []),
+            { label: "Ürün Adı", value: result.productName },
+            { label: "SKU (Stok Kodu)", value: result.sku },
+            {
+              label: "Miktar",
+              value: result.quantity > 0 ? `${result.quantity} Adet` : "Tükendi",
+            },
+            ...(result.location
+              ? [{ label: "Depo Konumu", value: result.location }]
+              : []),
           ]}
         />
         <Button variant="outline" onClick={handleReset} className="w-full">
@@ -48,46 +79,62 @@ export function StockQueryForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-3">
-        <Label htmlFor="stockQuery" className="text-sm font-medium text-foreground/80">Ürün Adı veya SKU</Label>
-        <div className="relative group">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-muted-foreground transition-colors group-focus-within:text-primary">
-            <Search className="size-5" />
-          </div>
-          <Input
-            id="stockQuery"
-            type="text"
-            placeholder="Örn: iPhone 15 veya SKU-999"
-            className="h-14 pl-11 pr-4 text-lg border-border/60 bg-background/50 transition-all duration-300 focus:bg-background focus:ring-2 focus:ring-primary/20"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            disabled={isLoading}
-          />
-        </div>
-      </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="query"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <FormLabel className="text-sm font-medium text-foreground/80">
+                Ürün Adı veya SKU
+              </FormLabel>
+              <div className="relative group">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-muted-foreground transition-colors group-focus-within:text-primary">
+                  <Search className="size-5" />
+                </div>
+                <FormControl>
+                  <Input
+                    type="text"
+                    placeholder="Örn: Zeytinyağı veya SKU-999"
+                    className="h-14 pl-11 pr-4 text-lg border-border/60 bg-background/50 transition-all duration-300 focus:bg-background focus:ring-2 focus:ring-primary/20"
+                    disabled={isPending}
+                    {...field}
+                  />
+                </FormControl>
+              </div>
+              <FormDescription className="pl-1 text-xs">
+                Ürün adı veya stok kodu ile arama yapabilirsiniz.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      {error && (
-        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-          <Alert variant="destructive" className="border-destructive/20 bg-destructive/5">
-            <AlertDescription className="text-xs">{error}</AlertDescription>
-          </Alert>
-        </motion.div>
-      )}
-
-      <Button 
-        type="submit" 
-        size="lg"
-        className="w-full h-14 text-lg font-bold shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.99]" 
-        disabled={isLoading || !query.trim()}
-      >
-        {isLoading ? (
-          <Loader2 className="mr-2 size-5 animate-spin" />
-        ) : (
-          <Search className="mr-2 size-5" />
+        {error && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
+            <Alert variant="destructive" className="border-destructive/20 bg-destructive/5">
+              <AlertDescription className="text-xs">{error.message}</AlertDescription>
+            </Alert>
+          </motion.div>
         )}
-        Stok Sorgula
-      </Button>
-    </form>
+
+        {!error && !form.formState.isSubmitted && (
+          <p className="rounded-lg border border-border/60 bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
+            Stok sonucu burada görünecek.
+          </p>
+        )}
+
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full h-14 text-lg font-bold shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.99]"
+          disabled={isPending}
+        >
+          {isPending ? <Loader2 className="mr-2 size-5 animate-spin" /> : <Search className="mr-2 size-5" />}
+          Stok Sorgula
+        </Button>
+      </form>
+    </Form>
   );
 }

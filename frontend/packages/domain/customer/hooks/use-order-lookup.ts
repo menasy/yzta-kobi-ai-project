@@ -1,37 +1,37 @@
-import { useState } from 'react';
-import { lookupOrder } from '../api/customer.api';
-import { OrderLookupInput } from '../schemas/customer.schema';
-import { ApiResponse, OrderLookupData } from '../types/customer.types';
+"use client";
 
-export function useOrderLookup() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [data, setData] = useState<OrderLookupData | null>(null);
-  const [error, setError] = useState<string | null>(null);
+import type { ApiError } from "@repo/core";
+import { queryKeys } from "@repo/state/query";
+import { useMutation } from "@tanstack/react-query";
 
-  const mutate = async (input: OrderLookupInput) => {
-    setIsLoading(true);
-    setError(null);
-    setData(null);
+import { lookupOrder } from "../api/customer.api";
+import type { OrderLookupInput } from "../schemas/customer.schema";
+import type { OrderLookupResponse } from "../types/customer.types";
 
-    try {
-      const response: ApiResponse<OrderLookupData> = await lookupOrder(input);
+interface UseOrderLookupOptions {
+  onSuccess?: (data: OrderLookupResponse, variables: OrderLookupInput) => void;
+  onError?: (error: ApiError, variables: OrderLookupInput) => void;
+}
 
-      if (response.statusCode >= 400 || !response.data) {
-        setError(response.message || 'Bir hata oluştu.');
-      } else {
-        setData(response.data);
-      }
-    } catch (err) {
-      setError('Bağlantı hatası oluştu. Lütfen tekrar deneyin.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+export function useOrderLookup(options: UseOrderLookupOptions = {}) {
+  const mutation = useMutation<OrderLookupResponse, ApiError, OrderLookupInput>({
+    mutationKey: queryKeys.customer.orderLookup(),
+    mutationFn: lookupOrder,
+    onSuccess: (data, variables) => {
+      options.onSuccess?.(data, variables);
+    },
+    onError: (error, variables) => {
+      options.onError?.(error, variables);
+    },
+  });
 
-  const reset = () => {
-    setData(null);
-    setError(null);
-  };
-
-  return { mutate, isLoading, data, error, reset };
+  return {
+    lookupOrder: mutation.mutate,
+    lookupOrderAsync: mutation.mutateAsync,
+    data: mutation.data ?? null,
+    isPending: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    error: mutation.error ?? null,
+    reset: mutation.reset,
+  } as const;
 }

@@ -1,37 +1,37 @@
-import { useState } from 'react';
-import { queryStock } from '../api/customer.api';
-import { StockQueryInput } from '../schemas/customer.schema';
-import { ApiResponse, StockQueryData } from '../types/customer.types';
+"use client";
 
-export function useStockQuery() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [data, setData] = useState<StockQueryData | null>(null);
-  const [error, setError] = useState<string | null>(null);
+import type { ApiError } from "@repo/core";
+import { queryKeys } from "@repo/state/query";
+import { useMutation } from "@tanstack/react-query";
 
-  const mutate = async (input: StockQueryInput) => {
-    setIsLoading(true);
-    setError(null);
-    setData(null);
+import { queryStock } from "../api/customer.api";
+import type { StockQueryInput } from "../schemas/customer.schema";
+import type { StockQueryResponse } from "../types/customer.types";
 
-    try {
-      const response: ApiResponse<StockQueryData> = await queryStock(input);
+interface UseStockQueryOptions {
+  onSuccess?: (data: StockQueryResponse, variables: StockQueryInput) => void;
+  onError?: (error: ApiError, variables: StockQueryInput) => void;
+}
 
-      if (response.statusCode >= 400 || !response.data) {
-        setError(response.message || 'Bir hata oluştu.');
-      } else {
-        setData(response.data);
-      }
-    } catch (err) {
-      setError('Bağlantı hatası oluştu. Lütfen tekrar deneyin.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+export function useStockQuery(options: UseStockQueryOptions = {}) {
+  const mutation = useMutation<StockQueryResponse, ApiError, StockQueryInput>({
+    mutationKey: queryKeys.customer.stockQuery(),
+    mutationFn: queryStock,
+    onSuccess: (data, variables) => {
+      options.onSuccess?.(data, variables);
+    },
+    onError: (error, variables) => {
+      options.onError?.(error, variables);
+    },
+  });
 
-  const reset = () => {
-    setData(null);
-    setError(null);
-  };
-
-  return { mutate, isLoading, data, error, reset };
+  return {
+    queryStock: mutation.mutate,
+    queryStockAsync: mutation.mutateAsync,
+    data: mutation.data ?? null,
+    isPending: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    error: mutation.error ?? null,
+    reset: mutation.reset,
+  } as const;
 }

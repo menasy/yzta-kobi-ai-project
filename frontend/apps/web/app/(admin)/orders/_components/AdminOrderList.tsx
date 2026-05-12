@@ -114,7 +114,7 @@ export function AdminOrderList() {
                                 {order.customer_name || "Misafir Müşteri"}
                               </span>
                               <span className="text-[10px] text-muted-foreground/60">
-                                {order.customer_email || "E-posta belirtilmemiş"}
+                                {typeof order.customer_email === 'string' && order.customer_email ? order.customer_email : "E-posta belirtilmemiş"}
                               </span>
                             </div>
                           </div>

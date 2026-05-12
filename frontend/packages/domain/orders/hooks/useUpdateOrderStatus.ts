@@ -51,6 +51,9 @@ export function useUpdateOrderStatus(
       void queryClient.invalidateQueries({
         queryKey: queryKeys.orders.summaryToday(),
       });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.orders.dashboardOverview(),
+      });
       options.onSuccess?.(data, variables);
     },
     onError: (error, variables) => {

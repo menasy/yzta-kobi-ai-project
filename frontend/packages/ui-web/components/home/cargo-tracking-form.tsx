@@ -1,43 +1,69 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Loader2, Truck, Search } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useCargoTracking } from '@repo/domain/customer';
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  cargoTrackingSchema,
+  type CargoTrackingInput,
+  useCargoTracking,
+} from "@repo/domain/customer";
+import { useApiMessageActions } from "@repo/state/stores";
+import { Loader2, Search, Truck } from "lucide-react";
+import { motion } from "framer-motion";
+import { useForm } from "react-hook-form";
 
-import { Alert, AlertDescription } from '../shadcn/alert';
-import { Button } from '../shadcn/button';
-import { Input } from '../shadcn/input';
-import { Label } from '../shadcn/label';
-import { CustomerResultCard } from './customer-result-card';
+import { Alert, AlertDescription } from "../shadcn/alert";
+import { Button } from "../shadcn/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../shadcn/form";
+import { Input } from "../shadcn/input";
+import { CustomerResultCard } from "./customer-result-card";
 
 export function CargoTrackingForm() {
-  const [trackingNumber, setTrackingNumber] = useState('');
-  const { mutate, isLoading, data, error, reset } = useCargoTracking();
+  const { showApiSuccess, showApiError } = useApiMessageActions();
+  const form = useForm<CargoTrackingInput>({
+    resolver: zodResolver(cargoTrackingSchema),
+    defaultValues: { trackingNumber: "" },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!trackingNumber.trim()) return;
-    await mutate({ trackingNumber });
+  const { trackCargoAsync, isPending, data, error, reset } = useCargoTracking({
+    onSuccess: (response) => showApiSuccess(response, "Kargo bilgisi hazır"),
+    onError: (apiError) => showApiError(apiError, "Kargo takip edilemedi"),
+  });
+
+  const result = data?.data ?? null;
+
+  const onSubmit = async (values: CargoTrackingInput) => {
+    try {
+      await trackCargoAsync(values);
+    } catch {
+      // Error state and message are handled by TanStack Query onError.
+    }
   };
 
   const handleReset = () => {
-    setTrackingNumber('');
+    form.reset({ trackingNumber: "" });
     reset();
   };
 
-  if (data) {
+  if (result) {
     return (
       <div className="space-y-6">
         <CustomerResultCard
           title="Kargo Durumu"
-          status={data.status === 'Dağıtıma Çıktı' ? 'warning' : 'info'}
-          statusText={data.status}
+          status={result.status === "Teslim Edildi" ? "success" : "warning"}
+          statusText={result.status}
           items={[
-            { label: 'Takip Numarası', value: data.trackingNumber },
-            { label: 'Kargo Firması', value: data.company },
-            { label: 'Tahmini Teslimat', value: data.estimatedDelivery },
-            { label: 'Son İşlem', value: data.lastUpdate },
+            { label: "Takip Numarası", value: result.trackingNumber },
+            { label: "Kargo Firması", value: result.company },
+            { label: "Tahmini Teslimat", value: result.estimatedDelivery },
+            { label: "Son İşlem", value: result.lastUpdate },
           ]}
         />
         <Button variant="outline" onClick={handleReset} className="w-full">
@@ -48,46 +74,62 @@ export function CargoTrackingForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-3">
-        <Label htmlFor="trackingNumber" className="text-sm font-medium text-foreground/80">Takip Numarası</Label>
-        <div className="relative group">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-muted-foreground transition-colors group-focus-within:text-primary">
-            <Truck className="size-5" />
-          </div>
-          <Input
-            id="trackingNumber"
-            type="text"
-            placeholder="Örn: 1A2B3C4D5E"
-            className="h-14 pl-11 pr-4 text-lg border-border/60 bg-background/50 transition-all duration-300 focus:bg-background focus:ring-2 focus:ring-primary/20"
-            value={trackingNumber}
-            onChange={(e) => setTrackingNumber(e.target.value)}
-            disabled={isLoading}
-          />
-        </div>
-      </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="trackingNumber"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <FormLabel className="text-sm font-medium text-foreground/80">
+                Takip Numarası
+              </FormLabel>
+              <div className="relative group">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-muted-foreground transition-colors group-focus-within:text-primary">
+                  <Truck className="size-5" />
+                </div>
+                <FormControl>
+                  <Input
+                    type="text"
+                    placeholder="Örn: 1A2B3C4D5E"
+                    className="h-14 pl-11 pr-4 text-lg border-border/60 bg-background/50 transition-all duration-300 focus:bg-background focus:ring-2 focus:ring-primary/20"
+                    disabled={isPending}
+                    {...field}
+                  />
+                </FormControl>
+              </div>
+              <FormDescription className="pl-1 text-xs">
+                Kargo firmanızın verdiği takip numarasını giriniz.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      {error && (
-        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-          <Alert variant="destructive" className="border-destructive/20 bg-destructive/5">
-            <AlertDescription className="text-xs">{error}</AlertDescription>
-          </Alert>
-        </motion.div>
-      )}
-
-      <Button 
-        type="submit" 
-        size="lg"
-        className="w-full h-14 text-lg font-bold shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.99]" 
-        disabled={isLoading || !trackingNumber.trim()}
-      >
-        {isLoading ? (
-          <Loader2 className="mr-2 size-5 animate-spin" />
-        ) : (
-          <Search className="mr-2 size-5" />
+        {error && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
+            <Alert variant="destructive" className="border-destructive/20 bg-destructive/5">
+              <AlertDescription className="text-xs">{error.message}</AlertDescription>
+            </Alert>
+          </motion.div>
         )}
-        Takip Et
-      </Button>
-    </form>
+
+        {!error && !form.formState.isSubmitted && (
+          <p className="rounded-lg border border-border/60 bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
+            Takip sonucu burada görünecek.
+          </p>
+        )}
+
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full h-14 text-lg font-bold shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.99]"
+          disabled={isPending}
+        >
+          {isPending ? <Loader2 className="mr-2 size-5 animate-spin" /> : <Search className="mr-2 size-5" />}
+          Takip Et
+        </Button>
+      </form>
+    </Form>
   );
 }

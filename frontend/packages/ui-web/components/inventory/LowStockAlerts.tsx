@@ -1,7 +1,7 @@
 "use client";
 
 import { useLowStock } from "@repo/domain/inventory/hooks/useLowStock";
-import { AlertCircle, PackageX, TrendingDown, ArrowRight } from "lucide-react";
+import { AlertCircle, PackageX, TrendingDown, ArrowRight, Box } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "../shadcn/skeleton";
 import { InventorySeverityBadge } from "./InventorySeverityBadge";

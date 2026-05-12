@@ -72,8 +72,29 @@ export interface DailyOrderSummary {
   total_revenue: number;
 }
 
+export interface WeeklyPerformanceItem {
+  date: string;
+  label: string;
+  revenue: number;
+  order_count: number;
+}
+
+export interface DashboardOverview {
+  total_revenue: number;
+  total_orders: number;
+  pending_orders: number;
+  processing_orders: number;
+  shipped_orders: number;
+  delivered_orders: number;
+  cancelled_orders: number;
+  new_orders_today: number;
+  weekly_performance: WeeklyPerformanceItem[];
+  currency: string;
+}
+
 export type CreateOrderResponse = ApiResponse<Order>;
 export type OrdersResponse = ApiResponse<Order[]>;
 export type OrderResponse = ApiResponse<Order>;
 export type UpdateOrderStatusResponse = ApiResponse<Order>;
 export type DailyOrderSummaryResponse = ApiResponse<DailyOrderSummary>;
+export type DashboardOverviewResponse = ApiResponse<DashboardOverview>;

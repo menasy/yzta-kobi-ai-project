@@ -18,6 +18,8 @@
     "./inventory/*": "./inventory/*",
     "./shipments": "./shipments/index.ts",
     "./shipments/*": "./shipments/*",
+    "./customer": "./customer/index.ts",
+    "./customer/*": "./customer/*",
     "./notifications": "./notifications/index.ts",
     "./notifications/*": "./notifications/*",
     "./health": "./health/index.ts",

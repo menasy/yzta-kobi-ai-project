@@ -4,6 +4,7 @@ import type {
   CreateOrderRequest,
   CreateOrderResponse,
   DailyOrderSummaryResponse,
+  DashboardOverviewResponse,
   OrderId,
   OrderListParams,
   OrderResponse,
@@ -17,6 +18,7 @@ const ORDERS_ENDPOINTS = {
   my: "my",
   myById: (orderId: OrderId) => `my/${String(orderId)}`,
   summaryToday: "summary/today",
+  dashboardOverview: "dashboard/overview",
   byId: (orderId: OrderId) => String(orderId),
   status: (orderId: OrderId) => `${String(orderId)}/status`,
 } as const;
@@ -49,6 +51,12 @@ export function getOrders(params?: OrderListParams): Promise<OrdersResponse> {
 export function getDailySummary(): Promise<DailyOrderSummaryResponse> {
   return ordersClient.get<DailyOrderSummaryResponse["data"]>(
     ORDERS_ENDPOINTS.summaryToday,
+  );
+}
+
+export function getDashboardOverview(): Promise<DashboardOverviewResponse> {
+  return ordersClient.get<DashboardOverviewResponse["data"]>(
+    ORDERS_ENDPOINTS.dashboardOverview,
   );
 }
 

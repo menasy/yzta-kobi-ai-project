@@ -124,6 +124,7 @@ const shipments = createQueryKeys("shipments");
 const notifications = createQueryKeys("notifications");
 const health = createQueryKeys("health");
 const user = createQueryKeys("user");
+const customer = createQueryKeys("customer");
 
 export const queryKeys = {
   auth: {
@@ -146,6 +147,7 @@ export const queryKeys = {
     list: (filters?: OrderListFilterParams) => orders.detail("list", filters),
     detail: (orderId: number | string) => orders.detail("detail", { orderId }),
     summaryToday: () => orders.scope("summaryToday"),
+    dashboardOverview: () => orders.scope("dashboardOverview"),
   },
   products: {
     all: products.all,
@@ -180,6 +182,12 @@ export const queryKeys = {
     all: user.all,
     profile: () => user.scope("profile"),
     address: () => user.scope("address"),
+  },
+  customer: {
+    all: customer.all,
+    orderLookup: () => customer.scope("orderLookup"),
+    stockQuery: () => customer.scope("stockQuery"),
+    cargoTracking: () => customer.scope("cargoTracking"),
   },
 } as const;
 

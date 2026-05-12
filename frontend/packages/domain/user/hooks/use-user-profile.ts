@@ -25,7 +25,10 @@ export const useUpdateUserProfile = () => {
       
       // Update global auth store user object
       if (response.data) {
-        updateUser(response.data);
+        updateUser({
+          ...response.data,
+          full_name: response.data.full_name ?? undefined,
+        });
       }
     },
   });

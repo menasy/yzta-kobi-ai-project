@@ -1,37 +1,37 @@
-import { useState } from 'react';
-import { trackCargo } from '../api/customer.api';
-import { CargoTrackingInput } from '../schemas/customer.schema';
-import { ApiResponse, CargoTrackingData } from '../types/customer.types';
+"use client";
 
-export function useCargoTracking() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [data, setData] = useState<CargoTrackingData | null>(null);
-  const [error, setError] = useState<string | null>(null);
+import type { ApiError } from "@repo/core";
+import { queryKeys } from "@repo/state/query";
+import { useMutation } from "@tanstack/react-query";
 
-  const mutate = async (input: CargoTrackingInput) => {
-    setIsLoading(true);
-    setError(null);
-    setData(null);
+import { trackCargo } from "../api/customer.api";
+import type { CargoTrackingInput } from "../schemas/customer.schema";
+import type { CargoTrackingResponse } from "../types/customer.types";
 
-    try {
-      const response: ApiResponse<CargoTrackingData> = await trackCargo(input);
+interface UseCargoTrackingOptions {
+  onSuccess?: (data: CargoTrackingResponse, variables: CargoTrackingInput) => void;
+  onError?: (error: ApiError, variables: CargoTrackingInput) => void;
+}
 
-      if (response.statusCode >= 400 || !response.data) {
-        setError(response.message || 'Bir hata oluştu.');
-      } else {
-        setData(response.data);
-      }
-    } catch (err) {
-      setError('Bağlantı hatası oluştu. Lütfen tekrar deneyin.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+export function useCargoTracking(options: UseCargoTrackingOptions = {}) {
+  const mutation = useMutation<CargoTrackingResponse, ApiError, CargoTrackingInput>({
+    mutationKey: queryKeys.customer.cargoTracking(),
+    mutationFn: trackCargo,
+    onSuccess: (data, variables) => {
+      options.onSuccess?.(data, variables);
+    },
+    onError: (error, variables) => {
+      options.onError?.(error, variables);
+    },
+  });
 
-  const reset = () => {
-    setData(null);
-    setError(null);
-  };
-
-  return { mutate, isLoading, data, error, reset };
+  return {
+    trackCargo: mutation.mutate,
+    trackCargoAsync: mutation.mutateAsync,
+    data: mutation.data ?? null,
+    isPending: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    error: mutation.error ?? null,
+    reset: mutation.reset,
+  } as const;
 }
