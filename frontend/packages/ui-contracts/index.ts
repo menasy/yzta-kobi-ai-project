@@ -18,3 +18,6 @@ export * from "./message";
 
 // Chat
 export * from "./chat";
+
+// AI Panel
+export * from "./ai-panel";

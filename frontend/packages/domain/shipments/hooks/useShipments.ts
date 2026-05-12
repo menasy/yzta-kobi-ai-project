@@ -4,26 +4,24 @@ import type { ApiError } from "@repo/core";
 import { queryKeys } from "@repo/state/query";
 import { useQuery } from "@tanstack/react-query";
 
-import { getDelayedShipments } from "../api/shipments.api";
+import { getShipments } from "../api/shipments.api";
 import type {
-  DelayedShipmentsResponse,
   ShipmentListParams,
+  ShipmentsResponse,
 } from "../types/shipments.types";
 
-type DelayedShipmentParams = Pick<ShipmentListParams, "skip" | "limit">;
-
-interface UseDelayedShipmentsOptions {
+interface UseShipmentsOptions {
   enabled?: boolean;
   refetchInterval?: number | false;
 }
 
-export function useDelayedShipments(
-  params?: DelayedShipmentParams,
-  options: UseDelayedShipmentsOptions = {},
+export function useShipments(
+  params?: ShipmentListParams,
+  options: UseShipmentsOptions = {},
 ) {
-  const query = useQuery<DelayedShipmentsResponse, ApiError>({
-    queryKey: queryKeys.shipments.delayed(params),
-    queryFn: () => getDelayedShipments(params),
+  const query = useQuery<ShipmentsResponse, ApiError>({
+    queryKey: queryKeys.shipments.list(params),
+    queryFn: () => getShipments(params),
     enabled: options.enabled,
     refetchInterval: options.refetchInterval,
   });

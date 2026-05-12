@@ -45,6 +45,13 @@ export interface InventoryListFilterParams extends KeyParams {
   size?: number;
 }
 
+export interface ShipmentListFilterParams extends KeyParams {
+  status?: string;
+  carrier?: string;
+  skip?: number;
+  limit?: number;
+}
+
 function normalizeValue(
   value: SerializableValue,
 ): NormalizedSerializableValue | undefined {
@@ -165,8 +172,12 @@ export const queryKeys = {
   },
   shipments: {
     all: shipments.all,
-    detail: (shipmentId: number | string) =>
-      shipments.detail("detail", { shipmentId }),
+    list: (filters?: ShipmentListFilterParams) =>
+      shipments.detail("list", filters),
+    detail: (trackingNumber: number | string) =>
+      shipments.detail("detail", { trackingNumber }),
+    delayed: (filters?: Pick<ShipmentListFilterParams, "skip" | "limit">) =>
+      shipments.detail("delayed", filters),
   },
   notifications: {
     all: notifications.all,

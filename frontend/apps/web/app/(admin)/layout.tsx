@@ -1,3 +1,4 @@
+import { GlobalAiAssistant } from "@/components/ai-assistant/GlobalAiAssistant";
 import { GlobalFooter } from "@/components/navigation/GlobalFooter";
 import { GlobalHeader } from "@/components/navigation/GlobalHeader";
 
@@ -19,6 +20,7 @@ export default function AdminLayout({
       </main>
 
       <GlobalFooter />
+      <GlobalAiAssistant />
     </div>
   );
 }

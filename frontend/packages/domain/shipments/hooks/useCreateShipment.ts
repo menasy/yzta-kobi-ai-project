@@ -34,6 +34,11 @@ export function useCreateShipment(options: UseCreateShipmentOptions = {}) {
     mutationFn: createShipment,
     onSuccess: (data, variables) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.shipments.all });
+      if (data.data?.tracking_number) {
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.shipments.detail(data.data.tracking_number),
+        });
+      }
       options.onSuccess?.(data, variables);
     },
     onError: (error, variables) => {

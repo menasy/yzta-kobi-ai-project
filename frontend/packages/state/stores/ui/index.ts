@@ -1,5 +1,6 @@
 export { createUIStore } from "./uiStore";
 export {
+  useAiPanelOpen,
   useCommandMenuOpen,
   useGlobalLoading,
   useMobileSidebarOpen,
