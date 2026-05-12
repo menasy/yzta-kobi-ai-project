@@ -1,33 +1,26 @@
-# api/router.py
-# Ana API router — tüm endpoint modüllerini bağlar.
-# Aktif router'lar burada include edilir.
-
 from fastapi import APIRouter
-
-from app.api.endpoints import auth
-from app.api.endpoints import orders
-from app.api.endpoints import products
-from app.api.endpoints import shipments
-from app.api.endpoints import chat
-from app.api.endpoints import inventory
-from app.api.endpoints import notifications
-from app.api.endpoints import forecast
+from app.api.endpoints import (
+    auth, orders, products, shipments, 
+    chat, inventory, notifications, forecast
+)
 
 api_router = APIRouter()
 
 # ── Aktif Router'lar ─────────────────────────────────────
 
+# Kimlik Doğrulama
 api_router.include_router(auth.router, prefix="/auth", tags=["Auth"])
 
+# Ürün ve Stok
 api_router.include_router(products.router, prefix="/products", tags=["Ürün Yönetimi"])
+#api_router.include_router(inventory.router, prefix="/inventory", tags=["Stok Yönetimi"])
+api_router.include_router(inventory.router, prefix="/inventory")
 
+# Yapay Zeka ve Tahminleme (Analiz kodlarını forecast.py'a yazdıysan burası çalışır)
+api_router.include_router(forecast.router, prefix="/forecast", tags=["Tahminleme"])
+
+# Diğer Modüller
 api_router.include_router(chat.router, prefix="/chat", tags=["Chat / Agent"])
-
-api_router.include_router(inventory.router, prefix="/inventory", tags=["Stok Yönetimi"])
-
 api_router.include_router(notifications.router, prefix="/notifications", tags=["Bildirimler"])
 api_router.include_router(orders.router, prefix="/orders", tags=["Sipariş Yönetimi"])
 api_router.include_router(shipments.router, prefix="/shipments", tags=["Sevkiyat Yönetimi"])
-
-#api_router.include_router(forecast.router, prefix="/api/v1/forecast", tags=["Forecast"])
-api_router.include_router(forecast.router, prefix="/forecast", tags=["Tahminleme"])

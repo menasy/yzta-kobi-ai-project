@@ -60,16 +60,16 @@ async def seed_data():
                     {"id": p_id}
                 )
 
-            # 3. Son 30 gunun satis verisini olustur
+            # 3. Son 60 gunun satis verisini olustur
             print("Satis gecmisi yaziliyor...")
             for p_id, _ in products:
-                for i in range(30):
+                for i in range(60):
                     tarih = datetime.now() - timedelta(days=i)
                     # Hafta sonu daha yuksek satis simulasyonu
                     if tarih.weekday() >= 5:
-                        miktar = random.randint(15, 30)
+                        miktar = random.randint(40, 60)
                     else:
-                        miktar = random.randint(5, 15)
+                        miktar = random.randint(20, 40)
                     
                     await session.execute(text("""
                         INSERT INTO sales (product_id, quantity, sale_date) 

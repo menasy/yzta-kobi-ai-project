@@ -7,13 +7,17 @@ class ForecastEngine:
     def __init__(self, session):
         self.session = session
 
-    async def get_sales_data(self):
+    async def get_sales_data(self, product_id):
         # 1. Veritabanından satış verilerini çek
         result = await self.session.execute(text("""
-            SELECT product_id, quantity, sale_date 
-            FROM sales 
-            ORDER BY sale_date ASC
-        """))
+            SELECT 
+                oi.product_id, 
+                oi.quantity, 
+                o.placed_at as sale_date 
+            FROM order_items oi
+            JOIN orders o ON oi.order_id = o.id
+            WHERE oi.product_id = :product_id
+        """), {"product_id": product_id})
         columns = ['product_id', 'quantity', 'sale_date']
         return pd.DataFrame(result.fetchall(), columns=columns)
 
@@ -26,7 +30,7 @@ class ForecastEngine:
 
     async def predict_next_week(self, product_id):
         # Veriyi al ve hazırla
-        raw_data = await self.get_sales_data()
+        raw_data = await self.get_sales_data(product_id)
         df = self.prepare_data(raw_data)
         
         # Sadece ilgili ürünün verisine odaklan

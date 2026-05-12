@@ -10,10 +10,29 @@ from app.core.response_builder import success_response
 from app.core import openapi_examples
 from app.schemas.inventory import InventoryUpdate
 from app.services.inventory_service import InventoryService
+from app.services.stock_analysis_service import StockAnalysisService
+from sqlalchemy.ext.asyncio import AsyncSession
+# Çakışmayı önlemek için sadece doğru olan session yolunu bıraktık
+from app.db.session import get_db_session 
+
 
 router = APIRouter()
 
 
+@router.get("/analysis/{product_id}", tags=["Tahminleme"]) 
+async def get_stock_analysis(product_id: int, db: AsyncSession = Depends(get_db_session)):
+    """
+    Ürünün mevcut stoğunu, gelecek 3 günlük satış tahminiyle kıyaslar 
+    ve kritik bir durum olup olmadığını analiz eder. Sadece Admin yetkisi 
+    olanlar görebilir.
+    """
+    analysis_service = StockAnalysisService(db)
+    result = await analysis_service.analyze_stock_health(product_id)
+    
+    return success_response(
+        data=result,
+        message="Stok analizi başarıyla tamamlandı."
+    )   
 @router.get(
     "/",
     response_model=None,
@@ -150,3 +169,4 @@ async def update_inventory(
         data=inventory,
         message="Stok güncellendi.",
     )
+
