@@ -22,6 +22,15 @@ class InventoryRepository(BaseRepository[Inventory]):
         result = await self.session.execute(select(Inventory).where(Inventory.product_id == product_id))
         return result.scalar_one_or_none()
 
+    async def get_by_product_id_with_product(self, product_id: int) -> Inventory | None:
+        """Ürün bilgisiyle birlikte tek stok kaydı getirir."""
+        result = await self.session.execute(
+            select(Inventory)
+            .where(Inventory.product_id == product_id)
+            .options(joinedload(Inventory.product))
+        )
+        return result.scalar_one_or_none()
+
     async def get_by_product_id_for_update(self, product_id: int) -> Inventory | None:
         """Ürün stok kaydını transaction içinde kilitleyerek getirir."""
         result = await self.session.execute(

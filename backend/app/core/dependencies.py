@@ -25,6 +25,7 @@ logger = get_logger(__name__)
 if TYPE_CHECKING:
     from app.agent.orchestrator import AgentOrchestrator
     from app.services.auth_service import AuthService
+    from app.services.customer_support_service import CustomerSupportService
     from app.services.inventory_service import InventoryService
     from app.services.notification_service import NotificationService
     from app.services.order_service import OrderService
@@ -181,6 +182,13 @@ async def get_order_service(db: DBSession) -> OrderService:
     from app.services.order_service import OrderService
 
     return OrderService(db=db)
+
+
+async def get_customer_support_service(db: DBSession) -> CustomerSupportService:
+    """CustomerSupportService dependency — public müşteri destek sorguları."""
+    from app.services.customer_support_service import CustomerSupportService
+
+    return CustomerSupportService(db=db)
 
 
 async def get_user_service(db: DBSession) -> UserService:

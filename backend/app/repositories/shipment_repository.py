@@ -2,7 +2,7 @@
 # Shipment tablosuna özel DB sorguları.
 # Sadece veri erişimi — iş mantığı yok.
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -30,6 +30,15 @@ class ShipmentRepository(BaseRepository[Shipment]):
             select(Shipment).where(Shipment.tracking_number == tracking_number)
         )
         return result.scalar_one_or_none()
+
+    async def get_by_tracking_with_events(self, tracking_number: str) -> Shipment | None:
+        """Public takip sorgusu için takip numarasına göre kargo ve olayları getirir."""
+        result = await self.session.execute(
+            select(Shipment)
+            .where(func.upper(Shipment.tracking_number) == tracking_number.upper())
+            .options(joinedload(Shipment.events), joinedload(Shipment.order))
+        )
+        return result.unique().scalar_one_or_none()
 
     async def get_with_events(self, shipment_id: int) -> Shipment | None:
         """Kargo olaylarıyla birlikte detay getirir."""

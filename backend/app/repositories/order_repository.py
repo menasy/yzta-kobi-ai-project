@@ -55,6 +55,13 @@ class OrderRepository(BaseRepository[Order]):
         result = await self.session.execute(select(Order).where(Order.order_number == order_number))
         return result.scalar_one_or_none()
 
+    async def get_by_order_number_public(self, order_number: str) -> Order | None:
+        """Public sorgulama için sipariş numarasına göre hafif sipariş detayı getirir."""
+        result = await self.session.execute(
+            select(Order).where(func.upper(Order.order_number) == order_number.upper())
+        )
+        return result.scalar_one_or_none()
+
     async def get_by_status(
         self,
         status: str,
