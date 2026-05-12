@@ -12,6 +12,9 @@ from app.services.inventory_query_service import InventoryQueryService
 
 from .base import BaseTool, ToolResult
 
+from app.services.stock_analysis_service import StockAnalysisService
+from .base import BaseTool
+
 logger = get_logger(__name__)
 
 
@@ -77,3 +80,29 @@ class GetLowStockReportTool(BaseTool):
             return ToolResult(success=True, data=report)
         except AppException as exc:
             return ToolResult(success=False, error=exc.message)
+
+
+class GetStockPredictionTool(BaseTool):
+    """Gelecek hafta için stok tahmini ve risk analizi yapan araç."""
+    
+    name = "get_stock_prediction"
+    description = "Bir ürünün ID'sini alarak gelecek hafta için stok tahmini ve risk analizini (danger, success vb.) yapar."
+
+    parameters = {
+        "type": "object",
+        "properties": {
+            "product_id": {
+                "type": "integer",
+                "description": "Tahmin yapılacak ürünün benzersiz kimlik numarası (ID)."
+            }
+        },
+        "required": ["product_id"]
+    }
+    
+    def __init__(self, db):
+        self.db = db
+
+    async def execute(self, product_id: int) -> str:
+        service = StockAnalysisService(self.db)
+        analysis = await service.get_stock_analysis(product_id)
+        return str(analysis)

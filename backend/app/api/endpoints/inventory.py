@@ -12,12 +12,47 @@ from app.schemas.inventory import InventoryUpdate
 from app.services.inventory_service import InventoryService
 from app.services.stock_analysis_service import StockAnalysisService
 from sqlalchemy.ext.asyncio import AsyncSession
-# Çakışmayı önlemek için sadece doğru olan session yolunu bıraktık
 from app.db.session import get_db_session 
 
+from app.agent.tools.base import BaseTool 
+from app.services.stock_analysis_service import StockAnalysisService
+
+from sqlalchemy import select
+from app.models.product import Product
 
 router = APIRouter()
 
+@router.get("/critical-stocks")
+async def get_critical_stocks(db: AsyncSession = Depends(get_db_session)):
+    """Tüm ürünleri analiz eder ve sadece riskli olanları döner."""
+    analysis_service = StockAnalysisService(db)
+
+    # 1. Tüm ürünleri çek
+    query = select(Product)
+    result = await db.execute(query)
+    products = result.scalars().all()
+    
+    critical_items = []
+    
+    # 2. Her ürün için analiz motorunu çalıştır
+    for product in products:
+        analysis_result = await analysis_service.analyze_stock_health(product.id)
+        
+        # Sadece riskli olanları listeye ekle
+        if analysis_result["status"] in ["danger", "warning"]:
+            critical_items.append({
+                "product_id": product.id,
+                "product_name": str(product.name),
+                "status": str(analysis_result["status"]),
+                "current_stock": int(analysis_result["current_stock"]),
+                "forecasted_demand": float(analysis_result["forecasted_demand_3d"]),
+                "alert_message": str(analysis_result["message"])
+            })
+            
+    return {
+        "total_risky_products": len(critical_items),
+        "items": critical_items
+    }
 
 @router.get("/analysis/{product_id}", tags=["Tahminleme"]) 
 async def get_stock_analysis(product_id: int, db: AsyncSession = Depends(get_db_session)):
@@ -170,3 +205,17 @@ async def update_inventory(
         message="Stok güncellendi.",
     )
 
+class GetStockPredictionTool(BaseTool):
+    """Gelecek hafta için stok tahmini ve risk analizi yapan araç."""
+    
+    name = "get_stock_prediction"
+    description = "Bir ürünün ID'sini alarak gelecek hafta için stok tahmini ve risk analizini (danger, success vb.) yapar."
+
+    def __init__(self, db):
+        self.db = db
+
+    async def execute(self, product_id: int) -> str:
+        service = StockAnalysisService(self.db)
+        analysis = await service.get_stock_analysis(product_id)
+        # Gemini'ın anlayacağı temiz bir metne çeviriyoruz
+        return str(analysis)

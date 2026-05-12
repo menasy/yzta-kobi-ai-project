@@ -3,6 +3,7 @@ from app.api.endpoints import (
     auth, orders, products, shipments, 
     chat, inventory, notifications, forecast
 )
+from app.api.endpoints import chat, inventory
 
 api_router = APIRouter()
 
@@ -24,3 +25,5 @@ api_router.include_router(chat.router, prefix="/chat", tags=["Chat / Agent"])
 api_router.include_router(notifications.router, prefix="/notifications", tags=["Bildirimler"])
 api_router.include_router(orders.router, prefix="/orders", tags=["Sipariş Yönetimi"])
 api_router.include_router(shipments.router, prefix="/shipments", tags=["Sevkiyat Yönetimi"])
+
+api_router.include_router(inventory.router, prefix="/inventory", tags=["Inventory Analysis"])
