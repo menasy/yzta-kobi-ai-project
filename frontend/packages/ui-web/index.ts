@@ -9,6 +9,7 @@ export * from "./components/notifications";
 export * from "./components/inventory";
 export * from "./components/user";
 export * from "./components/ai-assistant";
+export * from "./components/shipments";
 export { Button, buttonVariants } from "./components/shadcn/button";
 export { Input } from "./components/shadcn/input";
 export { Label } from "./components/shadcn/label";

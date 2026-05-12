@@ -17,11 +17,14 @@ import {
   FormMessage,
   Input,
 } from "@repo/ui-web";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 
 export function RegisterForm() {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
   const { showApiError, showApiSuccess } = useApiMessageActions();
   const { error, isPending, register } = useRegister({
@@ -108,13 +111,27 @@ export function RegisterForm() {
             <FormItem className="space-y-3">
               <FormLabel className="text-sm font-bold text-foreground/80">Şifre</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  disabled={isPending}
-                  className="h-12 border-border/60 bg-background/50 text-base transition-all duration-300 focus:bg-background focus:ring-2 focus:ring-primary/20"
-                  {...field}
-                />
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    disabled={isPending}
+                    className="h-12 pr-12 border-border/60 bg-background/50 text-base transition-all duration-300 focus:bg-background focus:ring-2 focus:ring-primary/20"
+                    {...field}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    disabled={isPending}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground/50 hover:bg-muted hover:text-foreground transition-all duration-200"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </FormControl>
               <FormMessage className="text-xs font-medium" />
             </FormItem>
@@ -127,13 +144,27 @@ export function RegisterForm() {
             <FormItem className="space-y-3">
               <FormLabel className="text-sm font-bold text-foreground/80">Şifre Tekrar</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  disabled={isPending}
-                  className="h-12 border-border/60 bg-background/50 text-base transition-all duration-300 focus:bg-background focus:ring-2 focus:ring-primary/20"
-                  {...field}
-                />
+                <div className="relative">
+                  <Input
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    disabled={isPending}
+                    className="h-12 pr-12 border-border/60 bg-background/50 text-base transition-all duration-300 focus:bg-background focus:ring-2 focus:ring-primary/20"
+                    {...field}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    disabled={isPending}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground/50 hover:bg-muted hover:text-foreground transition-all duration-200"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </FormControl>
               <FormMessage className="text-xs font-medium" />
             </FormItem>

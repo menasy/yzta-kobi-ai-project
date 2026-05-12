@@ -19,12 +19,14 @@ import {
   FormMessage,
   Input,
 } from "@repo/ui-web";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 
 export function LoginForm() {
+  const [showPassword, setShowPassword] = useState(false);
   const searchParams = useSearchParams();
   const { clearAuth, setSessionLoading } = useAuthActions();
   const { showApiError, showApiSuccess } = useApiMessageActions();
@@ -95,24 +97,30 @@ export function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem className="space-y-3">
-              <div className="flex items-center justify-between">
-                <FormLabel className="text-sm font-bold text-foreground/80">Şifre</FormLabel>
-                <Link
-                  href="/auth/forgot-password"
-                  className="text-xs font-bold text-primary hover:underline"
-                >
-                  Şifremi Unuttum
-                </Link>
-              </div>
+              <FormLabel className="text-sm font-bold text-foreground/80">Şifre</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                  disabled={isPending}
-                  className="h-12 border-border/60 bg-background/50 text-base transition-all duration-300 focus:bg-background focus:ring-2 focus:ring-primary/20"
-                  {...field}
-                />
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    disabled={isPending}
+                    className="h-12 pr-12 border-border/60 bg-background/50 text-base transition-all duration-300 focus:bg-background focus:ring-2 focus:ring-primary/20"
+                    {...field}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    disabled={isPending}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground/50 hover:bg-muted hover:text-foreground transition-all duration-200"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </FormControl>
               <FormMessage className="text-xs font-medium" />
             </FormItem>
