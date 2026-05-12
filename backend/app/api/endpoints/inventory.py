@@ -20,7 +20,11 @@ from app.services.stock_analysis_service import StockAnalysisService
 from sqlalchemy import select
 from app.models.product import Product
 
+
 router = APIRouter()
+
+def get_stock_analysis_service(db: AsyncSession = Depends(get_db_session)):
+    return StockAnalysisService(db)
 
 @router.get("/critical-stocks")
 async def get_critical_stocks(db: AsyncSession = Depends(get_db_session)):
@@ -70,6 +74,7 @@ async def get_stock_analysis(product_id: int, db: AsyncSession = Depends(get_db_
     )   
 @router.get(
     "/",
+    
     response_model=None,
     summary="Tüm stok kayıtlarını listele",
     responses={
@@ -216,7 +221,7 @@ class GetStockPredictionTool(BaseTool):
 
     async def execute(self, product_id: int) -> str:
         service = StockAnalysisService(self.db)
-        analysis = await service.get_stock_analysis(product_id)
+        analysis = await service.analyze_stock_health(product_id)
         # Gemini'ın anlayacağı temiz bir metne çeviriyoruz
         return str(analysis)
     
@@ -233,3 +238,20 @@ async def get_inventory_summary(
     analysis_service = StockAnalysisService(db)
     summary = await analysis_service.get_dashboard_summary()
     return summary
+
+
+@router.get("/simulate", summary="Market Simülasyonu Çalıştır")
+async def simulate_market(
+    growth_factor: float = 1.5, 
+    service: StockAnalysisService = Depends(get_stock_analysis_service)
+):
+    """
+    Satışların artış oranına göre (growth_factor) stokların dayanıklılığını test eder.
+    Örn: 2.0 değeri, satışların 2 katına çıktığı bir senaryoyu simüle eder.
+    """
+    result = await service.run_market_simulation(growth_factor)
+    return {
+        "statusCode": 200,
+        "message": f"Yuzde {int((growth_factor-1)*100)} artis senaryosu basariyla analiz edildi.",
+        "data": result
+    }

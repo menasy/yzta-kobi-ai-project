@@ -2,6 +2,8 @@ from sqlalchemy import text, select
 from app.services.forecasting_service import ForecastEngine
 from app.models.product import Product
 from app.models.notification import Notification
+from sqlalchemy import select
+from app.models.product import Product
 
 class StockAnalysisService:
     def __init__(self, session):
@@ -96,4 +98,35 @@ class StockAnalysisService:
             "stock_health_score": health_score,
             "total_estimated_shortage": round(total_shortage, 2),
             "status_summary": "Kritik" if health_score < 50 else "Dikkat" if health_score < 80 else "Sağlıklı"
+        }
+    
+
+    async def run_market_simulation(self, growth_factor: float):
+        """
+        growth_factor: Örn: 1.5 (%50 artış senaryosu)
+        Tüm ürünleri bu artışa göre analiz eder.
+        """
+
+
+        products = (await self.session.execute(select(Product))).scalars().all()
+        simulation_results = []
+
+        for product in products:
+            analysis = await self.analyze_stock_health(product.id)
+            if analysis["status"] == "neutral": continue
+
+            # Normal tahmini büyüme faktörüyle çarpıyoruz
+            simulated_days = round(analysis["days_to_zero"] / growth_factor, 1)
+            
+            if simulated_days < 1:
+                simulation_results.append({
+                    "product_name": product.name,
+                    "impact": "KRİTİK",
+                    "new_eta": f"{simulated_days} gün (DİKKAT: Stok hemen tükenecek!)"
+                })
+
+        return {
+            "scenario": f"Satışlarda %{int((growth_factor-1)*100)} artış senaryosu",
+            "risky_products": simulation_results,
+            "summary": f"Bu senaryoda {len(simulation_results)} ürün risk altına giriyor."
         }
