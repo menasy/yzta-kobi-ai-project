@@ -1,9 +1,10 @@
 # services/order_service.py
 # Customer direct checkout ve admin sipariş yönetimi iş mantığı.
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,13 +21,17 @@ from app.schemas.order import (
     CustomerOrderCreate,
     CustomerOrderItemCreate,
     CustomerOrderResponse,
+    DashboardOverviewResponse,
     OrderStatusUpdate,
+    WeeklyPerformanceItem,
 )
 from app.services.inventory_service import InventoryService
 
 logger = get_logger(__name__)
 
 MAX_ORDER_ITEM_QUANTITY = 10000
+DASHBOARD_TIMEZONE = ZoneInfo("Europe/Istanbul")
+WEEKDAY_LABELS_TR = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
 
 
 class OrderService:
@@ -201,6 +206,61 @@ class OrderService:
             "total_revenue": Decimal(str(await self._order_repo.get_today_revenue())),
         }
 
+    async def get_dashboard_overview(self) -> DashboardOverviewResponse:
+        """Admin/operator dashboard genel bakış verilerini hazırlar."""
+        today_start = self._local_day_start(datetime.now(tz=DASHBOARD_TIMEZONE))
+        today_end = today_start + timedelta(days=1)
+        weekly_start = today_start - timedelta(days=6)
+
+        status_counts = {status: 0 for status in ORDER_STATUSES}
+        status_counts.update(await self._order_repo.get_dashboard_status_counts())
+        total_revenue = await self._order_repo.get_dashboard_revenue_between(
+            today_start,
+            today_end,
+        )
+        new_orders_today = await self._order_repo.count_dashboard_pending_between(
+            today_start,
+            today_end,
+        )
+        weekly_rows = await self._order_repo.get_dashboard_weekly_performance(
+            weekly_start,
+            today_end,
+        )
+        weekly_by_date = {
+            day.isoformat(): {
+                "revenue": revenue,
+                "order_count": order_count,
+            }
+            for day, revenue, order_count in weekly_rows
+        }
+
+        weekly_performance = []
+        for offset in range(7):
+            day = (weekly_start + timedelta(days=offset)).date()
+            day_key = day.isoformat()
+            values = weekly_by_date.get(day_key, {"revenue": 0.0, "order_count": 0})
+            weekly_performance.append(
+                WeeklyPerformanceItem(
+                    date=day_key,
+                    label=WEEKDAY_LABELS_TR[day.weekday()],
+                    revenue=values["revenue"],
+                    order_count=values["order_count"],
+                )
+            )
+
+        return DashboardOverviewResponse(
+            total_revenue=total_revenue,
+            total_orders=sum(status_counts.values()),
+            pending_orders=status_counts["pending"],
+            processing_orders=status_counts["processing"],
+            shipped_orders=status_counts["shipped"],
+            delivered_orders=status_counts["delivered"],
+            cancelled_orders=status_counts["cancelled"],
+            new_orders_today=new_orders_today,
+            weekly_performance=weekly_performance,
+            currency="TRY",
+        )
+
     def _ensure_customer_user(self, user: User) -> None:
         if user.role != "customer":
             raise ForbiddenError(message="Sipariş oluşturmak ve görüntülemek için müşteri hesabı gereklidir.")
@@ -260,3 +320,11 @@ class OrderService:
     def _generate_order_number(self) -> str:
         today = datetime.now(tz=UTC).strftime("%Y%m%d")
         return f"ORD-{today}-{uuid4().hex[:8].upper()}"
+
+    def _local_day_start(self, value: datetime) -> datetime:
+        return value.astimezone(DASHBOARD_TIMEZONE).replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )

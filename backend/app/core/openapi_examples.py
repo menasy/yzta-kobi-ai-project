@@ -289,6 +289,26 @@ ORDER_SUMMARY_EXAMPLE = {
     "total_revenue": 18750.40,
 }
 
+DASHBOARD_OVERVIEW_EXAMPLE = {
+    "total_revenue": 18750.50,
+    "total_orders": 42,
+    "pending_orders": 8,
+    "processing_orders": 5,
+    "shipped_orders": 12,
+    "delivered_orders": 17,
+    "cancelled_orders": 2,
+    "new_orders_today": 6,
+    "weekly_performance": [
+        {
+            "date": "2026-05-06",
+            "label": "Çar",
+            "revenue": 2400.00,
+            "order_count": 4,
+        }
+    ],
+    "currency": "TRY",
+}
+
 ORDER_DETAIL_EXAMPLE = {
     **ADMIN_ORDER_RESPONSE_EXAMPLE,
 }

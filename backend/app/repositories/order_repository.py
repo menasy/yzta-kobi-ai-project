@@ -2,7 +2,7 @@
 # Order tablosuna özel DB sorguları.
 # Sadece veri erişimi — iş mantığı yok.
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 from sqlalchemy import func, select
@@ -206,3 +206,66 @@ class OrderRepository(BaseRepository[Order]):
             )
         )
         return float(result.scalar_one())
+
+    async def get_dashboard_status_counts(self) -> dict[str, int]:
+        """Dashboard için sipariş durumlarına göre toplam sayıları döndürür."""
+        result = await self.session.execute(
+            select(Order.status, func.count(Order.id)).group_by(Order.status)
+        )
+        return {status: count for status, count in result.all()}
+
+    async def get_dashboard_revenue_between(
+        self,
+        start_at: datetime,
+        end_at: datetime,
+    ) -> float:
+        """Verilen tarih aralığında iptal olmayan sipariş gelirini hesaplar."""
+        result = await self.session.execute(
+            select(func.coalesce(func.sum(Order.total_amount), 0)).where(
+                Order.placed_at >= start_at,
+                Order.placed_at < end_at,
+                Order.status != "cancelled",
+            )
+        )
+        return float(result.scalar_one())
+
+    async def count_dashboard_pending_between(
+        self,
+        start_at: datetime,
+        end_at: datetime,
+    ) -> int:
+        """Verilen tarih aralığında oluşturulan pending siparişleri sayar."""
+        result = await self.session.execute(
+            select(func.count(Order.id)).where(
+                Order.placed_at >= start_at,
+                Order.placed_at < end_at,
+                Order.status == "pending",
+            )
+        )
+        return result.scalar_one()
+
+    async def get_dashboard_weekly_performance(
+        self,
+        start_at: datetime,
+        end_at: datetime,
+    ) -> list[tuple[date, float, int]]:
+        """Son 7 gün için yerel gün bazında gelir ve sipariş sayısı döndürür."""
+        day_expr = func.date(func.timezone("Europe/Istanbul", Order.placed_at)).label("day")
+        result = await self.session.execute(
+            select(
+                day_expr,
+                func.coalesce(func.sum(Order.total_amount), 0).label("revenue"),
+                func.count(Order.id).label("order_count"),
+            )
+            .where(
+                Order.placed_at >= start_at,
+                Order.placed_at < end_at,
+                Order.status != "cancelled",
+            )
+            .group_by(day_expr)
+            .order_by(day_expr)
+        )
+        return [
+            (day, float(revenue), order_count)
+            for day, revenue, order_count in result.all()
+        ]

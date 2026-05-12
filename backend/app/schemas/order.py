@@ -167,3 +167,29 @@ class OrderSummaryResponse(BaseModel):
     delivered: int = 0
     cancelled: int = 0
     total_revenue: Decimal = Decimal("0.00")
+
+
+class WeeklyPerformanceItem(BaseModel):
+    """Dashboard haftalık performans satırı."""
+
+    date: str
+    label: str
+    revenue: float = 0.0
+    order_count: int = 0
+
+
+class DashboardOverviewResponse(BaseModel):
+    """Admin/operator dashboard genel bakış response."""
+
+    total_revenue: float = 0.0
+    total_orders: int = 0
+    pending_orders: int = 0
+    processing_orders: int = 0
+    shipped_orders: int = 0
+    delivered_orders: int = 0
+    cancelled_orders: int = 0
+    new_orders_today: int = 0
+    weekly_performance: list[WeeklyPerformanceItem] = Field(default_factory=list)
+    currency: str = "TRY"
+
+    model_config = ConfigDict(json_schema_extra={"example": openapi_examples.DASHBOARD_OVERVIEW_EXAMPLE})

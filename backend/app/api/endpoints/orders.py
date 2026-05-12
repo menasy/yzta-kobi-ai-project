@@ -4,7 +4,7 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.core import openapi_examples, openapi_responses
-from app.core.dependencies import AdminUser, CurrentUser, get_order_service
+from app.core.dependencies import AdminOrOperatorUser, AdminUser, CurrentUser, get_order_service
 from app.core.response_builder import success_response
 from app.schemas.order import CustomerOrderCreate, OrderStatusUpdate
 from app.services.order_service import OrderService
@@ -161,6 +161,31 @@ async def get_today_summary(
 ):
     summary = await service.get_today_summary()
     return success_response(data=summary, message="Günlük özet hazır.")
+
+
+@router.get(
+    "/dashboard/overview",
+    response_model=None,
+    summary="Admin/operator dashboard genel bakış özeti",
+    responses={
+        200: {
+            "description": "Dashboard özeti hazırlandı.",
+            "content": openapi_examples.example_content(
+                data=openapi_examples.DASHBOARD_OVERVIEW_EXAMPLE,
+                message="Dashboard özeti hazırlandı.",
+            ),
+        },
+        **openapi_responses.unauthorized_response(),
+        **openapi_responses.forbidden_response(description="Admin veya operator yetkisi gerekli."),
+        **openapi_responses.internal_error_response(),
+    },
+)
+async def get_dashboard_overview(
+    _user: AdminOrOperatorUser,
+    service: OrderService = Depends(get_order_service),
+):
+    overview = await service.get_dashboard_overview()
+    return success_response(data=overview, message="Dashboard özeti hazırlandı.")
 
 
 @router.get(

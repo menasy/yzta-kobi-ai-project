@@ -96,10 +96,20 @@ async def get_admin_user(
     return current_user
 
 
+async def get_admin_or_operator_user(
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> User:
+    """Admin veya operator rolü gerektiren operasyon ekranı endpoint'leri."""
+    if current_user.role not in {"admin", "operator"}:
+        raise ForbiddenError(message="Bu işlem için admin veya operator yetkisi gereklidir.")
+    return current_user
+
+
 # ── Convenience Type Aliases ─────────────────────────────
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
 AdminUser = Annotated[User, Depends(get_admin_user)]
+AdminOrOperatorUser = Annotated[User, Depends(get_admin_or_operator_user)]
 
 
 # ── Service Factory Dependencies ─────────────────────────
