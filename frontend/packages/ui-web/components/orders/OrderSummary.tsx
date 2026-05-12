@@ -38,12 +38,20 @@ export function OrderSummary({ order }: OrderSummaryProps) {
       </CardHeader>
       <CardContent className="p-5 sm:p-6 space-y-6">
         <div className="space-y-4">
-          <div className="flex justify-between items-center group">
+          <div className="flex justify-between items-center">
+            <span className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Hash className="h-4 w-4 text-muted-foreground/70" />
+              Sipariş No
+            </span>
+            <span className="font-semibold text-sm text-foreground">{order.order_number || "-"}</span>
+          </div>
+
+          <div className="flex justify-between items-center">
             <span className="flex items-center gap-2 text-sm text-muted-foreground">
               <Hash className="h-4 w-4 text-muted-foreground/70" />
               Sipariş ID
             </span>
-            <span className="font-semibold text-foreground">#{order.id}</span>
+            <span className="font-semibold text-sm text-foreground">#{order.id}</span>
           </div>
           
           <div className="flex justify-between items-center">

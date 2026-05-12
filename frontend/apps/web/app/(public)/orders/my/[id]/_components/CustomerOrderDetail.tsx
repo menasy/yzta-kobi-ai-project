@@ -9,7 +9,7 @@ import {
   OrderSummary,
   Button,
 } from "@repo/ui-web";
-import { AlertCircle, ArrowLeft, Loader2, Package, MapPin, ReceiptText } from "lucide-react";
+import { AlertCircle, ArrowLeft, Loader2, Package} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -54,8 +54,11 @@ export function CustomerOrderDetail({ orderId }: CustomerOrderDetailProps) {
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-              Sipariş #{orderData.id}
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
+              Sipariş {orderData.order_number || "-"}
+              <span className="text-sm font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-md border border-border/50">
+                #{orderData.id}
+              </span>
             </h1>
             <p className="text-sm font-medium text-muted-foreground mt-1">
               Sipariş detaylarınızı ve teslimat durumunu takip edin
