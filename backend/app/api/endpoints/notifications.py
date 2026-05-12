@@ -177,3 +177,13 @@ async def mark_notification_read(
 ):
     notification = await service.mark_read(notification_id)
     return success_response(data=notification, message="Bildirim okundu olarak işaretlendi.")
+
+
+
+@router.post("/generate-tasks", summary="Günlük görev listelerini oluştur")
+async def create_tasks(
+    admin: AdminUser,
+    service: NotificationService = Depends(get_notification_service)
+):
+    result = await service.generate_daily_tasks()
+    return success_response(data=result, message="Görevler başarıyla atandı.")
