@@ -27,3 +27,9 @@ api_router.include_router(orders.router, prefix="/orders", tags=["Sipariş Yöne
 api_router.include_router(shipments.router, prefix="/shipments", tags=["Sevkiyat Yönetimi"])
 
 api_router.include_router(inventory.router, prefix="/inventory", tags=["Inventory Analysis"])
+
+# Ürün Yönetimi
+api_router.include_router(products.router, prefix="/products", tags=["Ürün Yönetimi"])
+
+# Stok ve Analiz 
+api_router.include_router(inventory.router, prefix="/inventory", tags=["Stok ve Analiz"])

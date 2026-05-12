@@ -219,3 +219,17 @@ class GetStockPredictionTool(BaseTool):
         analysis = await service.get_stock_analysis(product_id)
         # Gemini'ın anlayacağı temiz bir metne çeviriyoruz
         return str(analysis)
+    
+
+
+@router.get("/dashboard-summary")
+async def get_inventory_summary(
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Tüm deponun genel sağlık durumunu ve özet rakamları döner.
+    Frontend'deki dashboard kartları için idealdir.
+    """
+    analysis_service = StockAnalysisService(db)
+    summary = await analysis_service.get_dashboard_summary()
+    return summary
