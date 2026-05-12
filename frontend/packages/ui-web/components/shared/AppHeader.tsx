@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@repo/core";
 import { AppHeaderProps } from "@repo/ui-contracts";
-import { Menu, Bell } from "lucide-react";
+import { Menu, Bell, User } from "lucide-react";
 
 import { Logo } from "../brand/logo";
 import { Avatar, AvatarFallback, AvatarImage } from "../shadcn/avatar";
@@ -248,8 +248,8 @@ export function AppHeader({
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full border border-border/50 hover:bg-accent">
                   <Avatar className="h-9 w-9">
                     <AvatarImage src={user?.avatarUrl} alt={user?.name} />
-                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
-                      {user?.initials || "??"}
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      <User className="h-5 w-5" />
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -264,9 +264,6 @@ export function AppHeader({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/profile">Profil Ayarları</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/billing">Abonelik</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 

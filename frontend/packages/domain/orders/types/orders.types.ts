@@ -21,6 +21,7 @@ export interface OrderItem extends Record<string, unknown> {
 export interface Order extends Record<string, unknown> {
   id?: OrderId;
   order_id?: OrderId;
+  order_number?: string;
   customer_id?: number | string;
   customer_name?: string | null;
   status?: OrderStatus;
