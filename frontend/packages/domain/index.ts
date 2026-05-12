@@ -30,3 +30,6 @@ export * from "./health/index";
 
 // Customer domain
 export * from "./customer/index";
+
+// User domain
+export * from "./user/index";

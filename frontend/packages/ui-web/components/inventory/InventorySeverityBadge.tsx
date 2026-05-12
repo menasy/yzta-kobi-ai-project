@@ -1,14 +1,31 @@
 import { cn } from "@repo/core";
-import { type VariantProps } from "class-variance-authority";
 import * as React from "react";
-
-import { Badge, badgeVariants } from "../shadcn/badge";
+import { Badge } from "../shadcn/badge";
 
 export type InventorySeverity = "info" | "warning" | "critical";
 
-interface InventorySeverityBadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {
+const severityConfig: Record<
+  InventorySeverity,
+  { label: string; dotClass: string; badgeClass: string }
+> = {
+  info: {
+    label: "Yeterli Stok",
+    dotClass: "bg-emerald-500",
+    badgeClass: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/15",
+  },
+  warning: {
+    label: "Düşük Stok",
+    dotClass: "bg-amber-500",
+    badgeClass: "bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/15",
+  },
+  critical: {
+    label: "Kritik Stok",
+    dotClass: "bg-rose-500",
+    badgeClass: "bg-rose-500/10 text-rose-600 border-rose-500/20 hover:bg-rose-500/15",
+  },
+};
+
+interface InventorySeverityBadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   severity: InventorySeverity;
 }
 
@@ -17,26 +34,26 @@ export function InventorySeverityBadge({
   className,
   ...props
 }: InventorySeverityBadgeProps) {
+  const config = severityConfig[severity] || severityConfig.info;
+
   return (
     <Badge
+      variant="secondary"
       className={cn(
-        "px-2 py-0.5 text-xs font-semibold shadow-sm transition-colors",
-        {
-          "bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50":
-            severity === "info",
-          "bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50":
-            severity === "warning",
-          "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50":
-            severity === "critical",
-        },
-        className,
+        "relative flex items-center gap-1.5 px-2.5 py-0.5 font-bold transition-all duration-300 border text-[10px] uppercase tracking-wider",
+        config.badgeClass,
+        className
       )}
-      variant="outline"
       {...props}
     >
-      {severity === "info" && "Bilgi"}
-      {severity === "warning" && "Düşük Stok"}
-      {severity === "critical" && "Kritik Stok"}
+      <span 
+        className={cn(
+          "h-1.5 w-1.5 rounded-full shrink-0",
+          config.dotClass,
+          severity === "critical" || severity === "warning" ? "animate-pulse" : ""
+        )} 
+      />
+      {config.label}
     </Badge>
   );
 }

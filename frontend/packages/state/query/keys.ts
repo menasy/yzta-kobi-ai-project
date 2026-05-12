@@ -123,6 +123,7 @@ const inventory = createQueryKeys("inventory");
 const shipments = createQueryKeys("shipments");
 const notifications = createQueryKeys("notifications");
 const health = createQueryKeys("health");
+const user = createQueryKeys("user");
 
 export const queryKeys = {
   auth: {
@@ -174,6 +175,11 @@ export const queryKeys = {
   health: {
     all: health.all,
     status: () => health.scope("status"),
+  },
+  user: {
+    all: user.all,
+    profile: () => user.scope("profile"),
+    address: () => user.scope("address"),
   },
 } as const;
 
