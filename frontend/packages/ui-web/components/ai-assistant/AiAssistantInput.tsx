@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@repo/core";
 import { useState, useRef, useEffect } from "react";
 import type { AiAssistantInputProps } from "@repo/ui-contracts";
 import { SendHorizonal } from "lucide-react";
@@ -40,30 +41,45 @@ export function AiAssistantInput({
   };
 
   return (
-    <div className="border-t border-border/40 bg-background/95 p-3 backdrop-blur-md">
+    <div className="p-4 bg-gradient-to-t from-background via-background/95 to-transparent backdrop-blur-sm">
       <form
         onSubmit={handleSubmit}
-        className="flex items-center gap-2 relative"
+        className="flex items-center gap-3 relative group"
       >
-        <input
-          ref={inputRef}
-          type="text"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Mesajınızı yazın..."
-          disabled={isPending || disabled}
-          className="flex-1 rounded-full border border-border/50 bg-muted/20 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring/50 disabled:opacity-50 pr-10 transition-colors"
-          id="ai-assistant-input"
-        />
+        <div className="absolute inset-0 bg-primary/5 rounded-[1.5rem] blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
+        
+        <div className="relative flex-1">
+          <input
+            ref={inputRef}
+            type="text"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Mesajınızı yazın..."
+            disabled={isPending || disabled}
+            className={cn(
+              "relative w-full rounded-[1.5rem] border border-border/60 bg-background/50 px-5 py-3.5 text-[14px]",
+              "text-foreground placeholder:text-muted-foreground/50 focus:outline-none",
+              "focus:ring-2 focus:ring-primary/20 focus:border-primary/40",
+              "disabled:opacity-50 transition-all shadow-sm backdrop-blur-md",
+            )}
+            id="ai-assistant-input"
+          />
+        </div>
+
         <Button
           type="submit"
           disabled={!content.trim() || isPending || disabled}
           size="icon"
-          className="absolute right-1 h-8 w-8 rounded-full transition-all duration-200"
+          className={cn(
+            "h-[46px] w-[46px] rounded-2xl transition-all duration-300 shadow-lg flex-shrink-0",
+            content.trim() 
+              ? "bg-primary text-primary-foreground scale-100 shadow-primary/20 hover:shadow-primary/40" 
+              : "bg-muted text-muted-foreground scale-95 opacity-50 shadow-none"
+          )}
           id="ai-assistant-send-btn"
         >
-          <SendHorizonal className="h-4 w-4" />
+          <SendHorizonal className="h-5 w-5" />
           <span className="sr-only">Gönder</span>
         </Button>
       </form>

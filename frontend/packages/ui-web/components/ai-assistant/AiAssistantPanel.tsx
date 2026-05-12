@@ -84,18 +84,18 @@ export function AiAssistantPanel({ className }: AiAssistantPanelProps) {
               }}
               transition={{
                 type: "spring",
-                stiffness: 350,
-                damping: 35,
-                mass: 0.8,
+                stiffness: 300,
+                damping: 30,
               }}
               className={cn(
                 "fixed z-50",
                 // Desktop: right side panel
                 "hidden md:flex md:flex-col",
-                "md:top-16 md:right-0 md:bottom-0",
-                "md:w-[420px]",
-                "md:border-l md:border-border/50",
-                "md:bg-background md:shadow-2xl md:shadow-black/5",
+                "md:top-0 md:right-0 md:bottom-0",
+                "md:w-[440px]",
+                "md:border-l md:border-border/40",
+                "md:bg-background/95 md:backdrop-blur-xl",
+                "md:shadow-[-20px_0_50px_-10px_rgba(0,0,0,0.1)]",
               )}
               id="ai-assistant-panel-desktop"
             >
@@ -113,25 +113,25 @@ export function AiAssistantPanel({ className }: AiAssistantPanelProps) {
               }}
               transition={{
                 type: "spring",
-                stiffness: 350,
-                damping: 35,
-                mass: 0.8,
+                stiffness: 300,
+                damping: 30,
               }}
               className={cn(
                 "fixed z-50",
                 // Mobile: bottom sheet
                 "flex flex-col md:hidden",
                 "inset-x-0 bottom-0",
-                "h-[85dvh]",
-                "rounded-t-2xl",
-                "bg-background shadow-2xl shadow-black/10",
-                "border-t border-border/50",
+                "h-[90dvh]",
+                "rounded-t-[2.5rem]",
+                "bg-background/98 backdrop-blur-xl",
+                "shadow-[0_-20px_50px_-12px_rgba(0,0,0,0.15)]",
+                "border-t border-border/40",
               )}
               id="ai-assistant-panel-mobile"
             >
               {/* Drag handle */}
-              <div className="flex justify-center pt-2 pb-0">
-                <div className="h-1 w-10 rounded-full bg-border" />
+              <div className="flex justify-center pt-4 pb-1">
+                <div className="h-1.5 w-12 rounded-full bg-muted-foreground/20" />
               </div>
               <AiAssistantWindow isOpen={isOpen} onClose={handleClose} />
             </motion.div>
