@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from app.services.notification_service import NotificationService
     from app.services.order_service import OrderService
     from app.services.product_service import ProductService
+    from app.services.shipment_service import ShipmentService
     from app.services.user_service import UserService
 
 # ── Type Aliases ─────────────────────────────────────────
@@ -147,15 +148,6 @@ async def get_auth_service(db: DBSession) -> AuthService:
 #     )
 #
 #
-# async def get_shipment_service(db: DBSession) -> "ShipmentService":
-#     from app.services.shipment_service import ShipmentService
-#     return ShipmentService(
-#         shipment_repo=ShipmentRepository(db),
-#         event_repo=ShipmentEventRepository(db),
-#         order_repo=OrderRepository(db),
-#     )
-
-
 async def get_inventory_service(db: DBSession) -> InventoryService:
     """InventoryService dependency — stok güncelleme ve threshold trigger."""
     from app.services.inventory_service import InventoryService
@@ -182,6 +174,13 @@ async def get_order_service(db: DBSession) -> OrderService:
     from app.services.order_service import OrderService
 
     return OrderService(db=db)
+
+
+async def get_shipment_service(db: DBSession) -> ShipmentService:
+    """ShipmentService dependency — kargo CRUD ve provider yenileme akışı."""
+    from app.services.shipment_service import ShipmentService
+
+    return ShipmentService(db=db)
 
 
 async def get_customer_support_service(db: DBSession) -> CustomerSupportService:

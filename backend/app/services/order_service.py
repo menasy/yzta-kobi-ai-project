@@ -15,6 +15,7 @@ from app.models.user import User
 from app.repositories.order_repository import OrderRepository
 from app.repositories.order_status_history_repository import OrderStatusHistoryRepository
 from app.repositories.product_repository import ProductRepository
+from app.repositories.shipment_repository import ShipmentRepository
 from app.schemas.common import ORDER_STATUSES, validate_status
 from app.schemas.order import (
     AdminOrderResponse,
@@ -42,6 +43,7 @@ class OrderService:
         self._product_repo = ProductRepository(db)
         self._status_history_repo = OrderStatusHistoryRepository(db)
         self._inventory_service = InventoryService(db)
+        self._shipment_repo = ShipmentRepository(db)
 
     async def create_customer_order(
         self,
@@ -171,6 +173,8 @@ class OrderService:
                     "reason": payload.reason,
                 }
             )
+            # Sipariş durumu değiştiyse, ilişkili kargoyu da senkronize et
+            await self._sync_shipment_status(order_id, payload.status)
 
         detailed_order = await self._order_repo.get_admin_order_by_id(order_id)
         if detailed_order is None:
@@ -187,13 +191,44 @@ class OrderService:
         )
         return AdminOrderResponse.model_validate(detailed_order)
 
+    async def _sync_shipment_status(self, order_id: int, new_order_status: str) -> None:
+        """Sipariş durumu değişince ilişkili kargo kaydını senkronize eder."""
+        shipment = await self._shipment_repo.get_by_order(order_id)
+        if shipment is None:
+            return  # Kargo kaydı yoksa işlem yapma
+
+        # Sipariş durumu → Kargo durumu eşleme tablosu
+        status_map = {
+            "shipped": "in_transit",
+            "delivered": "delivered",
+            "cancelled": "cancelled",
+        }
+
+        new_shipment_status = status_map.get(new_order_status)
+        if new_shipment_status is None or shipment.status == new_shipment_status:
+            return  # Eşleme yoksa veya zaten doğruysa atla
+
+        update_data: dict[str, object] = {"status": new_shipment_status}
+        if new_shipment_status == "delivered":
+            update_data["delivered_at"] = datetime.now(tz=UTC)
+
+        await self._shipment_repo.update(shipment.id, update_data)
+        logger.info(
+            "Kargo durumu sipariş ile senkronize edildi.",
+            extra={
+                "order_id": order_id,
+                "shipment_id": shipment.id,
+                "new_shipment_status": new_shipment_status,
+            },
+        )
+
     async def get_today_summary(self) -> dict[str, object]:
         """Admin dashboard için günlük sipariş özetini döndürür."""
         orders = await self._order_repo.get_today_orders()
         status_counts = {status: 0 for status in ORDER_STATUSES}
         for order in orders:
-            if order.status in status_counts:
-                status_counts[order.status] += 1
+                if order.status in status_counts:
+                    status_counts[order.status] += 1
 
         return {
             "date": datetime.now(tz=UTC).date().isoformat(),

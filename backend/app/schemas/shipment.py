@@ -9,7 +9,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .common import SHIPMENT_STATUSES, validate_sanitized_field, validate_status
 
-
 # ── Request Schemas ──────────────────────────────────────
 
 
@@ -28,10 +27,33 @@ class ShipmentCreate(BaseModel):
         max_length=100,
         description="Kargo takip numarası",
     )
+    location: str | None = Field(
+        default=None,
+        max_length=255,
+        description="İlk kargo konumu",
+    )
     estimated_delivery_date: datetime | None = Field(
         default=None,
         description="Tahmini teslimat tarihi",
     )
+
+    @field_validator("carrier")
+    @classmethod
+    def normalize_carrier(cls, v: str) -> str:
+        return validate_sanitized_field(v).lower()
+
+    @field_validator("tracking_number")
+    @classmethod
+    def normalize_tracking_number(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        sanitized = validate_sanitized_field(v)
+        return sanitized.upper() if sanitized else None
+
+    @field_validator("location")
+    @classmethod
+    def sanitize_location(cls, v: str | None) -> str | None:
+        return validate_sanitized_field(v)
 
 
 class ShipmentStatusUpdate(BaseModel):
@@ -95,6 +117,7 @@ class ShipmentResponse(BaseModel):
     carrier: str
     tracking_number: str | None = None
     status: str
+    location: str | None = None
     estimated_delivery_date: datetime | None = None
     delivered_at: datetime | None = None
     last_checked_at: datetime | None = None
@@ -115,6 +138,7 @@ class ShipmentListResponse(BaseModel):
     carrier: str
     tracking_number: str | None = None
     status: str
+    location: str | None = None
     estimated_delivery_date: datetime | None = None
     created_at: datetime
 
