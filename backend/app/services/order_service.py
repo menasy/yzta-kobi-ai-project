@@ -242,7 +242,7 @@ class OrderService:
         }
 
     async def get_dashboard_overview(self) -> DashboardOverviewResponse:
-        """Admin/operator dashboard genel bakış verilerini hazırlar."""
+        """Admin dashboard genel bakış verilerini hazırlar."""
         today_start = self._local_day_start(datetime.now(tz=DASHBOARD_TIMEZONE))
         today_end = today_start + timedelta(days=1)
         weekly_start = today_start - timedelta(days=6)

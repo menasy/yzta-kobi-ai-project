@@ -22,20 +22,20 @@ import {
 import { useCreateShipment } from "@repo/domain/shipments";
 import type { Carrier } from "@repo/domain/shipments";
 import { Plus, Loader2 } from "lucide-react";
-import { toast } from "sonner"; // Assuming sonner is used, if not we'll just handle state. But standard in this project is likely toast. Let's rely on standard callbacks.
-// Wait, the project might not have sonner imported. We can just use standard error handling or assume `console.error` if not sure.
 
 export function CreateShipmentDialog() {
   const [open, setOpen] = useState(false);
   const [orderId, setOrderId] = useState("");
   const [carrier, setCarrier] = useState<Carrier | "">("");
   const [trackingNumber, setTrackingNumber] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   const { createShipmentAsync, isPending } = useCreateShipment();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orderId || !carrier) return;
+    setErrorMessage(null);
 
     try {
       await createShipmentAsync({
@@ -48,10 +48,9 @@ export function CreateShipmentDialog() {
       setOrderId("");
       setCarrier("");
       setTrackingNumber("");
-      // Success is handled by user seeing the list updated or standard toast in mutation if setup globally
-    } catch (error: any) {
-      // Hata mesajı domain tarafında ApiError ile dönüyor.
-      console.error(error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Sevkiyat oluşturulamadı.";
+      setErrorMessage(message);
     }
   };
 
@@ -113,6 +112,9 @@ export function CreateShipmentDialog() {
               <p className="text-[10px] text-muted-foreground">İsteğe bağlı. Daha sonra da eklenebilir.</p>
             </div>
           </div>
+          {errorMessage ? (
+            <p className="text-sm font-medium text-destructive">{errorMessage}</p>
+          ) : null}
           
           <div className="flex justify-end gap-3 border-t border-white/10 pt-4 mt-6">
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>

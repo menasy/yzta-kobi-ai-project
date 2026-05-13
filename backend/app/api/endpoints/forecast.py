@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from app.core import openapi_examples, openapi_responses
-from app.core.dependencies import AdminOrOperatorUser, get_forecast_engine
+from app.core.dependencies import AdminUser, get_forecast_engine
 from app.core.response_builder import success_response
 from app.schemas.forecast import ProductForecastResponse
 from app.services.forecasting_service import ForecastEngine
@@ -28,7 +28,7 @@ router = APIRouter()
             ),
         },
         **openapi_responses.unauthorized_response(),
-        **openapi_responses.forbidden_response(description="Admin veya operator yetkisi gerekli."),
+        **openapi_responses.forbidden_response(description="Admin yetkisi gerekli."),
         **openapi_responses.not_found_responses(description="Ürün bulunamadı."),
         **openapi_responses.bad_request_response(description="Tahmin için yeterli satış geçmişi yok."),
         **openapi_responses.internal_error_response(),
@@ -36,7 +36,7 @@ router = APIRouter()
 )
 async def get_product_forecast(
     product_id: int,
-    _user: AdminOrOperatorUser,
+    admin: AdminUser,
     engine: ForecastEngine = Depends(get_forecast_engine),
 ):
     """Belirli bir ürün için gelecek 7 günlük satış tahminini döndürür."""

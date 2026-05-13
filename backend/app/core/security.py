@@ -54,7 +54,7 @@ def create_access_token(
 
     Payload:
         - sub: kullanıcı ID (string olarak)
-        - role: kullanıcı rolü (admin, operator)
+        - role: kullanıcı rolü (admin, customer)
         - iat: token oluşturma zamanı
         - exp: token son kullanma zamanı
 

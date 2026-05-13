@@ -21,6 +21,7 @@ from app.core.security import (
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.schemas.auth import LoginRequest, UserCreate, UserResponse
+from app.schemas.common import USER_ROLES
 
 logger = get_logger(__name__)
 
@@ -120,6 +121,9 @@ class AuthService:
         if not user.is_active:
             raise ForbiddenError(message="Kullanıcı hesabı devre dışı.")
 
+        if user.role not in USER_ROLES:
+            raise ForbiddenError(message="Kullanıcı rolü geçersiz.")
+
         # JWT token'ları üret
         access_token = create_access_token(
             user_id=user.id,
@@ -171,6 +175,9 @@ class AuthService:
 
         if not user.is_active:
             raise ForbiddenError(message="Kullanıcı hesabı devre dışı.")
+
+        if user.role not in USER_ROLES:
+            raise ForbiddenError(message="Kullanıcı rolü geçersiz.")
 
         new_access_token = create_access_token(
             user_id=user.id,

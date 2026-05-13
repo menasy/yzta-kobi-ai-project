@@ -179,7 +179,7 @@ class WeeklyPerformanceItem(BaseModel):
 
 
 class DashboardOverviewResponse(BaseModel):
-    """Admin/operator dashboard genel bakış response."""
+    """Admin dashboard genel bakış response."""
 
     total_revenue: float = 0.0
     total_orders: int = 0

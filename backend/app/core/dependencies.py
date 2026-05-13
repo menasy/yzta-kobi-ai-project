@@ -19,6 +19,7 @@ from app.core.security import decode_access_token
 from app.db.session import get_db_session
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
+from app.schemas.common import USER_ROLES
 
 logger = get_logger(__name__)
 
@@ -83,6 +84,9 @@ async def get_current_user(
     if not user.is_active:
         raise ForbiddenError(message="Kullanıcı hesabı devre dışı.")
 
+    if user.role not in USER_ROLES:
+        raise ForbiddenError(message="Kullanıcı rolü geçersiz.")
+
     return user
 
 
@@ -100,20 +104,10 @@ async def get_admin_user(
     return current_user
 
 
-async def get_admin_or_operator_user(
-    current_user: Annotated[User, Depends(get_current_user)],
-) -> User:
-    """Admin veya operator rolü gerektiren operasyon ekranı endpoint'leri."""
-    if current_user.role not in {"admin", "operator"}:
-        raise ForbiddenError(message="Bu işlem için admin veya operator yetkisi gereklidir.")
-    return current_user
-
-
 # ── Convenience Type Aliases ─────────────────────────────
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
 AdminUser = Annotated[User, Depends(get_admin_user)]
-AdminOrOperatorUser = Annotated[User, Depends(get_admin_or_operator_user)]
 
 
 # ── Service Factory Dependencies ─────────────────────────

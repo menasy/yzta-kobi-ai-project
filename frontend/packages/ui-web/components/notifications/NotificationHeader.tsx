@@ -119,16 +119,16 @@ export function NotificationHeader({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="flex items-start gap-3 rounded-xl border border-primary/15 bg-gradient-to-r from-primary/5 to-transparent p-3.5"
+            className="flex items-start gap-3.5 rounded-2xl border border-primary/20 bg-primary/[0.03] p-4 shadow-sm"
           >
-            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
+              <Sparkles className="h-4 w-4 text-primary" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary/70">
+              <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-primary">
                 Günlük Özet
               </p>
-              <p className="text-xs leading-relaxed text-foreground/80">
+              <p className="text-[13.5px] leading-relaxed text-foreground/90">
                 {dailySummary}
               </p>
             </div>

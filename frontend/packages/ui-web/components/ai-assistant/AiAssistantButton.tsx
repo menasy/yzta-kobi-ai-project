@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@repo/core";
+import type { AiAssistantButtonProps } from "@repo/ui-contracts";
 import { motion } from "framer-motion";
-import Image from "next/image";
 
 /**
  * AiAssistantButton — Sağ alt köşede kayan AI buton.
@@ -32,11 +32,10 @@ export function AiAssistantButton({ onClick, className }: AiAssistantButtonProps
       id="ai-assistant-fab"
     >
       <div className="relative h-7 w-7">
-        <Image 
+        <img
           src="/next-assets/logo-icon.svg" 
           alt="KOBİ Logo" 
-          fill
-          className="object-contain invert brightness-0"
+          className="h-full w-full object-contain invert brightness-0"
         />
       </div>
     </motion.button>

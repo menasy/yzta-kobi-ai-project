@@ -197,7 +197,6 @@ export function AiAssistantWindow({ isOpen, onClose }: AiAssistantWindowProps) {
 const ROLE_LABELS: Record<string, string> = {
   admin: "Admin",
   customer: "Müşteri",
-  operator: "Operatör",
 };
 
 function buildContextBadge(

@@ -52,7 +52,6 @@ SEED_CHECKSUM = "kobi-demo-seed-v1"
 DEFAULT_PASSWORD = os.getenv("SEED_DEMO_PASSWORD", "Demo12345!")
 ADMIN_EMAIL = os.getenv("SEED_ADMIN_EMAIL", "admin@kobi.local")
 ADMIN_PASSWORD = os.getenv("SEED_ADMIN_PASSWORD", "Admin123!")
-OPERATOR_EMAIL = os.getenv("SEED_OPERATOR_EMAIL", "operasyon@kobi.local")
 OWNER_EMAIL = os.getenv("SEED_OWNER_EMAIL", "isletme@kobi.local")
 DEMO_EMAIL = os.getenv("SEED_DEMO_EMAIL", "demo@kobi.local")
 
@@ -367,16 +366,6 @@ PEOPLE: tuple[PersonSeed, ...] = (
         "34710",
     ),
     PersonSeed("Ayşe Demir", OWNER_EMAIL, "905321000002", "admin", "İzmir", "Konak", "Gazi Blv. No:45", "35210"),
-    PersonSeed(
-        "Mert Kaya",
-        OPERATOR_EMAIL,
-        "905321000003",
-        "operator",
-        "Ankara",
-        "Çankaya",
-        "Tunus Cd. No:18",
-        "06680",
-    ),
     PersonSeed(
         "Demo Kullanıcı",
         DEMO_EMAIL,
@@ -777,7 +766,7 @@ async def _upsert_orders(
     users: dict[str, User],
     people_by_email: dict[str, PersonSeed],
     products: dict[str, Product],
-    operator: User,
+    actor: User,
 ) -> list[Order]:
     orders: list[Order] = []
     for seed in _order_seeds():
@@ -862,7 +851,7 @@ async def _upsert_orders(
                     order_id=order.id,
                     old_status=old_status,
                     new_status=new_status,
-                    changed_by_user_id=operator.id,
+                    changed_by_user_id=actor.id,
                     reason=reason,
                     created_at=event_time,
                     updated_at=event_time,
@@ -1015,7 +1004,7 @@ async def _seed_inventory_movements(
     session: AsyncSession,
     products: dict[str, Product],
     orders: list[Order],
-    operator: User,
+    actor: User,
 ) -> int:
     result = await session.execute(
         select(InventoryMovement).where(InventoryMovement.reason.like("KOBI demo:%"))
@@ -1040,7 +1029,7 @@ async def _seed_inventory_movements(
                 previous_quantity=0,
                 new_quantity=start_quantity,
                 reason="KOBI demo: sezon başı depo girişi",
-                created_by_user_id=operator.id,
+                created_by_user_id=actor.id,
                 created_at=created_at,
                 updated_at=created_at,
             )
@@ -1075,7 +1064,7 @@ async def _seed_inventory_movements(
                     previous_quantity=previous,
                     new_quantity=new_quantity,
                     reason=reason,
-                    created_by_user_id=operator.id,
+                    created_by_user_id=actor.id,
                     created_at=created_at,
                     updated_at=created_at,
                 )
@@ -1098,7 +1087,7 @@ async def _seed_inventory_movements(
                 previous_quantity=previous,
                 new_quantity=new_quantity,
                 reason="KOBI demo: sayım sonrası manuel düzeltme",
-                created_by_user_id=operator.id,
+                created_by_user_id=actor.id,
                 created_at=created_at,
                 updated_at=created_at,
             )
@@ -1120,7 +1109,7 @@ async def _seed_inventory_movements(
                 previous_quantity=previous,
                 new_quantity=new_quantity,
                 reason="KOBI demo: iade kaynaklı stok girişi",
-                created_by_user_id=operator.id,
+                created_by_user_id=actor.id,
                 created_at=created_at,
                 updated_at=created_at,
             )
@@ -1142,7 +1131,7 @@ async def _seed_inventory_movements(
                 previous_quantity=previous,
                 new_quantity=seed.target_quantity,
                 reason="KOBI demo: güncel demo stok seviyesi kalibrasyonu",
-                created_by_user_id=operator.id,
+                created_by_user_id=actor.id,
                 created_at=created_at,
                 updated_at=created_at,
             )
@@ -1316,7 +1305,7 @@ async def _seed_audit_logs(session: AsyncSession, users: dict[str, User]) -> int
         await session.delete(log)
     await session.flush()
 
-    actor = users[OPERATOR_EMAIL]
+    actor = users[ADMIN_EMAIL]
     specs = [
         (users[ADMIN_EMAIL], "LOGIN_SUCCESS", "user", str(users[ADMIN_EMAIL].id), None, {"email": ADMIN_EMAIL}),
         (actor, "ORDER_STATUS_UPDATED", "order", "KOBI-DEMO-0003", {"status": "processing"}, {"status": "shipped"}),
@@ -1362,10 +1351,10 @@ async def seed_database() -> dict[str, int]:
                 users=users,
                 people_by_email=people_by_email,
                 products=products,
-                operator=users[OPERATOR_EMAIL],
+                actor=users[ADMIN_EMAIL],
             )
             shipments = await _upsert_shipments(session, orders)
-            movement_count = await _seed_inventory_movements(session, products, orders, users[OPERATOR_EMAIL])
+            movement_count = await _seed_inventory_movements(session, products, orders, users[ADMIN_EMAIL])
             notification_count = await _seed_notifications(session, products, orders, shipments)
             conversation_count, redis_chat_count = await _seed_conversations(session, customers)
             audit_count = await _seed_audit_logs(session, users)

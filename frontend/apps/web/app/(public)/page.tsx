@@ -14,7 +14,7 @@ export default async function HomePage() {
   const token = cookieStore.get("access_token")?.value;
   const role = resolveKnownAuthRole(extractAuthRoleFromToken(token));
 
-  if (role === "admin" || role === "operator") {
+  if (role === "admin") {
     return <AdminHome />;
   }
 

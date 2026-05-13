@@ -6,7 +6,7 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.core import openapi_examples, openapi_responses
-from app.core.dependencies import AdminOrOperatorUser, AdminUser, get_inventory_service, get_stock_analysis_service
+from app.core.dependencies import AdminUser, get_inventory_service, get_stock_analysis_service
 from app.core.response_builder import success_response
 from app.mappers.inventory_mapper import (
     to_inventory_response,
@@ -33,12 +33,12 @@ router = APIRouter()
             ),
         },
         **openapi_responses.unauthorized_response(),
-        **openapi_responses.forbidden_response(description="Admin veya operator yetkisi gerekli."),
+        **openapi_responses.forbidden_response(description="Admin yetkisi gerekli."),
         **openapi_responses.internal_error_response(),
     },
 )
 async def get_critical_stocks(
-    _user: AdminOrOperatorUser,
+    admin: AdminUser,
     service: StockAnalysisService = Depends(get_stock_analysis_service),
 ):
     """Tüm aktif ürünleri analiz eder ve sadece riskli olanları döndürür."""
@@ -68,14 +68,14 @@ async def get_critical_stocks(
             ),
         },
         **openapi_responses.unauthorized_response(),
-        **openapi_responses.forbidden_response(description="Admin veya operator yetkisi gerekli."),
+        **openapi_responses.forbidden_response(description="Admin yetkisi gerekli."),
         **openapi_responses.not_found_responses(description="Ürün bulunamadı."),
         **openapi_responses.internal_error_response(),
     },
 )
 async def get_stock_analysis(
     product_id: int,
-    _user: AdminOrOperatorUser,
+    admin: AdminUser,
     service: StockAnalysisService = Depends(get_stock_analysis_service),
 ):
     result = await service.analyze_stock_health(product_id)
@@ -225,12 +225,12 @@ async def update_inventory(
             ),
         },
         **openapi_responses.unauthorized_response(),
-        **openapi_responses.forbidden_response(description="Admin veya operator yetkisi gerekli."),
+        **openapi_responses.forbidden_response(description="Admin yetkisi gerekli."),
         **openapi_responses.internal_error_response(),
     },
 )
 async def get_inventory_summary(
-    _user: AdminOrOperatorUser,
+    admin: AdminUser,
     service: StockAnalysisService = Depends(get_stock_analysis_service),
 ):
     summary = await service.get_dashboard_summary()
@@ -254,13 +254,13 @@ async def get_inventory_summary(
             ),
         },
         **openapi_responses.unauthorized_response(),
-        **openapi_responses.forbidden_response(description="Admin veya operator yetkisi gerekli."),
+        **openapi_responses.forbidden_response(description="Admin yetkisi gerekli."),
         **openapi_responses.validation_error_response(),
         **openapi_responses.internal_error_response(),
     },
 )
 async def simulate_market(
-    _user: AdminOrOperatorUser,
+    admin: AdminUser,
     growth_factor: float = Query(1.5, gt=0, le=100, description="Satış artış katsayısı"),
     service: StockAnalysisService = Depends(get_stock_analysis_service),
 ):

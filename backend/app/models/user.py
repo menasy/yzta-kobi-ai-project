@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 
 class User(Base, IDMixin, TimestampMixin):
-    """Sisteme giriş yapan admin/operatör kullanıcılar."""
+    """Sisteme giriş yapan kullanıcılar."""
 
     __tablename__ = "users"
 

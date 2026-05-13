@@ -15,7 +15,7 @@ export function DelayedShipmentsPanel() {
     return null;
   }
 
-  const getDelayDays = (date?: string | Date) => {
+  const getDelayDays = (date?: string | Date | null) => {
     if (!date) return 0;
     const estimated = new Date(date);
     const now = new Date();

@@ -93,7 +93,7 @@ Bu doküman, backend içinde kayıt (register), giriş (login), yetkilendirme (a
 
 **JWT payload:**
 - `sub`: kullanıcı ID (string)
-- `role`: kullanıcı rolü (admin, operator)
+- `role`: kullanıcı rolü (admin, customer)
 - `iat`: token oluşturma zamanı
 - `exp`: token bitiş zamanı
 

@@ -1,6 +1,6 @@
 import type { AuthRole } from "../types/auth.types";
 
-export const KNOWN_AUTH_ROLES = ["admin", "customer", "operator"] as const;
+export const KNOWN_AUTH_ROLES = ["admin", "customer"] as const;
 export type KnownAuthRole = (typeof KNOWN_AUTH_ROLES)[number];
 
 export interface AccessNavItem {
@@ -20,12 +20,8 @@ interface RouteAccessPolicy {
 }
 
 const CUSTOMER_ACCESS_ROLES = ["customer"] as const satisfies readonly KnownAuthRole[];
-const ADMIN_ACCESS_ROLES = ["admin", "operator"] as const satisfies readonly KnownAuthRole[];
-const AUTHENTICATED_ACCESS_ROLES = [
-  "admin",
-  "operator",
-  "customer",
-] as const satisfies readonly KnownAuthRole[];
+const ADMIN_ACCESS_ROLES = ["admin"] as const satisfies readonly KnownAuthRole[];
+const AUTHENTICATED_ACCESS_ROLES = ["admin", "customer"] as const satisfies readonly KnownAuthRole[];
 
 /**
  * ROTA ERİŞİM POLİTİKALARI
@@ -71,7 +67,7 @@ const ROUTE_ACCESS_POLICIES = [
     allowedRoles: CUSTOMER_ACCESS_ROLES,
   },
 
-  // Admin / Operator Routes
+  // Admin Routes
   {
     path: "/dashboard",
     matchMode: "prefix",
@@ -210,7 +206,7 @@ export function getDefaultPathForRole(
     return "/products";
   }
 
-  if (knownRole === "admin" || knownRole === "operator") {
+  if (knownRole === "admin") {
     return "/dashboard";
   }
 
@@ -232,7 +228,7 @@ export function getPrimaryNavigationItems(options: {
     return [...CUSTOMER_NAV_ITEMS];
   }
 
-  if (knownRole === "admin" || knownRole === "operator") {
+  if (knownRole === "admin") {
     return ADMIN_NAV_ITEMS.filter((item) => canAccessPath(item.href, knownRole));
   }
 

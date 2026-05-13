@@ -2,6 +2,7 @@
 
 import { cn } from "@repo/core";
 import { motion } from "framer-motion";
+import { User } from "lucide-react";
 import type { AiAssistantMessageProps } from "@repo/ui-contracts";
 import Image from "next/image";
 

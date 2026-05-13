@@ -1,6 +1,4 @@
 import { cn } from "@repo/core";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
 import type { ShipmentEvent } from "@repo/domain/shipments/types/shipments.types";
 import { ShipmentStatusBadge } from "./ShipmentStatusBadge";
 
@@ -43,7 +41,13 @@ export function ShipmentEventTimeline({ events, className }: ShipmentEventTimeli
               <div className="flex flex-wrap items-center gap-2">
                 <ShipmentStatusBadge status={event.status} className="scale-90 origin-left" />
                 <span className="text-xs text-muted-foreground">
-                  {format(date, "dd MMM yyyy, HH:mm", { locale: tr })}
+                  {new Intl.DateTimeFormat("tr-TR", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }).format(date)}
                 </span>
               </div>
               

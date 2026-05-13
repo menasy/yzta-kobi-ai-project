@@ -157,7 +157,7 @@ Tüm rotalar `packages/domain/auth/access/policy.ts` içinde merkezi olarak yön
 - `/orders/my/[id]` (Sipariş detayı)
 - `/chat` (AI Asistan)
 
-**Admin / Operator (Yönetici):**
+**Admin (Yönetici):**
 - `/dashboard` (Genel özet)
 - `/dashboard/products` (Ürün yönetimi - Create/Update/Delete)
 - `/orders` (Tüm siparişlerin yönetimi)

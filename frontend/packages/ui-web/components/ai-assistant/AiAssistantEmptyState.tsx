@@ -1,6 +1,8 @@
 "use client";
 
 import { cn } from "@repo/core";
+import type { AiAssistantEmptyStateProps } from "@repo/ui-contracts";
+import { Sparkles } from "lucide-react";
 import Image from "next/image";
 
 /**
