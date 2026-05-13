@@ -1,6 +1,8 @@
 import type { ApiResponse } from "@repo/core";
 import type {
   AiActionExecutionResult,
+  AiInsight,
+  AiPendingActionGroup,
   AiPendingActionPreview,
 } from "../../ai-actions/types/ai-actions.types";
 
@@ -26,6 +28,7 @@ export interface ChatConversationMessage extends Record<string, unknown> {
   id: number;
   role: MessageRole;
   content: string;
+  metadata_?: Record<string, unknown> | null;
   created_at: string;
 }
 
@@ -52,12 +55,16 @@ export interface ChatRenderableMessage {
   content: string;
   createdAt: string;
   pendingAction?: AiPendingActionPreview | null;
+  pendingActionGroup?: AiPendingActionGroup | null;
   actionExecution?: AiActionExecutionResult | null;
+  insight?: AiInsight | null;
+  error?: Record<string, unknown> | null;
 }
 
 export interface SendMessageData extends Record<string, unknown> {
   reply: string;
   session_id: string;
+  metadata?: Record<string, unknown> | null;
 }
 
 export interface ChatHistoryData {

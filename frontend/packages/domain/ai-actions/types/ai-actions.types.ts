@@ -53,12 +53,39 @@ export interface AiPendingActionPreview {
 }
 
 export interface AiActionExecutionResult {
-  actionId: string;
-  actionType: AiActionType;
-  status: Extract<AiActionStatus, "executed" | "cancelled" | "expired">;
+  actionId?: string;
+  groupId?: string;
+  actionType?: AiActionType;
+  status?: Extract<AiActionStatus, "executed" | "cancelled" | "expired">;
   affectedCount?: number;
   message?: string | null;
   results?: readonly Record<string, unknown>[];
+  executed?: boolean;
+}
+
+export interface AiPendingActionGroup {
+  groupId: string;
+  title: string;
+  summary: string;
+  status: AiActionStatus;
+  requiresConfirmation: boolean;
+  safetyLevel: AiActionSafetyLevel;
+  actionCount: number;
+  actions: AiPendingActionPreview[];
+  createdAt: string;
+  expiresAt: string;
+}
+
+export interface AiInsight {
+  dataQualityNote?: string;
+  candidates?: Record<string, unknown>[];
+  page?: string;
+  orders?: Record<string, unknown>;
+  products?: Record<string, unknown>;
+  inventory?: Record<string, unknown>;
+  shipments?: Record<string, unknown>;
+  notifications?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 export interface AiPageContext {

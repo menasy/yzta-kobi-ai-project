@@ -59,6 +59,33 @@ class PendingAction(BaseModel):
         return current >= expires_at
 
 
+class PendingActionGroup(BaseModel):
+    """Birden fazla action'ı gruplayarak onay mekanizmasını tekilleştirir."""
+
+    group_id: str = Field(..., min_length=8, max_length=80)
+    user_id: int = Field(..., gt=0)
+    session_id: str = Field(..., min_length=1, max_length=100)
+    title: str = Field(..., min_length=2, max_length=255)
+    summary: str = Field(..., min_length=2, max_length=1000)
+    status: PendingActionStatus = PendingActionStatus.PENDING
+    safety_level: SafetyLevel = SafetyLevel.MEDIUM
+    action_count: int = Field(..., ge=1)
+    actions: list[PendingAction] = Field(default_factory=list)
+    requires_confirmation: bool = True
+    created_at: datetime
+    expires_at: datetime
+
+    model_config = ConfigDict(use_enum_values=True)
+
+    def is_expired(self, now: datetime | None = None) -> bool:
+        """Group TTL süresini aşmış mı kontrol eder."""
+        current = now or datetime.now(tz=UTC)
+        expires_at = self.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=UTC)
+        return current >= expires_at
+
+
 class ProductPriceUpdateItem(BaseModel):
     """Ürün fiyat değişikliği execute payload satırı."""
 

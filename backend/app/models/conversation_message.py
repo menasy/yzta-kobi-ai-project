@@ -14,6 +14,7 @@ from .base_model import IDMixin
 # TimestampMixin yerine sadece created_at kullanıyoruz (mesajlar immutable)
 from datetime import datetime
 from sqlalchemy import DateTime, func
+from sqlalchemy.dialects.postgresql import JSONB
 
 
 if TYPE_CHECKING:
@@ -36,6 +37,7 @@ class ConversationMessage(Base, IDMixin):
     )
     role: Mapped[str] = mapped_column(String(20), nullable=False)  # user, assistant, system, tool
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    metadata_: Mapped[dict | None] = mapped_column("metadata", JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

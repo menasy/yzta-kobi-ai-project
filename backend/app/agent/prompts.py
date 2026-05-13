@@ -38,9 +38,10 @@ AI ACTION CO-PILOT GÜVENLİK AKIŞI:
    execute_pending_action tool'unu çağır.
 6. Kullanıcı onay vermezse veya belirsiz konuşursa execute etme; gerekirse get_pending_action
    veya get_latest_pending_action ile bekleyen aksiyonu hatırlat.
-7. Birden fazla pending action varsa kullanıcıdan hangisini onayladığını netleştirmesini iste.
-8. Kullanıcı iptal etmek isterse cancel_pending_action çağır.
-9. Expired, başka session/user'a ait veya drift tespit edilen action execute edilemez; yeniden pending action oluşturulmasını öner.
+7. KESİNLİKLE kullanıcıdan teknik action_id veya group_id isteme. Kullanıcı onay verdiğinde argümansız olarak `execute_pending_action` çağır, o en sonuncuyu bulur.
+8. Kullanıcı "hepsini yap", "tümünü onayla" derse ve birden fazla işlem varsa, hepsi tek bir PendingActionGroup içindedir, sadece onayla.
+9. Kullanıcı iptal etmek isterse cancel_pending_action çağır.
+10. Expired, başka session/user'a ait veya drift tespit edilen action execute edilemez; yeniden pending action oluşturulmasını öner.
 
 AKSİYON SINIRLARI:
 - Ürün fiyat değişikliklerinde eski/yeni fiyat preview'ı göster; maksimum artış/indirim sınırlarına uy.

@@ -1,5 +1,7 @@
 import type {
   AiActionExecutionResult,
+  AiInsight,
+  AiPendingActionGroup,
   AiPendingActionPreview,
 } from "../../ai-actions/types/ai-actions.types";
 import type {
@@ -7,30 +9,42 @@ import type {
   SendMessageData,
 } from "../types/chat.types";
 
-interface ChatStructuredMetadata {
+export interface ChatStructuredMetadata {
   pendingAction: AiPendingActionPreview | null;
+  pendingActionGroup: AiPendingActionGroup | null;
   actionExecution: AiActionExecutionResult | null;
+  insight: AiInsight | null;
+  error: Record<string, unknown> | null;
 }
 
 const EMPTY_CHAT_STRUCTURED_METADATA: ChatStructuredMetadata = {
   pendingAction: null,
+  pendingActionGroup: null,
   actionExecution: null,
+  insight: null,
+  error: null,
 };
 
+function extractFromRaw(metadata: Record<string, unknown> | null | undefined): ChatStructuredMetadata {
+  if (!metadata) return EMPTY_CHAT_STRUCTURED_METADATA;
+
+  return {
+    pendingAction: (metadata.pending_action as AiPendingActionPreview) || null,
+    pendingActionGroup: (metadata.pending_action_group as AiPendingActionGroup) || null,
+    actionExecution: (metadata.execution_result as AiActionExecutionResult) || null,
+    insight: (metadata.insight as AiInsight) || null,
+    error: (metadata.error as Record<string, unknown>) || null,
+  };
+}
+
 export function extractStructuredChatMessageMetadata(
-  _message: ChatConversationMessage,
+  message: ChatConversationMessage,
 ): ChatStructuredMetadata {
-  // Intentional no-op:
-  // The current backend contract does not expose structured pending action or
-  // execution metadata through conversation/history payloads. Do not parse text.
-  return EMPTY_CHAT_STRUCTURED_METADATA;
+  return extractFromRaw(message.metadata_);
 }
 
 export function extractStructuredSendMessageMetadata(
-  _data: SendMessageData,
+  data: SendMessageData,
 ): ChatStructuredMetadata {
-  // Intentional no-op:
-  // The current backend contract only returns { reply, session_id }. When the
-  // backend adds explicit structured metadata, update only this seam.
-  return EMPTY_CHAT_STRUCTURED_METADATA;
+  return extractFromRaw(data.metadata);
 }

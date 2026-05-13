@@ -52,11 +52,22 @@ class CreateConversationRequest(BaseModel):
 # ── Response Schemas ─────────────────────────────────────
 
 
+class ChatMetadata(BaseModel):
+    """Chat mesajları ve yanıtları için yapılandırılmış metadata."""
+    insight: dict | None = None
+    pending_action: dict | None = None
+    pending_action_group: dict | None = None
+    execution_result: dict | None = None
+    suggested_actions: list[dict] = Field(default_factory=list)
+    error: dict | None = None
+
+
 class ChatResponse(BaseModel):
     """Agent chat yanıtı."""
 
     reply: str
     session_id: str
+    metadata: ChatMetadata | None = None
 
     model_config = ConfigDict(
         json_schema_extra={"example": openapi_examples.CHAT_RESPONSE_EXAMPLE}
@@ -104,9 +115,10 @@ class ConversationMessageResponse(BaseModel):
     id: int
     role: str
     content: str
+    metadata: dict | None = Field(default=None, alias="metadata_")
     created_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class ConversationWithMessagesResponse(BaseModel):

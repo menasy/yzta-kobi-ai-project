@@ -5,6 +5,8 @@ import type { ChatMessageProps } from "@repo/ui-contracts";
 import { Bot, User } from "lucide-react";
 
 import { PendingActionCard } from "../ai-actions/PendingActionCard";
+import { PendingActionGroupCard } from "../ai-actions/PendingActionGroupCard";
+import { AiInsightCard } from "../ai-actions/AiInsightCard";
 import { Avatar, AvatarFallback } from "../shadcn/avatar";
 
 export function ChatMessage({
@@ -59,12 +61,25 @@ export function ChatMessage({
           </span>
         </div>
 
-        {!isUser && message.pendingAction ? (
-          <PendingActionCard
-            pendingAction={message.pendingAction}
-            onActionMessage={onActionMessage}
-          />
-        ) : null}
+        {!isUser && (
+          <div className="flex flex-col gap-3">
+            {message.insight ? (
+              <AiInsightCard insight={message.insight} />
+            ) : null}
+
+            {message.pendingActionGroup ? (
+              <PendingActionGroupCard
+                pendingActionGroup={message.pendingActionGroup}
+                onActionMessage={onActionMessage}
+              />
+            ) : message.pendingAction ? (
+              <PendingActionCard
+                pendingAction={message.pendingAction}
+                onActionMessage={onActionMessage}
+              />
+            ) : null}
+          </div>
+        )}
       </div>
     </div>
   );

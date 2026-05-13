@@ -14,7 +14,10 @@ export function normalizeConversationMessages(
       content: message.content,
       createdAt: message.created_at,
       pendingAction: metadata.pendingAction,
+      pendingActionGroup: metadata.pendingActionGroup,
       actionExecution: metadata.actionExecution,
+      insight: metadata.insight,
+      error: metadata.error,
     };
   });
 }

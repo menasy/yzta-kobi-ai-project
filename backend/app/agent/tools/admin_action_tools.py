@@ -25,16 +25,14 @@ class ExecutePendingActionTool(BaseTool):
     name = "execute_pending_action"
     description = (
         "Admin açıkça 'onaylıyorum', 'tamam uygula', 'evet yap' gibi net onay verdiğinde "
-        "pending action'ı execute eder. action_id yoksa current session'da tek pending action varsa onu uygular; "
-        "birden fazla varsa seçim ister."
+        "pending action'ı veya action group'u execute eder. Parametre verilmezse, current session'daki "
+        "en son pending action veya group'u bulup uygular."
     )
     parameters = {
         "type": "object",
         "properties": {
-            "action_id": {
-                "type": "string",
-                "description": "Execute edilecek pending action ID. Opsiyonel.",
-            },
+            "action_id": {"type": "string", "description": "Execute edilecek pending action ID. Opsiyonel."},
+            "group_id": {"type": "string", "description": "Execute edilecek pending action group ID. Opsiyonel."},
         },
     }
 
@@ -49,43 +47,51 @@ class ExecutePendingActionTool(BaseTool):
 
         try:
             action_id = kwargs.get("action_id")
-            if not action_id:
-                pending_actions = await self._store.list_for_session(
-                    context.user_id,
-                    context.session_id,
-                    pending_only=True,
-                )
-                if not pending_actions:
-                    return ToolResult(success=False, error="Onay bekleyen aksiyon bulunamadı.")
-                if len(pending_actions) > 1:
-                    return ToolResult(
-                        success=True,
-                        data={
-                            "requires_selection": True,
-                            "message": "Birden fazla onay bekleyen aksiyon var. Hangisini onayladığınızı belirtin.",
-                            "pending_actions": [action_to_response(action) for action in pending_actions],
-                        },
-                    )
-                action_id = pending_actions[0].action_id
+            group_id = kwargs.get("group_id")
 
-            result = await self._executor.execute(str(action_id), context)
+            if not action_id and not group_id:
+                # Find latest group or action
+                groups = await self._store.list_groups_for_session(context.user_id, context.session_id, pending_only=True)
+                actions = await self._store.list_for_session(context.user_id, context.session_id, pending_only=True)
+                
+                if not groups and not actions:
+                    return ToolResult(success=False, error="Onay bekleyen aksiyon bulunamadı.")
+                
+                latest_group = groups[0] if groups else None
+                latest_action = actions[0] if actions else None
+
+                if latest_group and latest_action:
+                    if latest_group.created_at > latest_action.created_at:
+                        group_id = latest_group.group_id
+                    else:
+                        action_id = latest_action.action_id
+                elif latest_group:
+                    group_id = latest_group.group_id
+                elif latest_action:
+                    action_id = latest_action.action_id
+
+            if group_id:
+                result = await self._executor.execute_group(str(group_id), context)
+            elif action_id:
+                result = await self._executor.execute(str(action_id), context)
+            else:
+                return ToolResult(success=False, error="Geçerli bir action veya group bulunamadı.")
+
             return ToolResult(success=True, data=result)
         except AppException as exc:
             return ToolResult(success=False, error=exc.message)
 
 
 class CancelPendingActionTool(BaseTool):
-    """Pending action iptal eder."""
+    """Pending action veya action group iptal eder."""
 
     name = "cancel_pending_action"
-    description = "Admin onay bekleyen bir aksiyonu iptal etmek istediğinde kullan."
+    description = "Admin onay bekleyen bir aksiyonu veya aksiyon grubunu iptal etmek istediğinde kullan."
     parameters = {
         "type": "object",
         "properties": {
-            "action_id": {
-                "type": "string",
-                "description": "İptal edilecek pending action ID. Opsiyonel; tek pending varsa o iptal edilir.",
-            },
+            "action_id": {"type": "string", "description": "İptal edilecek pending action ID. Opsiyonel."},
+            "group_id": {"type": "string", "description": "İptal edilecek pending action group ID. Opsiyonel."},
         },
     }
 
@@ -98,29 +104,43 @@ class CancelPendingActionTool(BaseTool):
             return denied
         try:
             action_id = kwargs.get("action_id")
-            if not action_id:
-                pending_actions = await self._store.list_for_session(
-                    context.user_id,
-                    context.session_id,
-                    pending_only=True,
-                )
-                if len(pending_actions) != 1:
-                    return ToolResult(
-                        success=True,
-                        data={
-                            "requires_selection": True,
-                            "pending_actions": [action_to_response(action) for action in pending_actions],
-                        },
-                    )
-                action_id = pending_actions[0].action_id
-            action = await self._store.cancel(context.user_id, context.session_id, str(action_id))
-            return ToolResult(success=True, data={"cancelled": True, "pending_action": action_to_response(action)})
+            group_id = kwargs.get("group_id")
+
+            if not action_id and not group_id:
+                groups = await self._store.list_groups_for_session(context.user_id, context.session_id, pending_only=True)
+                actions = await self._store.list_for_session(context.user_id, context.session_id, pending_only=True)
+                
+                if not groups and not actions:
+                    return ToolResult(success=False, error="İptal edilecek onay bekleyen aksiyon bulunamadı.")
+                
+                latest_group = groups[0] if groups else None
+                latest_action = actions[0] if actions else None
+
+                if latest_group and latest_action:
+                    if latest_group.created_at > latest_action.created_at:
+                        group_id = latest_group.group_id
+                    else:
+                        action_id = latest_action.action_id
+                elif latest_group:
+                    group_id = latest_group.group_id
+                elif latest_action:
+                    action_id = latest_action.action_id
+
+            if group_id:
+                group = await self._store.cancel_group(context.user_id, context.session_id, str(group_id))
+                # For brevity, reusing action_to_response style for group
+                return ToolResult(success=True, data={"cancelled": True, "pending_action_group": group.model_dump(mode="json")})
+            elif action_id:
+                action = await self._store.cancel(context.user_id, context.session_id, str(action_id))
+                return ToolResult(success=True, data={"cancelled": True, "pending_action": action_to_response(action)})
+            else:
+                return ToolResult(success=False, error="Geçerli bir action veya group bulunamadı.")
         except AppException as exc:
             return ToolResult(success=False, error=exc.message)
 
 
 class GetPendingActionTool(BaseTool):
-    """Belirli veya tüm pending action detaylarını getirir."""
+    """Belirli veya tüm pending action / group detaylarını getirir."""
 
     name = "get_pending_action"
     description = "Admin onay bekleyen aksiyon detayını görmek istediğinde kullan."
@@ -128,6 +148,7 @@ class GetPendingActionTool(BaseTool):
         "type": "object",
         "properties": {
             "action_id": {"type": "string", "description": "Pending action ID. Opsiyonel."},
+            "group_id": {"type": "string", "description": "Pending action group ID. Opsiyonel."},
         },
     }
 
@@ -140,14 +161,23 @@ class GetPendingActionTool(BaseTool):
             return denied
         try:
             action_id = kwargs.get("action_id")
+            group_id = kwargs.get("group_id")
+
+            if group_id:
+                group = await self._store.get_group(context.user_id, context.session_id, str(group_id))
+                return ToolResult(success=True, data={"pending_action_group": group.model_dump(mode="json")})
             if action_id:
                 action = await self._store.get(context.user_id, context.session_id, str(action_id))
                 return ToolResult(success=True, data={"pending_action": action_to_response(action)})
 
+            groups = await self._store.list_groups_for_session(context.user_id, context.session_id, pending_only=True)
             actions = await self._store.list_for_session(context.user_id, context.session_id, pending_only=True)
             return ToolResult(
                 success=True,
-                data={"pending_actions": [action_to_response(action) for action in actions]},
+                data={
+                    "pending_action_groups": [g.model_dump(mode="json") for g in groups],
+                    "pending_actions": [action_to_response(action) for action in actions]
+                },
             )
         except AppException as exc:
             return ToolResult(success=False, error=exc.message)

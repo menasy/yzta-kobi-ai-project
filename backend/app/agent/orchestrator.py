@@ -154,7 +154,7 @@ class AgentOrchestrator:
 
         return contents
 
-    async def run(self, message: str, context: "AgentContext") -> str:
+    async def run(self, message: str, context: "AgentContext") -> tuple[str, dict | None]:
         """
         Agent'ı çalıştırır.
 
@@ -163,7 +163,7 @@ class AgentOrchestrator:
             context: Güvenlik ve sahiplik bilgilerini içeren AgentContext.
 
         Returns:
-            LLM'in ürettiği final Türkçe yanıt.
+            (LLM'in ürettiği final Türkçe yanıt, Çıkarılan yapılandırılmış metadata sözlüğü)
         """
         # 1. Konuşma geçmişini yükle (user-scoped)
         history = await self._memory.load_for_user(context.session_id, context.user_id)
@@ -176,14 +176,20 @@ class AgentOrchestrator:
         contents = self._build_contents(history, message)
 
         # 4. ReAct döngüsü
-        final_text = await self._react_loop(contents, config, registry, context)
+        final_text, extracted_metadata = await self._react_loop(contents, config, registry, context)
 
         # 5. Konuşma geçmişini güncelle
         history.append({"role": "user", "content": message})
-        history.append({"role": "assistant", "content": final_text})
+        
+        # Asistan yanıtına metadata ekle (sadece bellekte, DB kaydı chat_history_service tarafından yapılıyor)
+        assistant_msg = {"role": "assistant", "content": final_text}
+        if extracted_metadata:
+            assistant_msg["metadata"] = extracted_metadata
+        history.append(assistant_msg)
+        
         await self._memory.save_for_user(context.session_id, context.user_id, history)
 
-        return final_text
+        return final_text, extracted_metadata
 
     async def _react_loop(
         self,
@@ -191,11 +197,13 @@ class AgentOrchestrator:
         config: types.GenerateContentConfig,
         registry: ToolRegistry,
         context: "AgentContext",
-    ) -> str:
+    ) -> tuple[str, dict | None]:
         """
         ReAct döngüsü: LLM çağır → tool varsa çalıştır → sonucu geri ver → tekrarla.
         Max _MAX_ITERATIONS iterasyon güvenliği var.
         """
+        extracted_metadata: dict[str, Any] = {}
+
         for iteration in range(1, _MAX_ITERATIONS + 1):
             logger.debug("ReAct iterasyon %d/%d", iteration, _MAX_ITERATIONS)
 
@@ -213,7 +221,7 @@ class AgentOrchestrator:
                         "Gemini kota limiti aşıldı, degradeli yanıt döndürülüyor: %s",
                         error_text,
                     )
-                    return self._build_rate_limit_reply(error_text)
+                    return self._build_rate_limit_reply(error_text), extracted_metadata
 
                 logger.error("Gemini API hatası: %s", error_text)
                 raise ExternalServiceError(
@@ -229,7 +237,7 @@ class AgentOrchestrator:
             logger.debug("LLM Yanıtı: %s", str(response))
             if not response.candidates:
                 logger.warning("LLM boş yanıt döndü.")
-                return "Üzgünüm, şu anda yanıt üretemiyorum. Lütfen tekrar deneyin."
+                return "Üzgünüm, şu anda yanıt üretemiyorum. Lütfen tekrar deneyin.", extracted_metadata
 
             candidate = response.candidates[0]
 
@@ -238,7 +246,7 @@ class AgentOrchestrator:
 
             if function_call is None:
                 # Final text yanıtı
-                return self._extract_text(candidate)
+                return self._extract_text(candidate), extracted_metadata
 
             # Tool çalıştır
             tool_name = function_call.name
@@ -253,6 +261,19 @@ class AgentOrchestrator:
             )
 
             result = await registry.execute(tool_name, context=context, **tool_args)
+
+            # Metadata çıkarma
+            if result.success and isinstance(result.data, dict):
+                if "pending_action" in result.data:
+                    extracted_metadata["pending_action"] = result.data["pending_action"]
+                elif "pending_action_group" in result.data:
+                    extracted_metadata["pending_action_group"] = result.data["pending_action_group"]
+                elif "executed" in result.data and result.data["executed"]:
+                    extracted_metadata["execution_result"] = result.data
+                elif "insight" in result.data:
+                    extracted_metadata["insight"] = result.data["insight"]
+                elif "candidates" in result.data or "page" in result.data or "low_stock_count" in result.data:
+                    extracted_metadata["insight"] = result.data # Genişletilmiş insight
 
             # Model yanıtını ve tool sonucunu contents'e ekle
             contents.append(candidate.content)
@@ -297,7 +318,7 @@ class AgentOrchestrator:
             "Üzgünüm, sorgunuzu işlerken çok fazla adım gerekti. "
             "Lütfen sorunuzu daha net bir şekilde tekrar sorun veya "
             "işletme yetkilimize danışın."
-        )
+        ), extracted_metadata
 
     @staticmethod
     def _extract_function_call(candidate: Any) -> Any | None:

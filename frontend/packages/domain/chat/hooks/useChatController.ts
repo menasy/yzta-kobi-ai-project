@@ -145,7 +145,10 @@ export function useChatController({
           content: response.data.reply,
           createdAt: new Date().toISOString(),
           pendingAction: metadata.pendingAction,
+          pendingActionGroup: metadata.pendingActionGroup,
           actionExecution: metadata.actionExecution,
+          insight: metadata.insight,
+          error: metadata.error,
         });
 
         if (metadata.actionExecution) {

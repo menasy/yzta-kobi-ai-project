@@ -8,12 +8,12 @@ interface UseAiActionConfirmationOptions {
   onSubmitMessage: (content: string) => Promise<unknown>;
 }
 
-function buildConfirmationMessage(actionId: string): string {
-  return `Onaylıyorum. Action ID: ${actionId}`;
+function buildConfirmationMessage(_actionId: string): string {
+  return `Onaylıyorum.`;
 }
 
-function buildCancellationMessage(actionId: string): string {
-  return `Bu aksiyonu iptal et. Action ID: ${actionId}`;
+function buildCancellationMessage(_actionId: string): string {
+  return `Bu işlemi iptal et.`;
 }
 
 export function useAiActionConfirmation({

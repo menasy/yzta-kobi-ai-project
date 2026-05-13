@@ -9,12 +9,13 @@ from app.core.logger import get_logger
 from app.services.redis_service import redis_service
 
 from .action_types import PendingActionStatus
-from .schemas import PendingAction
+from .schemas import PendingAction, PendingActionGroup
 
 logger = get_logger(__name__)
 
 KEY_PREFIX = "agent:pending_action"
-
+GROUP_KEY_PREFIX = "agent:pending_action_group"
+INSIGHT_KEY_PREFIX = "agent:latest_insight"
 
 class PendingActionStore:
     """User/session scoped pending action Redis erişimi."""
@@ -147,10 +148,128 @@ class PendingActionStore:
         return action
 
     @staticmethod
-    def _ensure_owner(action: PendingAction, *, user_id: int, session_id: str) -> None:
+    def _ensure_owner(action: PendingAction | PendingActionGroup, *, user_id: int, session_id: str) -> None:
         if action.user_id != user_id or action.session_id != session_id:
             logger.warning(
-                "Pending action ownership ihlali.",
-                extra={"action_id": action.action_id, "requested_user_id": user_id},
+                "Pending action/group ownership ihlali.",
+                extra={"requested_user_id": user_id},
             )
             raise ForbiddenError(message="Bu aksiyona erişim yetkiniz yok.")
+
+    # ── Group Methods ────────────────────────────────────────
+
+    def _group_key(self, user_id: int, session_id: str, group_id: str) -> str:
+        return f"{GROUP_KEY_PREFIX}:{user_id}:{session_id}:{group_id}"
+
+    def _group_pattern(self, user_id: int, session_id: str) -> str:
+        return f"{GROUP_KEY_PREFIX}:{user_id}:{session_id}:*"
+
+    async def create_group(self, group: PendingActionGroup) -> PendingActionGroup:
+        try:
+            await redis_service.set_value(
+                self._group_key(group.user_id, group.session_id, group.group_id),
+                json.dumps(group.model_dump(mode="json"), ensure_ascii=False),
+                expire=self._ttl_seconds,
+            )
+            logger.info("Pending action group oluşturuldu.", extra={"group_id": group.group_id})
+            return group
+        except Exception as exc:
+            logger.error("Group Redis yazma hatası: %s", str(exc), exc_info=True)
+            raise ExternalServiceError(message="Onay bekleyen aksiyon grubu kaydedilemedi.") from exc
+
+    async def get_group(self, user_id: int, session_id: str, group_id: str) -> PendingActionGroup:
+        try:
+            raw = await redis_service.get_value(self._group_key(user_id, session_id, group_id))
+        except Exception as exc:
+            logger.error("Group Redis okuma hatası: %s", str(exc), exc_info=True)
+            raise ExternalServiceError(message="Aksiyon grubu okunamadı.") from exc
+
+        if raw is None:
+            raise NotFoundError(message="Aksiyon grubu bulunamadı veya süresi doldu.")
+
+        group = PendingActionGroup.model_validate(json.loads(raw))
+        self._ensure_owner(group, user_id=user_id, session_id=session_id)
+        if group.status == PendingActionStatus.PENDING and group.is_expired():
+            group.status = PendingActionStatus.EXPIRED
+            await self.save_group(group, expire=300)
+        return group
+
+    async def save_group(self, group: PendingActionGroup, *, expire: int | None = None) -> None:
+        try:
+            await redis_service.set_value(
+                self._group_key(group.user_id, group.session_id, group.group_id),
+                json.dumps(group.model_dump(mode="json"), ensure_ascii=False),
+                expire=expire or self._ttl_seconds,
+            )
+        except Exception as exc:
+            logger.error("Group Redis güncelleme hatası: %s", str(exc), exc_info=True)
+            raise ExternalServiceError(message="Aksiyon grubu güncellenemedi.") from exc
+
+    async def list_groups_for_session(
+        self, user_id: int, session_id: str, *, pending_only: bool = True
+    ) -> list[PendingActionGroup]:
+        try:
+            keys = await redis_service.list_keys(self._group_pattern(user_id, session_id))
+            groups: list[PendingActionGroup] = []
+            for key in keys:
+                raw = await redis_service.get_value(key)
+                if raw is None: continue
+                group = PendingActionGroup.model_validate(json.loads(raw))
+                self._ensure_owner(group, user_id=user_id, session_id=session_id)
+                if group.status == PendingActionStatus.PENDING and group.is_expired():
+                    group.status = PendingActionStatus.EXPIRED
+                    await self.save_group(group, expire=300)
+                if pending_only and group.status != PendingActionStatus.PENDING:
+                    continue
+                groups.append(group)
+        except (ExternalServiceError, ForbiddenError):
+            raise
+        except Exception as exc:
+            logger.error("Group Redis listeleme hatası: %s", str(exc), exc_info=True)
+            raise ExternalServiceError(message="Aksiyon grupları listelenemedi.") from exc
+
+        return sorted(groups, key=lambda item: item.created_at, reverse=True)
+
+    async def get_latest_pending_group(self, user_id: int, session_id: str) -> PendingActionGroup:
+        groups = await self.list_groups_for_session(user_id, session_id, pending_only=True)
+        if not groups:
+            raise NotFoundError(message="Onay bekleyen aksiyon grubu bulunamadı.")
+        return groups[0]
+
+    async def mark_group_executed(self, group: PendingActionGroup) -> PendingActionGroup:
+        group.status = PendingActionStatus.EXECUTED
+        await self.save_group(group, expire=300)
+        return group
+
+    async def cancel_group(self, user_id: int, session_id: str, group_id: str) -> PendingActionGroup:
+        group = await self.get_group(user_id, session_id, group_id)
+        if group.status != PendingActionStatus.PENDING:
+            return group
+        group.status = PendingActionStatus.CANCELLED
+        await self.save_group(group, expire=300)
+        return group
+
+    # ── Insight Context ────────────────────────────────────────
+
+    def _insight_key(self, user_id: int, session_id: str) -> str:
+        return f"{INSIGHT_KEY_PREFIX}:{user_id}:{session_id}"
+
+    async def save_latest_insight(self, user_id: int, session_id: str, insight: dict) -> None:
+        try:
+            await redis_service.set_value(
+                self._insight_key(user_id, session_id),
+                json.dumps(insight, ensure_ascii=False),
+                expire=self._ttl_seconds,
+            )
+        except Exception as exc:
+            logger.error("Insight Redis yazma hatası: %s", str(exc), exc_info=True)
+
+    async def get_latest_insight(self, user_id: int, session_id: str) -> dict | None:
+        try:
+            raw = await redis_service.get_value(self._insight_key(user_id, session_id))
+            if raw is None:
+                return None
+            return json.loads(raw)
+        except Exception as exc:
+            logger.error("Insight Redis okuma hatası: %s", str(exc), exc_info=True)
+            return None

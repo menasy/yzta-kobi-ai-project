@@ -68,6 +68,37 @@ class ActionExecutor:
             **result,
         }
 
+    async def execute_group(self, group_id: str, context: "AgentContext") -> dict[str, Any]:
+        """Group içindeki tüm action'ları execute eder."""
+        self._ensure_admin(context)
+        group = await self._store.get_group(context.user_id, context.session_id, group_id)
+        if group.status == PendingActionStatus.EXPIRED or group.is_expired():
+            raise ConflictError(message="Bu aksiyon grubunun onay süresi dolmuş. Lütfen yeniden oluşturun.")
+        if group.status != PendingActionStatus.PENDING:
+            raise ConflictError(message=f"Bu aksiyon grubu artık çalıştırılamaz. Durum: {group.status}.")
+
+        results = []
+        async with self._db.begin_nested():
+            for action in group.actions:
+                self._ensure_executable(action)
+                res = await self._execute_by_type(action, context)
+                await self._store.mark_executed(action)
+                results.append({"action_id": action.action_id, **res})
+            await self._store.mark_group_executed(group)
+
+        logger.info(
+            "Pending action group execute edildi.",
+            extra={
+                "group_id": group.group_id,
+                "user_id": context.user_id,
+            },
+        )
+        return {
+            "executed": True,
+            "group_id": group.group_id,
+            "results": results,
+        }
+
     async def _execute_by_type(
         self,
         action: PendingAction,

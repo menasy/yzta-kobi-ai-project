@@ -171,9 +171,11 @@ class ConversationService:
         user_id: int,
         role: str,
         content: str,
+        metadata_: dict | None = None,
     ) -> ConversationMessage:
         """Mesajı PostgreSQL'e kaydeder ve conversation özetini günceller."""
-        msg = await self._msg_repo.add(conversation_id, user_id, role, content)
+        # Note: _msg_repo.add must be updated or we can just create the object here. Wait! Let me check ConversationMessageRepository
+        msg = await self._msg_repo.add(conversation_id, user_id, role, content, metadata_=metadata_)
 
         # Conversation özet bilgilerini güncelle
         count = await self._msg_repo.count_for_conversation(conversation_id)
@@ -224,7 +226,7 @@ class ConversationService:
 
         # Redis'e yükle
         history = [
-            {"role": m.role, "content": m.content}
+            {"role": m.role, "content": m.content, "metadata": getattr(m, "metadata_", None)}
             for m in messages
             if m.role in ("user", "assistant")
         ]

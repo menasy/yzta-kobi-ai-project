@@ -39,6 +39,7 @@ class ConversationMessageRepository(BaseRepository[ConversationMessage]):
         user_id: int,
         role: str,
         content: str,
+        metadata_: dict | None = None,
     ) -> ConversationMessage:
         """Yeni mesaj ekler."""
         return await self.create({
@@ -46,6 +47,7 @@ class ConversationMessageRepository(BaseRepository[ConversationMessage]):
             "user_id": user_id,
             "role": role,
             "content": content,
+            "metadata_": metadata_,
         })
 
     async def count_for_conversation(self, conversation_id: int) -> int:

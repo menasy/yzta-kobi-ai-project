@@ -43,10 +43,11 @@ def _chat_reply_response(
     reply: str,
     key: str,
     message: str,
+    metadata: dict | None = None,
 ):
     """Chat UI'nin kullanıcıyı yanıtsız bırakmaması için typed reply döndürür."""
     return success_response(
-        data=ChatResponse(reply=reply, session_id=session_id).model_dump(),
+        data=ChatResponse(reply=reply, session_id=session_id, metadata=metadata).model_dump(mode="json"),
         message=message,
         key=key,
     )
@@ -278,8 +279,9 @@ async def send_message(
         # 4. Agent'ı çalıştır (Context ile)
         response_key = "CHAT_MESSAGE_SENT"
         response_message = "Agent yanıtı alındı."
+        extracted_metadata = None
         try:
-            reply = await orchestrator.run(
+            reply, extracted_metadata = await orchestrator.run(
                 message=payload.content,
                 context=context,
             )
@@ -325,6 +327,7 @@ async def send_message(
             user_id=current_user.id,
             role="assistant",
             content=reply,
+            metadata_=extracted_metadata,
         )
 
         # 6. İlk mesajda başlık güncelle
@@ -335,6 +338,7 @@ async def send_message(
         return _chat_reply_response(
             session_id=payload.session_id,
             reply=reply,
+            metadata=extracted_metadata,
             message=response_message,
             key=response_key,
         )

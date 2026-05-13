@@ -51,7 +51,7 @@ class ConversationMemory:
 
     async def load_for_user(
         self, session_id: str, user_id: int
-    ) -> list[dict[str, str]]:
+    ) -> list[dict[str, Any]]:
         """User-scoped: Konuşma geçmişini Redis'ten yükler."""
         try:
             raw = await redis_service.get_value(self._user_key(session_id, user_id))
@@ -71,7 +71,7 @@ class ConversationMemory:
         self,
         session_id: str,
         user_id: int,
-        messages: list[dict[str, str]],
+        messages: list[dict[str, Any]],
     ) -> None:
         """User-scoped: Konuşma geçmişini Redis'e kaydeder."""
         try:
