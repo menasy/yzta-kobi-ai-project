@@ -6,10 +6,20 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Request
+from sqlalchemy.exc import SQLAlchemyError
 
+from app.agent.context import AgentContext
 from app.agent.orchestrator import AgentOrchestrator
 from app.core import openapi_examples, openapi_responses
 from app.core.dependencies import CurrentUser, DBSession, get_agent_orchestrator
+from app.core.exceptions import (
+    AppException,
+    ExternalServiceError,
+    ForbiddenError,
+    NotFoundError,
+    RateLimitError,
+)
+from app.core.logger import get_logger
 from app.core.rate_limit import enforce_chat_message_rate_limit
 from app.core.response_builder import success_response
 from app.schemas.chat import (
@@ -24,6 +34,41 @@ from app.schemas.chat import (
 from app.services.chat_history_service import ConversationService
 
 router = APIRouter()
+logger = get_logger(__name__)
+
+
+def _chat_reply_response(
+    *,
+    session_id: str,
+    reply: str,
+    key: str,
+    message: str,
+):
+    """Chat UI'nin kullanıcıyı yanıtsız bırakmaması için typed reply döndürür."""
+    return success_response(
+        data=ChatResponse(reply=reply, session_id=session_id).model_dump(),
+        message=message,
+        key=key,
+    )
+
+
+def _app_exception_reply(exc: AppException) -> str:
+    if isinstance(exc, ForbiddenError):
+        return (
+            "Bu sohbet oturumu hesabınızla eşleşmiyor. "
+            "Lütfen yeni bir sohbet başlatın veya kendi sohbet geçmişinizden bir oturum seçin."
+        )
+
+    if isinstance(exc, NotFoundError):
+        return (
+            "Bu sohbet oturumunu bulamadım. Silinmiş veya süresi dolmuş olabilir. "
+            "Yeni bir sohbet başlatıp tekrar deneyebilirsiniz."
+        )
+
+    if isinstance(exc, RateLimitError):
+        return exc.message
+
+    return exc.message or "İsteği işlerken bir uygulama hatası oluştu."
 
 
 def _get_conversation_service(db: DBSession) -> ConversationService:
@@ -166,12 +211,6 @@ async def delete_conversation(
 
 # ── Mesaj Gönderim Endpointi ─────────────────────────────
 
-
-from app.agent.context import AgentContext
-from app.core.exceptions import AppException, ExternalServiceError
-
-# ... (rest of imports)
-
 @router.post(
     "/message",
     response_model=None,
@@ -211,7 +250,7 @@ async def send_message(
         context = AgentContext(
             user_id=current_user.id,
             role=current_user.role,
-            customer_id=current_user.id, # Customer id = User id varsayımı
+            customer_id=current_user.id,
             session_id=payload.session_id,
         )
 
@@ -237,51 +276,132 @@ async def send_message(
         )
 
         # 4. Agent'ı çalıştır (Context ile)
-        is_success = True
+        response_key = "CHAT_MESSAGE_SENT"
+        response_message = "Agent yanıtı alındı."
         try:
             reply = await orchestrator.run(
                 message=payload.content,
                 context=context,
             )
-        except (AppException, ExternalServiceError) as exc:
-            is_success = False
-            logger.warning("Agent servis/iş mantığı hatası: %s", str(exc))
-            reply = exc.message or "Şu anda bu bilgiyi kontrol edemiyorum. Lütfen biraz sonra tekrar deneyin."
-        except Exception as exc:
-            is_success = False
-            logger.error("Agent çalıştırılırken hata: %s", str(exc), exc_info=True)
-            reply = "Üzgünüm, işleminizi şu anda gerçekleştiremiyorum. Lütfen kısa süre sonra tekrar deneyin."
-
-        # 5. Assistant cevabını kaydet (Sadece başarı durumunda)
-        if is_success:
-            await service.persist_message(
-                conversation_id=conv.id,
-                user_id=current_user.id,
-                role="assistant",
-                content=reply,
+        except ExternalServiceError as exc:
+            logger.warning(
+                "Agent harici servis hatası: %s",
+                str(exc),
+                extra={"user_id": current_user.id},
             )
+            response_key = "CHAT_AGENT_UNAVAILABLE"
+            response_message = "AI sağlayıcısı geçici olarak yanıt veremedi."
+            reply = (
+                "AI sağlayıcısına şu anda ulaşamıyorum. Mesajınız alındı; "
+                "lütfen kısa süre sonra tekrar deneyin."
+            )
+        except AppException as exc:
+            logger.warning(
+                "Agent uygulama hatası: %s [%s]",
+                exc.message,
+                exc.key,
+                extra={"user_id": current_user.id, "status_code": exc.status_code},
+            )
+            response_key = f"CHAT_AGENT_{exc.key}"
+            response_message = "Agent isteği sınırlı yanıtla tamamlandı."
+            reply = _app_exception_reply(exc)
+        except Exception as exc:
+            logger.error(
+                "Agent çalıştırılırken beklenmeyen hata: %s",
+                str(exc),
+                extra={"user_id": current_user.id},
+                exc_info=True,
+            )
+            response_key = "CHAT_AGENT_ERROR"
+            response_message = "Agent yanıtı güvenli hata mesajıyla döndü."
+            reply = (
+                "Yanıt üretirken beklenmeyen bir teknik sorun yaşadım. "
+                "Mesajınız kaydedildi; lütfen biraz sonra tekrar deneyin."
+            )
+
+        # 5. Assistant cevabını kaydet
+        await service.persist_message(
+            conversation_id=conv.id,
+            user_id=current_user.id,
+            role="assistant",
+            content=reply,
+        )
 
         # 6. İlk mesajda başlık güncelle
         if conv.message_count == 0 or conv.title == "Yeni Sohbet":
             title = ConversationService._generate_title(payload.content)
             await service.update_conversation_title(conv.id, title)
 
-        return success_response(
-            data=ChatResponse(reply=reply, session_id=payload.session_id).model_dump(),
-            message="Agent yanıtı alındı.",
-            key="CHAT_MESSAGE_SENT",
+        return _chat_reply_response(
+            session_id=payload.session_id,
+            reply=reply,
+            message=response_message,
+            key=response_key,
         )
-        
-    except Exception as e:
-        # Rate limit veya en temel hatalar için
-        logger.error("Chat endpoint kritik hata: %s", str(e), exc_info=True)
-        return success_response(
-            data=ChatResponse(
-                reply="Bir sorun oluştu. Lütfen tekrar deneyin.", 
-                session_id=payload.session_id
-            ).model_dump(),
-            message="Hata oluştu.",
-            key="CHAT_ERROR"
+    except RateLimitError as exc:
+        logger.warning(
+            "Chat rate limit aşıldı: %s",
+            exc.message,
+            extra={"user_id": current_user.id, "status_code": exc.status_code},
+        )
+        return _chat_reply_response(
+            session_id=payload.session_id,
+            reply=(
+                f"{exc.message} Bu oturum açık kalacak; birkaç saniye sonra "
+                "aynı sohbetten devam edebilirsiniz."
+            ),
+            message="Mesaj sınırı aşıldı.",
+            key="CHAT_RATE_LIMITED",
+        )
+    except (ForbiddenError, NotFoundError) as exc:
+        logger.warning(
+            "Chat oturum erişim hatası: %s [%s]",
+            exc.message,
+            exc.key,
+            extra={"user_id": current_user.id, "status_code": exc.status_code},
+        )
+        return _chat_reply_response(
+            session_id=payload.session_id,
+            reply=_app_exception_reply(exc),
+            message="Sohbet oturumu kullanılamadı.",
+            key=f"CHAT_{exc.key}",
+        )
+    except AppException as exc:
+        logger.warning(
+            "Chat uygulama hatası: %s [%s]",
+            exc.message,
+            exc.key,
+            extra={"user_id": current_user.id, "status_code": exc.status_code},
+        )
+        return _chat_reply_response(
+            session_id=payload.session_id,
+            reply=_app_exception_reply(exc),
+            message="Chat isteği sınırlı yanıtla tamamlandı.",
+            key=f"CHAT_{exc.key}",
+        )
+    except SQLAlchemyError as exc:
+        logger.error(
+            "Chat veritabanı hatası: %s",
+            str(exc),
+            extra={"user_id": current_user.id},
+            exc_info=True,
+        )
+        raise
+    except Exception as exc:
+        logger.error(
+            "Chat endpoint beklenmeyen hata: %s",
+            str(exc),
+            extra={"user_id": current_user.id},
+            exc_info=True,
+        )
+        return _chat_reply_response(
+            session_id=payload.session_id,
+            reply=(
+                "Beklenmeyen bir teknik sorun oluştu. "
+                "Oturumunuz korunuyor; lütfen biraz sonra tekrar deneyin."
+            ),
+            message="Chat isteği beklenmeyen hata ile tamamlandı.",
+            key="CHAT_UNEXPECTED_ERROR",
         )
 
 

@@ -14,6 +14,7 @@ import type { ReactNode } from "react";
 import { AuthSessionSync } from "../auth/AuthSessionSync";
 import { SystemGate, SystemStatusSync } from "../system";
 
+import { ChatSessionPersistence } from "./ChatSessionPersistence";
 import { ThemeProvider } from "./theme-provider";
 
 interface ProvidersProps {
@@ -43,6 +44,7 @@ export function Providers({
             <UIStoreProvider>
               <MessageStoreProvider>
                 <ChatStoreProvider>
+                  <ChatSessionPersistence />
                   <SystemGate>{children}</SystemGate>
                 </ChatStoreProvider>
               </MessageStoreProvider>

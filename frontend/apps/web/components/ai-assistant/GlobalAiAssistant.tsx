@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  AiPanelChatStoreProvider,
-} from "@repo/state/stores/ai-panel";
-import {
-  useIsAuthenticated,
-} from "@repo/state/stores/auth";
+import { useIsAuthenticated } from "@repo/state/stores/auth";
 import { AiAssistantPanel } from "@repo/ui-web";
 import { usePathname } from "next/navigation";
 
@@ -14,7 +9,7 @@ import { usePathname } from "next/navigation";
  *
  * - /chat sayfasında render edilmez (mevcut Chat sayfası korunur).
  * - Authenticated olmayan kullanıcılara gösterilmez.
- * - AiPanelChatStoreProvider ile panelin ChatStore'u izole edilir.
+ * - Root ChatStoreProvider'ı kullanır; /chat sayfası ile aynı session'a bağlıdır.
  */
 export function GlobalAiAssistant() {
   const pathname = usePathname();
@@ -30,9 +25,5 @@ export function GlobalAiAssistant() {
     return null;
   }
 
-  return (
-    <AiPanelChatStoreProvider>
-      <AiAssistantPanel />
-    </AiPanelChatStoreProvider>
-  );
+  return <AiAssistantPanel />;
 }

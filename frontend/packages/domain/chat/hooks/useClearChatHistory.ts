@@ -29,6 +29,15 @@ export function useClearChatHistory(options: UseClearChatHistoryOptions = {}) {
       void queryClient.removeQueries({
         queryKey: queryKeys.chat.history(data.data.session_id),
       });
+      void queryClient.removeQueries({
+        queryKey: queryKeys.chat.conversation(variables),
+      });
+      void queryClient.removeQueries({
+        queryKey: queryKeys.chat.conversation(data.data.session_id),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.chat.conversations(),
+      });
       options.onSuccess?.(data, variables);
     },
     onError: (error, variables) => {

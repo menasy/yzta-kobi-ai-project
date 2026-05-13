@@ -1,49 +1,63 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { cn } from "@repo/core";
 import {
   useChatActions,
   useIsTyping,
   useOptimisticMessages,
 } from "@repo/state/stores/chat";
-import { useSendMessage, useChatConversation } from "@repo/domain/chat";
+import {
+  getChatSendErrorReply,
+  useChatHistory,
+  useSendMessage,
+} from "@repo/domain/chat";
 import { useShowError } from "@repo/state/stores/message";
 import type { ChatWindowProps } from "@repo/ui-contracts";
 import type { ApiError } from "@repo/core";
-import type { ChatConversationMessage } from "@repo/domain/chat";
-import type { OptimisticChatMessage } from "@repo/state/stores/chat/types";
 
 import { ChatMessageList } from "./ChatMessageList";
 import { ChatInput } from "./ChatInput";
 import { ChatEmptyState } from "./ChatEmptyState";
 
-export function ChatWindow({ className, sessionId, onNewChat }: ChatWindowProps) {
-  const { 
-    setSessionId, 
-    ensureSessionId, 
-    addOptimisticMessage, 
-    removeMessage,
-    replaceOptimisticMessage, 
-    appendAssistantMessage, 
-    setTyping, 
-    clearMessages 
+export function ChatWindow({
+  className,
+  sessionId,
+  onNewChat,
+}: ChatWindowProps) {
+  const {
+    setSessionId,
+    ensureSessionId,
+    addOptimisticMessage,
+    replaceOptimisticMessage,
+    appendAssistantMessage,
+    setTyping,
+    clearMessages,
   } = useChatActions();
   const optimisticMessages = useOptimisticMessages();
   const isTyping = useIsTyping();
   const showError = useShowError();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const previousSessionIdRef = useRef<string | null>(sessionId);
 
-  // Sync prop sessionId to the chat store and clear optimistic state when switching
   useEffect(() => {
+    const previousSessionId = previousSessionIdRef.current;
+
     setSessionId(sessionId);
-    clearMessages();
+
+    if (previousSessionId && previousSessionId !== sessionId) {
+      clearMessages();
+    }
+
+    previousSessionIdRef.current = sessionId;
   }, [sessionId, setSessionId, clearMessages]);
 
-  // Load conversation and messages from PostgreSQL
-  const { messages: serverMessages, isLoading } = useChatConversation(sessionId, {
-    enabled: Boolean(sessionId),
-  });
+  const { messages: serverMessages, isLoading } = useChatHistory(
+    sessionId ?? "",
+    {
+      enabled: Boolean(sessionId),
+    },
+  );
 
   const { sendMessageAsync } = useSendMessage({
     onError: (error: ApiError) => {
@@ -55,9 +69,8 @@ export function ChatWindow({ className, sessionId, onNewChat }: ChatWindowProps)
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || isTyping) return;
 
-    // Use existing sessionId or generate a new one for optimistic flow
-    const currentSessionId = sessionId || ensureSessionId();
-    
+    const currentSessionId = sessionId ?? ensureSessionId();
+
     // Create optimistic user message
     const tempId = `temp-${Date.now()}`;
     addOptimisticMessage({
@@ -76,45 +89,56 @@ export function ChatWindow({ className, sessionId, onNewChat }: ChatWindowProps)
         content,
       });
 
-      // Once we have a successful response, we can remove the optimistic message
-      // as the subsequent refetch will bring it from the server history.
-      removeMessage(tempId);
+      replaceOptimisticMessage(tempId, {
+        id: tempId,
+        role: "user",
+        content,
+        createdAt: new Date().toISOString(),
+        isOptimistic: false,
+      });
 
-      // Append assistant reply to local store ONLY if it's not already expected from server refetch
-      // Actually, appending it is fine for instant feedback, but we should make sure displayedMessages deduplicates it.
       appendAssistantMessage({
         id: `ast-${Date.now()}`,
         content: response.data.reply,
         createdAt: new Date().toISOString(),
       });
-      
-      // If this was a new chat, notify parent to update URL
+
       if (!sessionId && onNewChat) {
         onNewChat(currentSessionId);
       }
-    } catch (err) {
-      console.error(err);
-      // In case of error, we might want to mark the message as failed or just remove it
-      removeMessage(tempId);
+    } catch (error) {
+      replaceOptimisticMessage(tempId, {
+        id: tempId,
+        role: "user",
+        content,
+        createdAt: new Date().toISOString(),
+        isOptimistic: false,
+      });
+      appendAssistantMessage({
+        id: `err-${Date.now()}`,
+        content: getChatSendErrorReply(error),
+        createdAt: new Date().toISOString(),
+      });
     } finally {
       setTyping(false);
     }
   };
 
-  // Combine server history and client optimistic messages
-  // We deduplicate messages by content if they are very close in time, 
-  // or simply prioritize server messages once they arrive.
-  const displayedMessages = serverMessages.length > 0
-    ? [
-        ...serverMessages,
-        ...optimisticMessages.filter(
-          (om) => 
-            om.id !== "welcome-message" && 
-            // Show if it's an optimistic user message OR an assistant reply not yet in server history
-            !serverMessages.some(sm => sm.content === om.content && sm.role === om.role)
-        )
-      ]
-    : optimisticMessages;
+  const displayedMessages =
+    serverMessages.length > 0
+      ? [
+          ...serverMessages,
+          ...optimisticMessages.filter(
+            (optimisticMessage) =>
+              optimisticMessage.id !== "welcome-message" &&
+              !serverMessages.some(
+                (serverMessage) =>
+                  serverMessage.content === optimisticMessage.content &&
+                  serverMessage.role === optimisticMessage.role,
+              ),
+          ),
+        ]
+      : optimisticMessages;
 
   // If no sessionId and no messages (not even the welcome message), show the empty state.
   if (!sessionId && displayedMessages.length === 0) {

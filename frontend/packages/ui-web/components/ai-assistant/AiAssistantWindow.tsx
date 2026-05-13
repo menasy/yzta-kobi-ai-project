@@ -1,17 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
-import { cn } from "@repo/core";
+import { useCallback, useEffect, useRef } from "react";
 import type { ApiError } from "@repo/core";
 import {
-  useAiPanelChatActions,
-  useAiPanelIsTyping,
-  useAiPanelOptimisticMessages,
-  useAiPanelSessionId,
-} from "@repo/state/stores/ai-panel";
-import { useSendMessage, useChatHistory, useClearChatHistory } from "@repo/domain/chat";
-import { useShowError } from "@repo/state/stores/message";
+  getChatSendErrorReply,
+  useChatHistory,
+  useClearChatHistory,
+  useSendMessage,
+} from "@repo/domain/chat";
 import { useUser } from "@repo/state/stores/auth";
+import {
+  useChatActions,
+  useChatSessionId,
+  useIsTyping,
+  useOptimisticMessages,
+} from "@repo/state/stores/chat";
+import { useShowError } from "@repo/state/stores/message";
 import type { AiAssistantWindowProps } from "@repo/ui-contracts";
 import { usePathname } from "next/navigation";
 
@@ -32,7 +36,7 @@ import { AiAssistantErrorState } from "./AiAssistantErrorState";
 export function AiAssistantWindow({ isOpen, onClose }: AiAssistantWindowProps) {
   const pathname = usePathname();
   const user = useUser();
-  const sessionId = useAiPanelSessionId();
+  const sessionId = useChatSessionId();
   const {
     ensureSessionId,
     addOptimisticMessage,
@@ -40,9 +44,9 @@ export function AiAssistantWindow({ isOpen, onClose }: AiAssistantWindowProps) {
     appendAssistantMessage,
     setTyping,
     clearChat,
-  } = useAiPanelChatActions();
-  const optimisticMessages = useAiPanelOptimisticMessages();
-  const isTyping = useAiPanelIsTyping();
+  } = useChatActions();
+  const optimisticMessages = useOptimisticMessages();
+  const isTyping = useIsTyping();
   const showError = useShowError();
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -54,12 +58,14 @@ export function AiAssistantWindow({ isOpen, onClose }: AiAssistantWindowProps) {
   }, [isOpen, sessionId, ensureSessionId]);
 
   // Fetch history — disabled when panel closed or no sessionId
-  const { messages: serverMessages, isLoading, error: historyError, refetch } = useChatHistory(
-    sessionId ?? "",
-    {
-      enabled: isOpen && Boolean(sessionId),
-    },
-  );
+  const {
+    messages: serverMessages,
+    isLoading,
+    error: historyError,
+    refetch,
+  } = useChatHistory(sessionId ?? "", {
+    enabled: isOpen && Boolean(sessionId),
+  });
 
   // Send message mutation
   const { sendMessageAsync } = useSendMessage({
@@ -76,7 +82,10 @@ export function AiAssistantWindow({ isOpen, onClose }: AiAssistantWindowProps) {
         clearChat();
       },
       onError: (error: ApiError) => {
-        showError("Hata", error.message || "Konuşma temizlenirken bir hata oluştu.");
+        showError(
+          "Hata",
+          error.message || "Konuşma temizlenirken bir hata oluştu.",
+        );
       },
     });
 
@@ -119,8 +128,19 @@ export function AiAssistantWindow({ isOpen, onClose }: AiAssistantWindowProps) {
           content: response.data.reply,
           createdAt: new Date().toISOString(),
         });
-      } catch {
-        // Error handled in onError callback
+      } catch (error) {
+        replaceOptimisticMessage(tempId, {
+          id: tempId,
+          role: "user",
+          content,
+          createdAt: new Date().toISOString(),
+          isOptimistic: false,
+        });
+        appendAssistantMessage({
+          id: `panel-err-${Date.now()}`,
+          content: getChatSendErrorReply(error),
+          createdAt: new Date().toISOString(),
+        });
       } finally {
         setTyping(false);
       }
@@ -148,7 +168,7 @@ export function AiAssistantWindow({ isOpen, onClose }: AiAssistantWindowProps) {
   const displayedMessages =
     serverMessages.length > 0
       ? serverMessages.concat(
-          optimisticMessages.filter((m) => m.isOptimistic),
+          optimisticMessages.filter((message) => message.isOptimistic),
         )
       : optimisticMessages;
 

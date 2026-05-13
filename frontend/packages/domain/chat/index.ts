@@ -35,3 +35,4 @@ export { useClearChatHistory } from "./hooks/useClearChatHistory";
 export { useCreateChatConversation } from "./hooks/useCreateChatConversation";
 export { useDeleteChatConversation } from "./hooks/useDeleteChatConversation";
 export { useSendMessage } from "./hooks/useSendMessage";
+export { getChatSendErrorReply } from "./utils/chat-error";

@@ -1,21 +1,17 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { createContext, useContext, useRef } from "react";
 import type { StoreApi } from "zustand";
 
-import { createChatStore } from "../chat/chatStore";
+import { useChatStoreContext } from "../chat/provider";
 import type { ChatStore, ChatStoreInitialState } from "../chat/types";
 
 /**
- * AiPanelChatStoreContext — Global AI Panel için izole ChatStore context'i.
+ * Backward-compatible AI panel chat provider.
  *
- * Root ChatStoreProvider'dan tamamen bağımsızdır.
- * /chat sayfası root provider'ı kullanırken panel bu context'i kullanır;
- * böylece session ID ve optimistic message state'i çakışmaz.
+ * The panel must share the root ChatStoreProvider with the full-page chat so
+ * both surfaces use the same session and optimistic state.
  */
-const AiPanelChatStoreContext = createContext<StoreApi<ChatStore> | null>(null);
-
 interface AiPanelChatStoreProviderProps {
   children: ReactNode;
   initialState?: ChatStoreInitialState;
@@ -23,29 +19,10 @@ interface AiPanelChatStoreProviderProps {
 
 export function AiPanelChatStoreProvider({
   children,
-  initialState,
 }: AiPanelChatStoreProviderProps) {
-  const storeRef = useRef<StoreApi<ChatStore> | null>(null);
-
-  if (!storeRef.current) {
-    storeRef.current = createChatStore(initialState);
-  }
-
-  return (
-    <AiPanelChatStoreContext.Provider value={storeRef.current}>
-      {children}
-    </AiPanelChatStoreContext.Provider>
-  );
+  return <>{children}</>;
 }
 
 export function useAiPanelChatStoreContext(): StoreApi<ChatStore> {
-  const store = useContext(AiPanelChatStoreContext);
-
-  if (!store) {
-    throw new Error(
-      "useAiPanelChatStoreContext must be used within an AiPanelChatStoreProvider.",
-    );
-  }
-
-  return store;
+  return useChatStoreContext();
 }

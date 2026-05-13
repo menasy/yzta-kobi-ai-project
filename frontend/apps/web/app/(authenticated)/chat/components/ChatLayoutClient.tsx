@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Menu } from "lucide-react";
-
+import { useChatActions, useChatSessionId } from "@repo/state/stores/chat";
 import { ChatSidebar, ChatWindow } from "@repo/ui-web";
 import { Button } from "@repo/ui-web/components/shadcn/button";
-import { Sheet, SheetContent, SheetTrigger } from "@repo/ui-web/components/shadcn/sheet";
+import { Sheet, SheetContent } from "@repo/ui-web/components/shadcn/sheet";
+import { Menu } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 function normalizeSessionId(value: string | null): string | null {
   if (!value) {
@@ -25,9 +25,13 @@ export function ChatLayoutClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const storeSessionId = useChatSessionId();
+  const { clearChat, setSessionId } = useChatActions();
 
   // Read the active session from the URL query parameter `s`
-  const activeSessionId = normalizeSessionId(searchParams.get("s"));
+  const activeSessionId =
+    normalizeSessionId(searchParams.get("s")) ??
+    normalizeSessionId(storeSessionId);
 
   const handleSelectSession = (sessionId: string) => {
     const nextSessionId = normalizeSessionId(sessionId);
@@ -44,12 +48,14 @@ export function ChatLayoutClient() {
     setIsSidebarOpen(false);
     const nextSessionId = normalizeSessionId(newSessionId ?? null);
     if (nextSessionId) {
+      setSessionId(nextSessionId);
       if (nextSessionId === activeSessionId) {
         return;
       }
       router.push(`/chat?s=${encodeURIComponent(nextSessionId)}`);
     } else {
-      if (!activeSessionId) {
+      clearChat();
+      if (!activeSessionId && !searchParams.get("s")) {
         return;
       }
       router.push(`/chat`);
