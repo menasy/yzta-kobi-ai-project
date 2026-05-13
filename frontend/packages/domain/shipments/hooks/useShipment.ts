@@ -1,6 +1,7 @@
 "use client";
 
 import type { ApiError } from "@repo/core";
+import { useSystemReady } from "@repo/state";
 import { queryKeys } from "@repo/state/query";
 import { useQuery } from "@tanstack/react-query";
 
@@ -19,11 +20,15 @@ export function useShipment(
   trackingNumber: TrackingNumber,
   options: UseShipmentOptions = {},
 ) {
+  const systemReady = useSystemReady();
+  const enabled = systemReady && (options.enabled ?? Boolean(trackingNumber));
+  const refetchInterval = systemReady ? options.refetchInterval : false;
+
   const query = useQuery<ShipmentResponse, ApiError>({
     queryKey: queryKeys.shipments.detail(trackingNumber),
     queryFn: () => getShipment(trackingNumber),
-    enabled: options.enabled ?? Boolean(trackingNumber),
-    refetchInterval: options.refetchInterval,
+    enabled,
+    refetchInterval,
   });
 
   return {

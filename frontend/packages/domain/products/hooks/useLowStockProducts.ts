@@ -1,6 +1,7 @@
 "use client";
 
 import type { ApiError } from "@repo/core";
+import { useSystemReady } from "@repo/state";
 import { queryKeys } from "@repo/state/query";
 import { useQuery } from "@tanstack/react-query";
 
@@ -15,11 +16,15 @@ interface UseLowStockProductsOptions {
 export function useLowStockProducts(
   options: UseLowStockProductsOptions = {},
 ) {
+  const systemReady = useSystemReady();
+  const enabled = systemReady && (options.enabled ?? true);
+  const refetchInterval = systemReady ? options.refetchInterval : false;
+
   const query = useQuery<LowStockProductsResponse, ApiError>({
     queryKey: queryKeys.products.lowStock(),
     queryFn: getLowStockProducts,
-    enabled: options.enabled,
-    refetchInterval: options.refetchInterval,
+    enabled,
+    refetchInterval,
   });
 
   return {

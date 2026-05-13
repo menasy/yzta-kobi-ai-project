@@ -1,12 +1,17 @@
+"use client";
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSystemReady } from "@repo/state";
 import { queryKeys } from "@repo/state/query";
 import { getUserAddress, upsertUserAddress } from "../api/user.api";
 import type { UserAddressUpsert } from "../types/user.types";
 
 export const useUserAddress = () => {
+  const systemReady = useSystemReady();
   return useQuery({
     queryKey: queryKeys.user.address(),
     queryFn: getUserAddress,
+    enabled: systemReady,
     staleTime: 5 * 60 * 1000, // 5 dakika
     retry: (failureCount, error: any) => {
       // 404 ise retry yapma, yeni kullanıcıların adresi olmayabilir.

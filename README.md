@@ -59,6 +59,41 @@ docker compose up -d
 docker compose down
 ```
 
+API container başlangıcında sırasıyla şu akış çalışır:
+
+1. `alembic upgrade head`
+2. `python scripts/seed_all.py`
+3. `uvicorn app.main:app --host 0.0.0.0 --port 8000`
+
+Seed sistemi `seed_runs` tablosuna başarılı çalışma kaydı yazar.
+Aynı seed sürümü tekrar çalıştırıldığında duplicate ürün, sipariş, stok hareketi,
+kargo, bildirim veya konuşma verisi üretmez; mevcut gerçek kullanıcı verilerini silmez.
+
+### Demo Giriş Bilgileri
+
+```text
+Admin:      admin@kobi.local / Admin123!
+İşletme:    isletme@kobi.local / Demo12345!
+Operasyon:  operasyon@kobi.local / Demo12345!
+Demo user:  demo@kobi.local / Demo12345!
+```
+
+### Manuel Seed Çalıştırma
+
+Migration sonrası seed'i elle çalıştırmak için:
+
+```bash
+docker compose exec api python scripts/seed_all.py
+```
+
+Local backend ortamında:
+
+```bash
+cd backend
+poetry run alembic upgrade head
+poetry run python scripts/seed_all.py
+```
+
 ### 5. Durum Kontrolleri
 
 ```bash

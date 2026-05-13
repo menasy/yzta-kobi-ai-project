@@ -113,6 +113,14 @@ class DatabaseError(AppException):
     message = "Veritabanı işlemi sırasında bir hata oluştu."
 
 
+class DatabaseNotReadyError(AppException):
+    """Veritabanı şeması hazır değil — 503."""
+
+    status_code = 503
+    key = "DATABASE_NOT_READY"
+    message = "Veritabanı şeması hazır değil. Lütfen migration/seed adımlarını çalıştırın."
+
+
 class RateLimitError(AppException):
     """İstek sınırı aşıldı — 429."""
 

@@ -12,6 +12,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api.router import api_router
@@ -21,6 +22,7 @@ from app.core.logger import get_logger, setup_logging
 from app.core import openapi_examples
 from app.core.response_builder import success_response
 from app.core.responses import ApiResponse
+from app.core.system_status import get_system_status
 from app.db.session import close_db_connections, ensure_schema
 
 
@@ -54,7 +56,10 @@ async def lifespan(app: FastAPI):
             "environment": settings.ENVIRONMENT,
         },
     )
-    await ensure_schema()
+    try:
+        await ensure_schema()
+    except Exception as exc:
+        logger.warning("Schema kontrolu basarisiz: %s", exc)
     yield
     await close_db_connections()
     logger.info("Uygulama kapatıldı.")
@@ -259,6 +264,61 @@ async def unhandled_exception_handler(
     )
 
 
+@app.exception_handler(SQLAlchemyError)
+async def sqlalchemy_exception_handler(
+    request: Request, exc: SQLAlchemyError
+) -> JSONResponse:
+    request_id = getattr(request.state, "request_id", None)
+    error_message = str(exc).lower()
+
+    missing_table = any(
+        marker in error_message
+        for marker in ["does not exist", "undefined table", "no such table"]
+    )
+    connection_error = any(
+        marker in error_message
+        for marker in [
+            "connection refused",
+            "could not connect",
+            "connection is closed",
+            "server closed the connection",
+        ]
+    )
+
+    if missing_table or connection_error:
+        status_code = 503
+        key = "DATABASE_NOT_READY"
+        message = "Veritabani hazir degil. Migration/seed adimlarini kontrol edin."
+        logger.warning(
+            "Database not ready: %s",
+            exc,
+            extra={"request_id": request_id, "status_code": status_code},
+        )
+    else:
+        status_code = 500
+        key = "DATABASE_ERROR"
+        message = "Veritabani islemi sirasinda hata olustu."
+        logger.error(
+            "Database error: %s",
+            exc,
+            extra={"request_id": request_id, "status_code": status_code},
+        )
+
+    body = ApiResponse(
+        statusCode=status_code,
+        key=key,
+        message=message,
+        data=None,
+        errors=None,
+    )
+
+    return JSONResponse(
+        status_code=status_code,
+        content=body.model_dump(),
+        headers={"X-Request-ID": str(request_id)} if request_id else {},
+    )
+
+
 # ══════════════════════════════════════════════════════════
 # ROUTER KAYITLARI
 # ══════════════════════════════════════════════════════════
@@ -291,6 +351,12 @@ app.include_router(api_router, prefix=settings.API_PREFIX)
                             "app_name": "KOBİ Agent",
                             "version": "0.1.0",
                             "environment": "development",
+                            "ready": True,
+                            "databaseReady": True,
+                            "migrationsReady": True,
+                            "seedReady": True,
+                            "missingTables": [],
+                            "message": "Sistem hazir.",
                         },
                         message="Sistem çalışıyor.",
                     )
@@ -309,12 +375,8 @@ app.include_router(api_router, prefix=settings.API_PREFIX)
 )
 async def health_check():
     """Sistem sağlık kontrolü — public endpoint."""
+    status_payload = await get_system_status()
     return success_response(
-        data={
-            "status": "ok",
-            "app_name": settings.APP_NAME,
-            "version": settings.APP_VERSION,
-            "environment": settings.ENVIRONMENT,
-        },
-        message="Sistem çalışıyor.",
+        data=status_payload,
+        message=status_payload.get("message", "Sistem durumu okundu."),
     )

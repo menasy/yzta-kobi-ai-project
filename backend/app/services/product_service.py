@@ -2,9 +2,10 @@
 # Ürün CRUD iş mantığı servisi.
 # Repository katmanı üzerinden ürün işlemlerini yönetir.
 
+from sqlalchemy.exc import NoSuchTableError, OperationalError, ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import DatabaseNotReadyError, NotFoundError
 from app.repositories.product_repository import ProductRepository
 from app.schemas.product import ProductCreate, ProductResponse, ProductUpdate
 
@@ -15,14 +16,33 @@ class ProductService:
     def __init__(self, db: AsyncSession) -> None:
         self._product_repo = ProductRepository(db)
 
+    @staticmethod
+    def _is_missing_table_error(error: Exception) -> bool:
+        message = str(error).lower()
+        return (
+            "does not exist" in message
+            or "undefined table" in message
+            or "no such table" in message
+        )
+
     async def get_all_products(self) -> list[ProductResponse]:
         """Tüm ürünleri döndürür."""
-        products = await self._product_repo.get_all()
+        try:
+            products = await self._product_repo.get_all()
+        except (NoSuchTableError, ProgrammingError, OperationalError) as exc:
+            if self._is_missing_table_error(exc):
+                raise DatabaseNotReadyError() from exc
+            raise
         return [ProductResponse.model_validate(product) for product in products]
 
     async def get_product_by_id(self, product_id: int) -> ProductResponse:
         """ID ile tek ürün getirir, yoksa NotFoundError fırlatır."""
-        product = await self._product_repo.get(product_id)
+        try:
+            product = await self._product_repo.get(product_id)
+        except (NoSuchTableError, ProgrammingError, OperationalError) as exc:
+            if self._is_missing_table_error(exc):
+                raise DatabaseNotReadyError() from exc
+            raise
         if product is None:
             raise NotFoundError(message=f"{product_id} numaralı ürün bulunamadı.")
         return ProductResponse.model_validate(product)
@@ -34,7 +54,12 @@ class ProductService:
 
     async def get_low_stock_products(self) -> list[ProductResponse]:
         """Kritik stok seviyesindeki ürünleri döndürür."""
-        products = await self._product_repo.get_low_stock_products()
+        try:
+            products = await self._product_repo.get_low_stock_products()
+        except (NoSuchTableError, ProgrammingError, OperationalError) as exc:
+            if self._is_missing_table_error(exc):
+                raise DatabaseNotReadyError() from exc
+            raise
         return [ProductResponse.model_validate(product) for product in products]
 
     async def update_product(self, product_id: int, update_data: ProductUpdate) -> ProductResponse:

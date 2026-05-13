@@ -1,6 +1,7 @@
 "use client";
 
 import type { ApiError } from "@repo/core";
+import { useSystemReady } from "@repo/state";
 import { queryKeys } from "@repo/state/query";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -17,11 +18,13 @@ interface UseMeOptions {
 
 export function useMe(options: UseMeOptions = {}) {
   const { enabled, onError, onSettled, onSuccess } = options;
+  const systemReady = useSystemReady();
+  const isEnabled = systemReady && (enabled ?? true);
   const queryClient = useQueryClient();
   const query = useQuery<MeResponse, ApiError>({
     queryKey: queryKeys.auth.me(),
     queryFn: getMe,
-    enabled,
+    enabled: isEnabled,
   });
 
   useEffect(() => {

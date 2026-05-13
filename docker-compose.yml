@@ -8,6 +8,9 @@ services:
     container_name: kobi_api
     volumes:
       - ./backend/app:/app/app
+      - ./backend/alembic:/app/alembic
+      - ./backend/scripts:/app/scripts
+      - ./backend/alembic.ini:/app/alembic.ini
     ports:
       - "8000:8000"
     env_file:

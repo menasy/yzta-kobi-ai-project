@@ -1,6 +1,7 @@
 "use client";
 
 import type { ApiError } from "@repo/core";
+import { useSystemReady } from "@repo/state";
 import { queryKeys } from "@repo/state/query";
 import { useQuery } from "@tanstack/react-query";
 
@@ -15,11 +16,17 @@ interface UseDashboardOverviewOptions {
 export function useDashboardOverview(
   options: UseDashboardOverviewOptions = {},
 ) {
+  const systemReady = useSystemReady();
+  const enabled = systemReady && (options.enabled ?? true);
+  const refetchInterval = systemReady
+    ? options.refetchInterval ?? 30_000
+    : false;
+
   const query = useQuery<DashboardOverviewResponse, ApiError>({
     queryKey: queryKeys.orders.dashboardOverview(),
     queryFn: getDashboardOverview,
-    enabled: options.enabled,
-    refetchInterval: options.refetchInterval ?? 30_000,
+    enabled,
+    refetchInterval,
   });
 
   return {

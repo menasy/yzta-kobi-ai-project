@@ -10,6 +10,8 @@ import type { HealthResponse } from "../types/health.types";
 interface UseHealthOptions {
   enabled?: boolean;
   refetchInterval?: number | false;
+  retry?: boolean | number;
+  staleTime?: number;
 }
 
 export function useHealth(options: UseHealthOptions = {}) {
@@ -18,6 +20,8 @@ export function useHealth(options: UseHealthOptions = {}) {
     queryFn: getHealth,
     enabled: options.enabled,
     refetchInterval: options.refetchInterval,
+    retry: options.retry,
+    staleTime: options.staleTime,
   });
 
   return {

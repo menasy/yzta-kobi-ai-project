@@ -1,6 +1,7 @@
 "use client";
 
 import type { ApiError } from "@repo/core";
+import { useSystemReady } from "@repo/state";
 import { queryKeys } from "@repo/state/query";
 import { useQuery } from "@tanstack/react-query";
 
@@ -13,11 +14,17 @@ interface UseDailySummaryOptions {
 }
 
 export function useDailySummary(options: UseDailySummaryOptions = {}) {
+  const systemReady = useSystemReady();
+  const enabled = systemReady && (options.enabled ?? true);
+  const refetchInterval = systemReady
+    ? options.refetchInterval ?? 30_000
+    : false;
+
   const query = useQuery<DailyOrderSummaryResponse, ApiError>({
     queryKey: queryKeys.orders.summaryToday(),
     queryFn: getDailySummary,
-    enabled: options.enabled,
-    refetchInterval: options.refetchInterval ?? 30_000,
+    enabled,
+    refetchInterval,
   });
 
   return {

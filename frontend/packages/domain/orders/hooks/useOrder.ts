@@ -1,6 +1,7 @@
 "use client";
 
 import type { ApiError } from "@repo/core";
+import { useSystemReady } from "@repo/state";
 import { queryKeys } from "@repo/state/query";
 import { useQuery } from "@tanstack/react-query";
 
@@ -12,10 +13,13 @@ interface UseOrderOptions {
 }
 
 export function useOrder(orderId: OrderId, options: UseOrderOptions = {}) {
+  const systemReady = useSystemReady();
+  const enabled = systemReady && (options.enabled ?? Boolean(orderId));
+
   const query = useQuery<OrderResponse, ApiError>({
     queryKey: queryKeys.orders.detail(orderId),
     queryFn: () => getOrder(orderId),
-    enabled: options.enabled ?? Boolean(orderId),
+    enabled,
   });
 
   return {

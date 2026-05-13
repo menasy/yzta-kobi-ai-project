@@ -5,12 +5,14 @@ import {
   ChatStoreProvider,
   MessageStoreProvider,
   QueryProvider,
+  SystemStoreProvider,
   UIStoreProvider,
 } from "@repo/state";
 import type { AuthStoreInitialState } from "@repo/state";
 import type { ReactNode } from "react";
 
 import { AuthSessionSync } from "../auth/AuthSessionSync";
+import { SystemGate, SystemStatusSync } from "../system";
 
 import { ThemeProvider } from "./theme-provider";
 
@@ -34,14 +36,19 @@ export function Providers({
       disableTransitionOnChange
     >
       <QueryProvider>
-        <AuthStoreProvider initialState={authInitialState}>
-          <AuthSessionSync hasAuthCookie={hasAuthCookie} />
-          <UIStoreProvider>
-            <MessageStoreProvider>
-              <ChatStoreProvider>{children}</ChatStoreProvider>
-            </MessageStoreProvider>
-          </UIStoreProvider>
-        </AuthStoreProvider>
+        <SystemStoreProvider>
+          <SystemStatusSync />
+          <AuthStoreProvider initialState={authInitialState}>
+            <AuthSessionSync hasAuthCookie={hasAuthCookie} />
+            <UIStoreProvider>
+              <MessageStoreProvider>
+                <ChatStoreProvider>
+                  <SystemGate>{children}</SystemGate>
+                </ChatStoreProvider>
+              </MessageStoreProvider>
+            </UIStoreProvider>
+          </AuthStoreProvider>
+        </SystemStoreProvider>
       </QueryProvider>
     </ThemeProvider>
   );

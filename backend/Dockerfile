@@ -24,7 +24,10 @@ RUN poetry install --no-interaction --no-ansi --only main --no-root
 # Uygulama kodunu kopyala
 COPY . .
 
+RUN chmod +x /app/entrypoint.sh
+
 EXPOSE 8000
 
-# Varsayılan başlatma komutu (docker-compose'da override edilir)
+# Migration + idempotent seed + API start
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

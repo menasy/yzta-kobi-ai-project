@@ -1,13 +1,18 @@
+"use client";
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSystemReady } from "@repo/state";
 import { queryKeys } from "@repo/state/query";
 import { getUserProfile, updateUserProfile } from "../api/user.api";
 import type { UserProfileUpdate } from "../types/user.types";
 import { useAuthActions } from "@repo/state/stores/auth";
 
 export const useUserProfile = () => {
+  const systemReady = useSystemReady();
   return useQuery({
     queryKey: queryKeys.user.profile(),
     queryFn: getUserProfile,
+    enabled: systemReady,
     staleTime: 5 * 60 * 1000, // 5 dakika cache
   });
 };

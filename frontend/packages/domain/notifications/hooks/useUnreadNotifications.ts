@@ -2,6 +2,7 @@
 
 import type { ApiError } from "@repo/core";
 import { queryKeys } from "@repo/state/query";
+import { useSystemReady } from "@repo/state";
 import { useQuery } from "@tanstack/react-query";
 
 import { getUnreadNotifications } from "../api/notifications.api";
@@ -19,13 +20,16 @@ interface UseUnreadNotificationsOptions {
 export function useUnreadNotifications(
   options: UseUnreadNotificationsOptions = {},
 ) {
-  const { params, ...queryOptions } = options;
+  const { params } = options;
+  const systemReady = useSystemReady();
+  const enabled = systemReady && (options.enabled ?? true);
+  const refetchInterval = systemReady ? options.refetchInterval : false;
 
   const query = useQuery<UnreadNotificationsResponse, ApiError>({
     queryKey: queryKeys.notifications.unread(),
     queryFn: () => getUnreadNotifications(params),
-    enabled: queryOptions.enabled,
-    refetchInterval: queryOptions.refetchInterval,
+    enabled,
+    refetchInterval,
     retry: false,
   });
 

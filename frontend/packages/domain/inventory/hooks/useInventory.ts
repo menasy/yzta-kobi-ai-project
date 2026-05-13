@@ -1,6 +1,7 @@
 "use client";
 
 import type { ApiError } from "@repo/core";
+import { useSystemReady } from "@repo/state";
 import { queryKeys } from "@repo/state/query";
 import { useQuery } from "@tanstack/react-query";
 
@@ -19,11 +20,15 @@ export function useInventory(
   params?: InventoryListParams,
   options: UseInventoryOptions = {},
 ) {
+  const systemReady = useSystemReady();
+  const enabled = systemReady && (options.enabled ?? true);
+  const refetchInterval = systemReady ? options.refetchInterval : false;
+
   const query = useQuery<InventoryResponse, ApiError>({
     queryKey: queryKeys.inventory.list(params),
     queryFn: () => getInventory(params),
-    enabled: options.enabled,
-    refetchInterval: options.refetchInterval,
+    enabled,
+    refetchInterval,
   });
 
   return {

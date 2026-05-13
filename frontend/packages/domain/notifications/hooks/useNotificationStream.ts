@@ -1,6 +1,7 @@
 "use client";
 
 import { queryKeys } from "@repo/state/query";
+import { useSystemReady } from "@repo/state";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 
@@ -101,6 +102,7 @@ interface UseNotificationStreamOptions {
 export function useNotificationStream(
   options: UseNotificationStreamOptions = {},
 ) {
+  const systemReady = useSystemReady();
   const { enabled = true } = options;
   const queryClient = useQueryClient();
 
@@ -131,6 +133,7 @@ export function useNotificationStream(
   useEffect(() => {
     if (
       !enabled ||
+      !systemReady ||
       typeof window === "undefined" ||
       typeof EventSource === "undefined"
     ) {
@@ -232,5 +235,5 @@ export function useNotificationStream(
         eventSource = null;
       }
     };
-  }, [enabled, invalidateNotifications, queryClient]);
+  }, [enabled, invalidateNotifications, queryClient, systemReady]);
 }

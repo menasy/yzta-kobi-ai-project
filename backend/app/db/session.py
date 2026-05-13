@@ -55,11 +55,21 @@ def _get_engine():
     return _engine
 
 
+def get_engine():
+    """Public engine accessor for health/status checks."""
+    return _get_engine()
+
+
 def _get_session_factory():
     global _session_factory  # noqa: PLW0603
     if _session_factory is None:
         _session_factory = _create_session_factory(_get_engine())
     return _session_factory
+
+
+def get_session_factory() -> async_sessionmaker[AsyncSession]:
+    """Script ve worker gibi FastAPI dependency dışı akışlar için session factory döndürür."""
+    return _get_session_factory()
 
 
 # ── FastAPI Dependency ───────────────────────────────────

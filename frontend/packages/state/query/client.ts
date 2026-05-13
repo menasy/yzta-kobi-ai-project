@@ -10,6 +10,10 @@ interface StatusCodeError {
   statusCode: number;
 }
 
+interface ErrorKey {
+  key: string;
+}
+
 function hasStatusCode(error: unknown): error is StatusCodeError {
   return (
     typeof error === "object" &&
@@ -19,12 +23,33 @@ function hasStatusCode(error: unknown): error is StatusCodeError {
   );
 }
 
+function hasErrorKey(error: unknown): error is ErrorKey {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "key" in error &&
+    typeof error.key === "string"
+  );
+}
+
 export function shouldRetryQuery(
   failureCount: number,
   error: unknown,
 ): boolean {
   if (failureCount >= RETRY_COUNT) {
     return false;
+  }
+
+  if (hasErrorKey(error)) {
+    const nonRetryKeys = new Set([
+      "DATABASE_NOT_READY",
+      "MIGRATION_REQUIRED",
+      "SEED_REQUIRED",
+      "INVALID_RESPONSE",
+    ]);
+    if (nonRetryKeys.has(error.key)) {
+      return false;
+    }
   }
 
   if (hasStatusCode(error)) {
@@ -47,7 +72,7 @@ export function createQueryClient(): QueryClient {
         retry: shouldRetryQuery,
         retryDelay: exponentialBackoff,
         refetchOnWindowFocus: false,
-        refetchOnReconnect: true,
+        refetchOnReconnect: false,
         refetchOnMount: false,
         throwOnError: false,
       },

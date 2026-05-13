@@ -1,6 +1,7 @@
 "use client";
 
 import type { ApiError } from "@repo/core";
+import { useSystemReady } from "@repo/state";
 import { queryKeys } from "@repo/state/query";
 import { useQuery } from "@tanstack/react-query";
 
@@ -21,11 +22,15 @@ export function useDelayedShipments(
   params?: DelayedShipmentParams,
   options: UseDelayedShipmentsOptions = {},
 ) {
+  const systemReady = useSystemReady();
+  const enabled = systemReady && (options.enabled ?? true);
+  const refetchInterval = systemReady ? options.refetchInterval : false;
+
   const query = useQuery<DelayedShipmentsResponse, ApiError>({
     queryKey: queryKeys.shipments.delayed(params),
     queryFn: () => getDelayedShipments(params),
-    enabled: options.enabled,
-    refetchInterval: options.refetchInterval,
+    enabled,
+    refetchInterval,
   });
 
   return {

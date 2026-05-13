@@ -24,7 +24,6 @@ export function useOrderLookup(options: UseOrderLookupOptions = {}) {
       options.onError?.(error, variables);
     },
   });
-
   return {
     lookupOrder: mutation.mutate,
     lookupOrderAsync: mutation.mutateAsync,

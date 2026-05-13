@@ -1,6 +1,7 @@
 "use client";
 
 import type { ApiError } from "@repo/core";
+import { useSystemReady } from "@repo/state";
 import { queryKeys } from "@repo/state/query";
 import { useQuery } from "@tanstack/react-query";
 
@@ -17,13 +18,16 @@ interface UseNotificationsOptions {
 }
 
 export function useNotifications(options: UseNotificationsOptions = {}) {
-  const { params, ...queryOptions } = options;
+  const { params } = options;
+  const systemReady = useSystemReady();
+  const enabled = systemReady && (options.enabled ?? true);
+  const refetchInterval = systemReady ? options.refetchInterval : false;
 
   const query = useQuery<NotificationsResponse, ApiError>({
     queryKey: queryKeys.notifications.list(),
     queryFn: () => getNotifications(params),
-    enabled: queryOptions.enabled,
-    refetchInterval: queryOptions.refetchInterval,
+    enabled,
+    refetchInterval,
     retry: false,
   });
 

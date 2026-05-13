@@ -85,13 +85,29 @@ async function parseResponse<T>(response: Response): Promise<ApiResponse<T>> {
           ? json.detail
           : response.statusText || "Bir hata oluştu";
 
+      if (response.ok) {
+        throw new ApiError(
+          "Geçersiz API yanıtı",
+          "INVALID_RESPONSE",
+          response.status,
+        );
+      }
+
       return {
         statusCode: response.status,
-        key: response.ok ? "SUCCESS" : "UNKNOWN_ERROR",
+        key: "UNKNOWN_ERROR",
         message: detail === "Not Found" ? "Endpoint bulunamadı." : detail,
         data: null as T,
         errors: null,
       };
+    }
+
+    if (typeof json.key !== "string" || typeof json.message !== "string") {
+      throw new ApiError(
+        "Geçersiz API yanıtı",
+        "INVALID_RESPONSE",
+        response.status,
+      );
     }
 
     return json as ApiResponse<T>;
