@@ -30,6 +30,14 @@ NOT_FOUND_RESPONSE = {
     "errors": None,
 }
 
+BAD_REQUEST_RESPONSE = {
+    "statusCode": 400,
+    "key": "BAD_REQUEST",
+    "message": "İstek geçersiz.",
+    "data": None,
+    "errors": None,
+}
+
 INTERNAL_ERROR_RESPONSE = {
     "statusCode": 500,
     "key": "INTERNAL_ERROR",

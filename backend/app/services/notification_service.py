@@ -5,14 +5,13 @@
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import DatabaseError, NotFoundError
 from app.core.logger import get_logger
 from app.models.notification import Notification
 from app.repositories.notification_repository import NotificationRepository
+from app.repositories.product_repository import ProductRepository
 from app.services.notification_publisher import publish_notification_event
 from app.services.stock_analysis_service import StockAnalysisService
-from app.models.product import Product
-from sqlalchemy import select
 
 logger = get_logger(__name__)
 
@@ -22,6 +21,8 @@ class NotificationService:
 
     def __init__(self, db: AsyncSession) -> None:
         self._repo = NotificationRepository(db)
+        self._product_repo = ProductRepository(db)
+        self._stock_analysis_service = StockAnalysisService(db)
 
     # ── 1. Stok Bildirimi Oluşturma ───────────────────────────
 
@@ -231,52 +232,42 @@ class NotificationService:
     
 
     async def generate_daily_tasks(self):
-
-        db_session = getattr(self._repo, 'db', getattr(self._repo, 'session', None))
-        
-        if not db_session:
-            return {"status": "error", "message": "Veritabanı bağlantısı kurulamadı."}
-
-        
-        analysis_service = StockAnalysisService(db_session) 
-        product_query = select(Product)
-        product_result = await db_session.execute(product_query)
-        all_products = product_result.scalars().all()
+        """Stok analizine göre günlük operasyon görev bildirimleri oluşturur."""
+        all_products = await self._product_repo.get_all_active_products()
 
         critical_items_list = ""
         for product in all_products:
-            # Her ürünü analiz et
-            analysis = await analysis_service.analyze_stock_health(product.id)
-            if analysis.get("status") == "danger":
-                days = analysis.get("days_to_zero", "Belirsiz")
-                shortage = analysis.get("forecasted_demand_3d", 0) - analysis.get("current_stock", 0)
+            analysis = await self._stock_analysis_service.analyze_stock_health(product.id)
+            if analysis.status == "danger":
+                days = analysis.days_to_zero if analysis.days_to_zero is not None else "Belirsiz"
+                shortage = analysis.forecasted_demand_3d - analysis.current_stock
                 critical_items_list += f"- {product.name}: {round(max(0, shortage), 2)} birim lazım (Kalan: {days} gün)\n"
 
-    
         if not critical_items_list:
             depo_message = "Bugün acil bir stok takviyesi gerekmiyor. Tüm stoklar güvenli seviyede."
         else:
             depo_message = "SABAH LİSTESİ: Acil takviye gereken ürünler:\n" + critical_items_list
 
-        depo_task = Notification(
-            title="Dinamik Depo Hazırlık Listesi",
-            message=depo_message,
-            type="task_assignment"
-        )
-
-        kargo_task = Notification(
-            title="Günlük Teslimat Rotası",
-            message="Rota: Merkez -> Bölge Dağıtım -> Müşteri Teslimat Noktaları.",
-            type="task_assignment"
-        )
-
-        
         try:
-            db_session.add(depo_task)
-            db_session.add(kargo_task)
-            await db_session.commit()
+            await self._repo.create_notification(
+                {
+                    "title": "Dinamik Depo Hazırlık Listesi",
+                    "message": depo_message,
+                    "type": "TASK_ASSIGNMENT",
+                    "severity": "info",
+                    "payload": {"source": "daily_tasks", "task": "warehouse_preparation"},
+                }
+            )
+            await self._repo.create_notification(
+                {
+                    "title": "Günlük Teslimat Rotası",
+                    "message": "Rota: Merkez -> Bölge Dağıtım -> Müşteri Teslimat Noktaları.",
+                    "type": "TASK_ASSIGNMENT",
+                    "severity": "info",
+                    "payload": {"source": "daily_tasks", "task": "delivery_route"},
+                }
+            )
         except Exception as e:
-            await db_session.rollback()
-            return {"status": "error", "message": f"Kayıt hatası: {str(e)}"}
+            raise DatabaseError(message="Günlük görev bildirimleri oluşturulamadı.") from e
 
         return {"status": "success", "message": "Gerçek verilere dayalı dinamik görevler oluşturuldu."}

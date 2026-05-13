@@ -63,6 +63,15 @@ class ProductRepository(BaseRepository[Product]):
         )
         return list(result.scalars().all())
 
+    async def get_all_active_products(self) -> list[Product]:
+        """Analiz/dashboards için tüm aktif ürünleri getirir."""
+        result = await self.session.execute(
+            select(Product)
+            .where(Product.is_active.is_(True))
+            .order_by(Product.id.asc())
+        )
+        return list(result.scalars().all())
+
     async def count_active(self) -> int:
         """Aktif ürün sayısını döndürür."""
         result = await self.session.execute(

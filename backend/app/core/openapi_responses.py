@@ -37,6 +37,15 @@ def validation_error_response(description: str = "Validasyon hatasi.") -> dict[i
     }
 
 
+def bad_request_response(description: str = "Gecersiz istek.") -> dict[int, dict[str, Any]]:
+    return {
+        400: {
+            "description": description,
+            "content": _example_content(openapi_examples.BAD_REQUEST_RESPONSE),
+        }
+    }
+
+
 def internal_error_response(description: str = "Beklenmeyen sunucu hatasi.") -> dict[int, dict[str, Any]]:
     return {
         500: {

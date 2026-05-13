@@ -26,11 +26,13 @@ if TYPE_CHECKING:
     from app.agent.orchestrator import AgentOrchestrator
     from app.services.auth_service import AuthService
     from app.services.customer_support_service import CustomerSupportService
+    from app.services.forecasting_service import ForecastEngine
     from app.services.inventory_service import InventoryService
     from app.services.notification_service import NotificationService
     from app.services.order_service import OrderService
     from app.services.product_service import ProductService
     from app.services.shipment_service import ShipmentService
+    from app.services.stock_analysis_service import StockAnalysisService
     from app.services.user_service import UserService
 
 # ── Type Aliases ─────────────────────────────────────────
@@ -153,6 +155,20 @@ async def get_inventory_service(db: DBSession) -> InventoryService:
     from app.services.inventory_service import InventoryService
 
     return InventoryService(db=db)
+
+
+async def get_stock_analysis_service(db: DBSession) -> StockAnalysisService:
+    """StockAnalysisService dependency — tahminleme destekli envanter analizleri."""
+    from app.services.stock_analysis_service import StockAnalysisService
+
+    return StockAnalysisService(db=db)
+
+
+async def get_forecast_engine(db: DBSession) -> ForecastEngine:
+    """ForecastEngine dependency — satış geçmişinden tahmin üretir."""
+    from app.services.forecasting_service import ForecastEngine
+
+    return ForecastEngine(db=db)
 
 
 async def get_notification_service(db: DBSession) -> NotificationService:

@@ -5,7 +5,6 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import Integer as SqlInteger, and_, cast, select, update
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.notification import Notification

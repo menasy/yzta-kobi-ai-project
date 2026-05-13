@@ -22,6 +22,13 @@ class InventoryRepository(BaseRepository[Inventory]):
         result = await self.session.execute(select(Inventory).where(Inventory.product_id == product_id))
         return result.scalar_one_or_none()
 
+    async def get_quantity_by_product_id(self, product_id: int) -> int:
+        """Ürün ID'sine göre anlık stok miktarını döndürür."""
+        result = await self.session.execute(
+            select(Inventory.quantity).where(Inventory.product_id == product_id)
+        )
+        return int(result.scalar_one_or_none() or 0)
+
     async def get_by_product_id_with_product(self, product_id: int) -> Inventory | None:
         """Ürün bilgisiyle birlikte tek stok kaydı getirir."""
         result = await self.session.execute(

@@ -3,17 +3,13 @@ from fastapi import APIRouter
 from app.api.endpoints import auth
 from app.api.endpoints import chat
 from app.api.endpoints import customer_support
+from app.api.endpoints import forecast
 from app.api.endpoints import inventory
 from app.api.endpoints import notifications
 from app.api.endpoints import orders
 from app.api.endpoints import products
 from app.api.endpoints import shipments
 from app.api.endpoints import user
-from app.api.endpoints import (
-    auth, orders, products, shipments, 
-    chat, inventory, notifications, forecast
-)
-from app.api.endpoints import chat, inventory
 
 api_router = APIRouter()
 
@@ -27,7 +23,7 @@ api_router.include_router(user.router, prefix="/user", tags=["Kullanıcı Ayarla
 api_router.include_router(products.router, prefix="/products", tags=["Ürün Yönetimi"])
 api_router.include_router(customer_support.router, prefix="/support", tags=["Müşteri Destek"])
 
-# Yapay Zeka ve Tahminleme (Analiz kodlarını forecast.py'a yazdıysan burası çalışır)
+# Yapay Zeka ve Tahminleme
 api_router.include_router(forecast.router, prefix="/forecast", tags=["Tahminleme"])
 
 # Diğer Modüller
@@ -37,4 +33,3 @@ api_router.include_router(orders.router, prefix="/orders", tags=["Sipariş Yöne
 api_router.include_router(shipments.router, prefix="/shipments", tags=["Sevkiyat Yönetimi"])
 
 api_router.include_router(inventory.router, prefix="/inventory", tags=["Inventory Analysis"])
-

@@ -54,7 +54,16 @@ SHIPMENT_STATUSES = frozenset({"created", "in_transit", "delivered", "delayed", 
 
 # Bildirim tipleri
 NOTIFICATION_TYPES = frozenset(
-    {"LOW_STOCK_ALERT", "SHIPMENT_DELAYED", "DAILY_SUMMARY", "SYSTEM", "AI_AGENT"}
+    {
+        "LOW_STOCK_ALERT",
+        "SHIPMENT_DELAY",
+        "SHIPMENT_DELAYED",
+        "DAILY_SUMMARY",
+        "SYSTEM",
+        "SYSTEM_REPORT",
+        "AI_AGENT",
+        "TASK_ASSIGNMENT",
+    }
 )
 
 # Bildirim durumları

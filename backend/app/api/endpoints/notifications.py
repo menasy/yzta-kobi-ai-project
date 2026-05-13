@@ -5,8 +5,6 @@ import json
 import redis.asyncio as redis
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.core.config import get_settings
 from app.core.dependencies import AdminUser, get_notification_service
@@ -19,7 +17,6 @@ from app.mappers.notification_mapper import (
 )
 from app.services.notification_publisher import NOTIFICATION_CHANNEL
 from app.services.notification_service import NotificationService
-from app.models.notification import Notification
 
 logger = get_logger(__name__)
 
