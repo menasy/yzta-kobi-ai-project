@@ -2,6 +2,8 @@
 
 import { cn } from "@repo/core";
 import type { AiActionPreviewItem } from "@repo/domain/ai-actions";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface PendingActionPreviewProps {
   preview: readonly AiActionPreviewItem[];
@@ -86,7 +88,11 @@ export function PendingActionPreview({
             </div>
 
             {item.warning ? (
-              <p className="mt-2 text-xs text-warning">{item.warning}</p>
+              <div className="mt-2 text-xs text-warning">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {item.warning}
+                </ReactMarkdown>
+              </div>
             ) : null}
           </div>
         ))}

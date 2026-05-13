@@ -8,6 +8,9 @@ import {
 } from "@repo/domain/ai-actions";
 import { useUser } from "@repo/state/stores/auth";
 
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
 import { Card, CardContent, CardHeader, CardTitle } from "../shadcn/card";
 import { Badge } from "../shadcn/badge";
 import { PendingActionAffectedResources } from "./PendingActionAffectedResources";
@@ -97,9 +100,11 @@ export function PendingActionCard({
           <CardTitle className="text-base font-semibold text-foreground">
             {pendingAction.title}
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {pendingAction.summary}
-          </p>
+          <div className="text-sm text-muted-foreground">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {pendingAction.summary}
+            </ReactMarkdown>
+          </div>
         </div>
       </CardHeader>
 
@@ -113,7 +118,11 @@ export function PendingActionCard({
           <span className="text-xs font-medium text-muted-foreground">
             Gerekçe
           </span>
-          <p className="text-sm text-foreground">{pendingAction.reason}</p>
+          <div className="text-sm text-foreground">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {pendingAction.reason}
+            </ReactMarkdown>
+          </div>
         </div>
 
         {!isAdmin ? (

@@ -6,6 +6,8 @@ import type { AiInsight } from "@repo/domain/ai-actions";
 import { Card, CardContent, CardHeader, CardTitle } from "../shadcn/card";
 import { Badge } from "../shadcn/badge";
 import { Lightbulb } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface AiInsightCardProps {
   insight: AiInsight;
@@ -35,9 +37,11 @@ export function AiInsightCard({ insight, className }: AiInsightCardProps) {
           )}
         </div>
         {insight.dataQualityNote && (
-          <p className="text-xs text-muted-foreground italic">
-            {insight.dataQualityNote}
-          </p>
+          <div className="text-xs text-muted-foreground italic">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {insight.dataQualityNote}
+            </ReactMarkdown>
+          </div>
         )}
       </CardHeader>
       
@@ -65,9 +69,11 @@ export function AiInsightCard({ insight, className }: AiInsightCardProps) {
             {Object.entries(insight).filter(([k]) => k !== "dataQualityNote" && k !== "page").map(([k, v]) => (
               <div key={k} className="mb-2">
                 <span className="font-medium capitalize">{k}:</span>{" "}
-                <span className="text-muted-foreground">
-                  {typeof v === "object" ? JSON.stringify(v) : String(v)}
-                </span>
+                <div className="text-muted-foreground">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {typeof v === "object" ? JSON.stringify(v) : String(v)}
+                  </ReactMarkdown>
+                </div>
               </div>
             ))}
           </div>

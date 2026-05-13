@@ -8,6 +8,9 @@ import {
 } from "@repo/domain/ai-actions";
 import { useUser } from "@repo/state/stores/auth";
 
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
 import { Card, CardContent, CardHeader, CardTitle } from "../shadcn/card";
 import { Badge } from "../shadcn/badge";
 import { PendingActionConfirmControls } from "./PendingActionConfirmControls";
@@ -75,9 +78,11 @@ export function PendingActionGroupCard({
           <CardTitle className="text-base font-semibold text-foreground">
             {pendingActionGroup.title}
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {pendingActionGroup.summary}
-          </p>
+          <div className="text-sm text-muted-foreground">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {pendingActionGroup.summary}
+            </ReactMarkdown>
+          </div>
         </div>
       </CardHeader>
 

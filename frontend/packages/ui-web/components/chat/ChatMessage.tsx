@@ -4,6 +4,9 @@ import { cn } from "@repo/core";
 import type { ChatMessageProps } from "@repo/ui-contracts";
 import { Bot, User } from "lucide-react";
 
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
 import { PendingActionCard } from "../ai-actions/PendingActionCard";
 import { PendingActionGroupCard } from "../ai-actions/PendingActionGroupCard";
 import { AiInsightCard } from "../ai-actions/AiInsightCard";
@@ -56,9 +59,17 @@ export function ChatMessage({
               : "rounded-tl-sm border border-border/40 bg-muted/50 text-foreground",
           )}
         >
-          <span className="whitespace-pre-wrap leading-relaxed">
-            {message.content}
-          </span>
+          {isUser ? (
+            <span className="whitespace-pre-wrap leading-relaxed">
+              {message.content}
+            </span>
+          ) : (
+            <div className="prose prose-sm dark:prose-invert max-w-none break-words leading-relaxed">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {message.content}
+              </ReactMarkdown>
+            </div>
+          )}
         </div>
 
         {!isUser && (

@@ -35,7 +35,10 @@ export function PendingActionSafetyBadge({
   safetyLevel,
   className,
 }: PendingActionSafetyBadgeProps) {
-  const config = SAFETY_BADGE_CONFIG[safetyLevel];
+  const config = SAFETY_BADGE_CONFIG[safetyLevel] || {
+    label: String(safetyLevel || "Bilinmeyen"),
+    className: "border-muted/20 bg-muted/10 text-muted-foreground",
+  };
 
   return (
     <Badge
