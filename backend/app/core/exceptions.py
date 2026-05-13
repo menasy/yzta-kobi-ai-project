@@ -97,6 +97,14 @@ class ExternalServiceError(AppException):
     message = "Harici servis yanıt vermedi."
 
 
+class OptionalDependencyError(AppException):
+    """Opsiyonel bagimlilik eksik — 503."""
+
+    status_code = 503
+    key = "OPTIONAL_DEPENDENCY_MISSING"
+    message = "Opsiyonel bir bagimlilik eksik."
+
+
 class DatabaseError(AppException):
     """Veritabanı işlemi sırasında hata — 500."""
 

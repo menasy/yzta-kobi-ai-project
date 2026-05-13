@@ -10,6 +10,9 @@ from app.core.logger import get_logger
 from app.models.notification import Notification
 from app.repositories.notification_repository import NotificationRepository
 from app.services.notification_publisher import publish_notification_event
+from app.services.stock_analysis_service import StockAnalysisService
+from app.models.product import Product
+from sqlalchemy import select
 
 logger = get_logger(__name__)
 
@@ -187,7 +190,7 @@ class NotificationService:
         )
         
         if not notifications:
-            return "✅ Son 24 saat içinde herhangi bir kargo gecikmesi tespit edilmedi."
+            return "Son 24 saat içinde herhangi bir kargo gecikmesi tespit edilmedi."
         
         # 2. Agent'a gönderilecek ham metni hazırla
         raw_data = ""
@@ -207,12 +210,12 @@ class NotificationService:
             summary_text = await orchestrator.run(user_prompt, session_id="system_delay_report")
         except Exception as e:
             logger.error(f"AI Analiz hatası: {e}", exc_info=True)
-            summary_text = f"📊 Toplam {len(notifications)} gecikme var ancak rapor oluşturulamadı."
+            summary_text = f"Toplam {len(notifications)} gecikme var ancak rapor oluşturulamadı."
 
         # 4. Analiz sonucunu veritabanına bir "SYSTEM_REPORT" bildirimi olarak kaydet
         report_notification_data = {
             "type": "SYSTEM_REPORT",
-            "title": "📊 Günlük Kargo Gecikme Analizi (Agent)",
+            "title": "Günlük Kargo Gecikme Analizi (Agent)",
             "message": summary_text,
             "severity": "info",
             "payload": {
@@ -225,3 +228,55 @@ class NotificationService:
         await self._repo.create_notification(report_notification_data)
         
         return summary_text
+    
+
+    async def generate_daily_tasks(self):
+
+        db_session = getattr(self._repo, 'db', getattr(self._repo, 'session', None))
+        
+        if not db_session:
+            return {"status": "error", "message": "Veritabanı bağlantısı kurulamadı."}
+
+        
+        analysis_service = StockAnalysisService(db_session) 
+        product_query = select(Product)
+        product_result = await db_session.execute(product_query)
+        all_products = product_result.scalars().all()
+
+        critical_items_list = ""
+        for product in all_products:
+            # Her ürünü analiz et
+            analysis = await analysis_service.analyze_stock_health(product.id)
+            if analysis.get("status") == "danger":
+                days = analysis.get("days_to_zero", "Belirsiz")
+                shortage = analysis.get("forecasted_demand_3d", 0) - analysis.get("current_stock", 0)
+                critical_items_list += f"- {product.name}: {round(max(0, shortage), 2)} birim lazım (Kalan: {days} gün)\n"
+
+    
+        if not critical_items_list:
+            depo_message = "Bugün acil bir stok takviyesi gerekmiyor. Tüm stoklar güvenli seviyede."
+        else:
+            depo_message = "SABAH LİSTESİ: Acil takviye gereken ürünler:\n" + critical_items_list
+
+        depo_task = Notification(
+            title="Dinamik Depo Hazırlık Listesi",
+            message=depo_message,
+            type="task_assignment"
+        )
+
+        kargo_task = Notification(
+            title="Günlük Teslimat Rotası",
+            message="Rota: Merkez -> Bölge Dağıtım -> Müşteri Teslimat Noktaları.",
+            type="task_assignment"
+        )
+
+        
+        try:
+            db_session.add(depo_task)
+            db_session.add(kargo_task)
+            await db_session.commit()
+        except Exception as e:
+            await db_session.rollback()
+            return {"status": "error", "message": f"Kayıt hatası: {str(e)}"}
+
+        return {"status": "success", "message": "Gerçek verilere dayalı dinamik görevler oluşturuldu."}

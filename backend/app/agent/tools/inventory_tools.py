@@ -77,3 +77,37 @@ class GetLowStockReportTool(BaseTool):
             return ToolResult(success=True, data=report)
         except AppException as exc:
             return ToolResult(success=False, error=exc.message)
+
+
+class GetStockPredictionTool(BaseTool):
+    """Gelecek hafta için stok tahmini ve risk analizi yapan araç."""
+    
+    name = "get_stock_prediction"
+    description = "Bir ürünün ID'sini alarak gelecek hafta için stok tahmini ve risk analizini (danger, success vb.) yapar."
+
+    parameters = {
+        "type": "object",
+        "properties": {
+            "product_id": {
+                "type": "integer",
+                "description": "Tahmin yapılacak ürünün benzersiz kimlik numarası (ID)."
+            }
+        },
+        "required": ["product_id"]
+    }
+    
+    def __init__(self, db):
+        self.db = db
+
+    async def execute(self, product_id: int) -> ToolResult:
+        if product_id is None:
+            return ToolResult(success=False, error="product_id gerekli.")
+
+        try:
+            from app.services.stock_analysis_service import StockAnalysisService
+
+            service = StockAnalysisService(self.db)
+            analysis = await service.analyze_stock_health(product_id)
+            return ToolResult(success=True, data=analysis)
+        except AppException as exc:
+            return ToolResult(success=False, error=exc.message)

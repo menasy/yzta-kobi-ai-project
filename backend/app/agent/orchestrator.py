@@ -3,6 +3,8 @@
 # LLM → tool_call → execute → LLM → final yanıt
 # HTTP request/response bilmez. Sadece mesaj alır, yanıt üretir.
 
+import asyncio
+
 import re
 from typing import Any
 
@@ -21,6 +23,10 @@ from .tools import ToolRegistry, ToolResult
 from .tools.cargo_tools import GetCargoStatusTool
 from .tools.inventory_tools import CheckProductStockTool, GetLowStockReportTool
 from .tools.order_tools import GetOrderStatusTool, GetOrdersByPhoneTool
+
+from app.services.stock_analysis_service import StockAnalysisService
+
+from .tools.inventory_tools import CheckProductStockTool, GetLowStockReportTool, GetStockPredictionTool
 
 logger = get_logger(__name__)
 
@@ -61,6 +67,7 @@ class AgentOrchestrator:
         # Inventory tools
         registry.register(CheckProductStockTool(db))
         registry.register(GetLowStockReportTool(db))
+        registry.register(GetStockPredictionTool(db)) # Yeni stok tahmin aracı
 
         # Cargo tools (DB session gerektirmez)
         registry.register(GetCargoStatusTool())
@@ -146,6 +153,7 @@ class AgentOrchestrator:
         Max _MAX_ITERATIONS iterasyon güvenliği var.
         """
         for iteration in range(1, _MAX_ITERATIONS + 1):
+            await asyncio.sleep(2)
             logger.debug("ReAct iterasyon %d/%d", iteration, _MAX_ITERATIONS)
 
             # LLM çağrısı (async)
@@ -304,27 +312,3 @@ class AgentOrchestrator:
                 texts.append(part.text)
 
         return "\n".join(texts) if texts else "Yanıt üretilemedi."
-
-    @staticmethod
-    def _is_rate_limit_error(error_text: str) -> bool:
-        """Gemini 429/RESOURCE_EXHAUSTED benzeri kota limit hatalarını tespit eder."""
-        normalized = error_text.upper()
-        return "RESOURCE_EXHAUSTED" in normalized or " 429 " in normalized or "CODE': 429" in normalized
-
-    @staticmethod
-    def _build_rate_limit_reply(error_text: str) -> str:
-        """
-        Provider kota limiti aşıldığında kullanıcıya hataya düşmeden dönecek mesajı üretir.
-        """
-        retry_match = re.search(r"retry in ([0-9]+(?:\.[0-9]+)?)s", error_text, re.IGNORECASE)
-        if retry_match:
-            retry_seconds = int(float(retry_match.group(1)))
-            return (
-                "Şu anda yoğunluk nedeniyle AI servisinde geçici bir kota sınırı var. "
-                f"Lütfen yaklaşık {retry_seconds} saniye sonra tekrar deneyin."
-            )
-
-        return (
-            "Şu anda yoğunluk nedeniyle AI servisinde geçici bir kota sınırı var. "
-            "Lütfen kısa bir süre sonra tekrar deneyin."
-        )

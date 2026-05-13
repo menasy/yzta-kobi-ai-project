@@ -15,12 +15,71 @@ from app.mappers.inventory_mapper import (
 )
 from app.schemas.inventory import InventoryUpdate
 from app.services.inventory_service import InventoryService
+from app.services.stock_analysis_service import StockAnalysisService
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.db.session import get_db_session 
+
+from app.agent.tools.base import BaseTool 
+from app.services.stock_analysis_service import StockAnalysisService
+
+from sqlalchemy import select
+from app.models.product import Product
+
 
 router = APIRouter()
 
+def get_stock_analysis_service(db: AsyncSession = Depends(get_db_session)):
+    return StockAnalysisService(db)
 
+@router.get("/critical-stocks")
+async def get_critical_stocks(db: AsyncSession = Depends(get_db_session)):
+    """Tüm ürünleri analiz eder ve sadece riskli olanları döner."""
+    analysis_service = StockAnalysisService(db)
+
+    # 1. Tüm ürünleri çek
+    query = select(Product)
+    result = await db.execute(query)
+    products = result.scalars().all()
+    
+    critical_items = []
+    
+    # 2. Her ürün için analiz motorunu çalıştır
+    for product in products:
+        analysis_result = await analysis_service.analyze_stock_health(product.id)
+        
+        # Sadece riskli olanları listeye ekle
+        if analysis_result["status"] in ["danger", "warning"]:
+            critical_items.append({
+                "product_id": product.id,
+                "product_name": str(product.name),
+                "status": str(analysis_result["status"]),
+                "current_stock": int(analysis_result["current_stock"]),
+                "forecasted_demand": float(analysis_result["forecasted_demand_3d"]),
+                "alert_message": str(analysis_result["message"])
+            })
+            
+    return {
+        "total_risky_products": len(critical_items),
+        "items": critical_items
+    }
+
+@router.get("/analysis/{product_id}", tags=["Tahminleme"]) 
+async def get_stock_analysis(product_id: int, db: AsyncSession = Depends(get_db_session)):
+    """
+    Ürünün mevcut stoğunu, gelecek 3 günlük satış tahminiyle kıyaslar 
+    ve kritik bir durum olup olmadığını analiz eder. Sadece Admin yetkisi 
+    olanlar görebilir.
+    """
+    analysis_service = StockAnalysisService(db)
+    result = await analysis_service.analyze_stock_health(product_id)
+    
+    return success_response(
+        data=result,
+        message="Stok analizi başarıyla tamamlandı."
+    )   
 @router.get(
     "/",
+    
     response_model=None,
     summary="Tüm stok kayıtlarını listele",
     responses={
@@ -138,3 +197,49 @@ async def update_inventory(
         data=to_inventory_response(inventory),
         message="Stok güncellendi.",
     )
+
+class GetStockPredictionTool(BaseTool):
+    """Gelecek hafta için stok tahmini ve risk analizi yapan araç."""
+    
+    name = "get_stock_prediction"
+    description = "Bir ürünün ID'sini alarak gelecek hafta için stok tahmini ve risk analizini (danger, success vb.) yapar."
+
+    def __init__(self, db):
+        self.db = db
+
+    async def execute(self, product_id: int) -> str:
+        service = StockAnalysisService(self.db)
+        analysis = await service.analyze_stock_health(product_id)
+        # Gemini'ın anlayacağı temiz bir metne çeviriyoruz
+        return str(analysis)
+    
+
+
+@router.get("/dashboard-summary")
+async def get_inventory_summary(
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Tüm deponun genel sağlık durumunu ve özet rakamları döner.
+    Frontend'deki dashboard kartları için idealdir.
+    """
+    analysis_service = StockAnalysisService(db)
+    summary = await analysis_service.get_dashboard_summary()
+    return summary
+
+
+@router.get("/simulate", summary="Market Simülasyonu Çalıştır")
+async def simulate_market(
+    growth_factor: float = 1.5, 
+    service: StockAnalysisService = Depends(get_stock_analysis_service)
+):
+    """
+    Satışların artış oranına göre (growth_factor) stokların dayanıklılığını test eder.
+    Örn: 2.0 değeri, satışların 2 katına çıktığı bir senaryoyu simüle eder.
+    """
+    result = await service.run_market_simulation(growth_factor)
+    return {
+        "statusCode": 200,
+        "message": f"Yuzde {int((growth_factor-1)*100)} artis senaryosu basariyla analiz edildi.",
+        "data": result
+    }
