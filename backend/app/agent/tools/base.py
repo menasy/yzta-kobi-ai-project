@@ -4,9 +4,12 @@
 # LLM, tool tanımlarını to_function_declaration() ile öğrenir.
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
+
+if TYPE_CHECKING:
+    from app.agent.context import AgentContext
 
 from app.core.logger import get_logger
 
@@ -50,7 +53,7 @@ class BaseTool(ABC):
     parameters: dict[str, Any]
 
     @abstractmethod
-    async def execute(self, **kwargs: Any) -> ToolResult:
+    async def execute(self, context: "AgentContext", **kwargs: Any) -> ToolResult:
         """Tool'un asıl işi burada yapılır."""
         ...
 

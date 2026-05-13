@@ -11,6 +11,8 @@ from .base_model import IDMixin, TimestampMixin
 
 if TYPE_CHECKING:
     from .audit_log import AuditLog
+    from .conversation import Conversation
+    from .conversation_message import ConversationMessage
     from .inventory_movement import InventoryMovement
     from .order import Order
     from .order_status_history import OrderStatusHistory
@@ -35,3 +37,5 @@ class User(Base, IDMixin, TimestampMixin):
     orders: Mapped[list["Order"]] = relationship(back_populates="customer")
     order_status_history: Mapped[list["OrderStatusHistory"]] = relationship(back_populates="changed_by_user")
     addresses: Mapped[list["UserAddress"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    conversations: Mapped[list["Conversation"]] = relationship(back_populates="user")
+    conversation_messages: Mapped[list["ConversationMessage"]] = relationship(back_populates="user")

@@ -21,12 +21,13 @@ import {
 } from "@repo/ui-web";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { clearAuth, setSessionLoading } = useAuthActions();
   const { showApiError, showApiSuccess } = useApiMessageActions();
@@ -34,7 +35,8 @@ export function LoginForm() {
     onSuccess: (response) => {
       showApiSuccess(response, "Giriş Başarılı");
       const redirectPath = resolveAuthRedirectPath(searchParams.get("from"));
-      window.location.href = redirectPath;
+      router.replace(redirectPath);
+      router.refresh();
     },
     onError: (loginError) => {
       showApiError(

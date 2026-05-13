@@ -1,8 +1,9 @@
 # agent/tools/inventory_tools.py
 # Stok sorgulama tool'ları.
 # InventoryQueryService üzerinden çalışır — doğrudan repository veya DB session kullanmaz.
+# Admin-only tool'lar: GetLowStockReportTool, GetStockPredictionTool.
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,6 +12,9 @@ from app.core.logger import get_logger
 from app.services.inventory_query_service import InventoryQueryService
 
 from .base import BaseTool, ToolResult
+
+if TYPE_CHECKING:
+    from app.agent.context import AgentContext
 
 logger = get_logger(__name__)
 
@@ -37,7 +41,7 @@ class CheckProductStockTool(BaseTool):
     def __init__(self, db: AsyncSession) -> None:
         self._service = InventoryQueryService(db)
 
-    async def execute(self, **kwargs: Any) -> ToolResult:
+    async def execute(self, context: "AgentContext", **kwargs: Any) -> ToolResult:
         product_name: str | None = kwargs.get("product_name")
         if not product_name:
             return ToolResult(success=False, error="Ürün adı belirtilmedi.")
@@ -66,7 +70,11 @@ class GetLowStockReportTool(BaseTool):
     def __init__(self, db: AsyncSession) -> None:
         self._service = InventoryQueryService(db)
 
-    async def execute(self, **kwargs: Any) -> ToolResult:
+    async def execute(self, context: "AgentContext", **kwargs: Any) -> ToolResult:
+        # Admin-only güvenlik kontrolü
+        if context.role != "admin":
+            return ToolResult(success=False, error="Bu bilgiye erişim yetkiniz yok.")
+
         try:
             report = await self._service.get_low_stock_report()
             if not report:
@@ -81,7 +89,7 @@ class GetLowStockReportTool(BaseTool):
 
 class GetStockPredictionTool(BaseTool):
     """Gelecek hafta için stok tahmini ve risk analizi yapan araç."""
-    
+
     name = "get_stock_prediction"
     description = "Bir ürünün ID'sini alarak gelecek hafta için stok tahmini ve risk analizini (danger, success vb.) yapar."
 
@@ -90,23 +98,28 @@ class GetStockPredictionTool(BaseTool):
         "properties": {
             "product_id": {
                 "type": "integer",
-                "description": "Tahmin yapılacak ürünün benzersiz kimlik numarası (ID)."
-            }
+                "description": "Tahmin yapılacak ürünün benzersiz kimlik numarası (ID).",
+            },
         },
-        "required": ["product_id"]
+        "required": ["product_id"],
     }
-    
-    def __init__(self, db):
-        self.db = db
 
-    async def execute(self, product_id: int) -> ToolResult:
+    def __init__(self, db: AsyncSession) -> None:
+        self._db = db
+
+    async def execute(self, context: "AgentContext", **kwargs: Any) -> ToolResult:
+        # Admin-only güvenlik kontrolü
+        if context.role != "admin":
+            return ToolResult(success=False, error="Bu bilgiye erişim yetkiniz yok.")
+
+        product_id: int | None = kwargs.get("product_id")
         if product_id is None:
-            return ToolResult(success=False, error="product_id gerekli.")
+            return ToolResult(success=False, error="Ürün ID'si (product_id) gerekli.")
 
         try:
             from app.services.stock_analysis_service import StockAnalysisService
 
-            service = StockAnalysisService(self.db)
+            service = StockAnalysisService(self._db)
             analysis = await service.analyze_stock_health(product_id)
             return ToolResult(success=True, data=analysis)
         except AppException as exc:

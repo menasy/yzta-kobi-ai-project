@@ -9,6 +9,9 @@ RUN apt-get update && \
 
 WORKDIR /app
 
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 # Poetry kurulumu
 RUN pip install --no-cache-dir poetry
 
@@ -24,6 +27,7 @@ RUN poetry install --no-interaction --no-ansi --only main --no-root
 # Uygulama kodunu kopyala
 COPY . .
 
+# Startup script container icinde executable olmali
 RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8000

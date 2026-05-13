@@ -4,20 +4,16 @@ import type { ApiError } from "@repo/core";
 import { useSystemReady } from "@repo/state";
 import { queryKeys } from "@repo/state/query";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 
 import { getMe } from "../api/auth.api";
 import type { MeResponse } from "../types/auth.types";
 
 interface UseMeOptions {
   enabled?: boolean;
-  onSuccess?: (data: MeResponse) => void;
-  onError?: (error: ApiError) => void;
-  onSettled?: (data: MeResponse | undefined, error: ApiError | null) => void;
 }
 
 export function useMe(options: UseMeOptions = {}) {
-  const { enabled, onError, onSettled, onSuccess } = options;
+  const { enabled } = options;
   const systemReady = useSystemReady();
   const isEnabled = systemReady && (enabled ?? true);
   const queryClient = useQueryClient();
@@ -26,20 +22,6 @@ export function useMe(options: UseMeOptions = {}) {
     queryFn: getMe,
     enabled: isEnabled,
   });
-
-  useEffect(() => {
-    if (query.isSuccess) {
-      onSuccess?.(query.data);
-      onSettled?.(query.data, null);
-    }
-  }, [onSettled, onSuccess, query.data, query.isSuccess]);
-
-  useEffect(() => {
-    if (query.error) {
-      onError?.(query.error);
-      onSettled?.(undefined, query.error);
-    }
-  }, [onError, onSettled, query.error]);
 
   return {
     user: query.data?.data ?? null,

@@ -2,7 +2,10 @@
 # ToolRegistry — tüm tool'ları merkezi olarak yönetir.
 # Tool kayıt, isimle erişim, toplu schema üretimi ve güvenli çalıştırma.
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from app.agent.context import AgentContext
 
 from app.core.logger import get_logger
 
@@ -55,7 +58,7 @@ class ToolRegistry:
         """
         return [tool.to_function_declaration() for tool in self._tools.values()]
 
-    async def execute(self, tool_name: str, **kwargs: Any) -> ToolResult:
+    async def execute(self, tool_name: str, context: "AgentContext", **kwargs: Any) -> ToolResult:
         """
         Tool'u ismiyle güvenli şekilde çalıştırır.
 
@@ -72,7 +75,7 @@ class ToolRegistry:
             )
 
         try:
-            result = await tool.execute(**kwargs)
+            result = await tool.execute(context=context, **kwargs)
             logger.info(
                 "Tool çalıştırıldı: %s (success=%s)",
                 tool_name,
@@ -88,5 +91,5 @@ class ToolRegistry:
             )
             return ToolResult(
                 success=False,
-                error=f"Araç çalışırken bir hata oluştu: {str(exc)}",
+                error="Bu bilgiye şu anda erişilemiyor. Lütfen biraz sonra tekrar deneyin.",
             )

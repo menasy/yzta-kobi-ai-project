@@ -17,7 +17,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api.router import api_router
 from app.core.config import get_settings
-from app.core.exceptions import AppException
+from app.core.cookie import clear_auth_cookies
+from app.core.exceptions import AppException, UnauthorizedError
 from app.core.logger import get_logger, setup_logging
 from app.core import openapi_examples
 from app.core.response_builder import success_response
@@ -196,11 +197,14 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
         data=None,
         errors=exc.errors,
     )
-    return JSONResponse(
+    response = JSONResponse(
         status_code=exc.status_code,
         content=body.model_dump(),
         headers={"X-Request-ID": str(request_id)} if request_id else {},
     )
+    if isinstance(exc, UnauthorizedError):
+        clear_auth_cookies(response)
+    return response
 
 
 @app.exception_handler(RequestValidationError)

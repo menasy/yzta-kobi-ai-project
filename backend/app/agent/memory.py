@@ -3,6 +3,7 @@
 # session_id bazlı mesaj geçmişi tutar.
 # Son 10 mesajı saklar, TTL ile otomatik temizlenir.
 # Hata durumunda sistemi düşürmez — boş liste döner.
+# User-scoped key formatı ile güvenlik sağlar.
 
 import json
 from typing import Any
@@ -39,8 +40,71 @@ class ConversationMemory:
         self._ttl = settings.REDIS_CONVERSATION_TTL
 
     def _key(self, session_id: str) -> str:
-        """Redis key oluşturur."""
+        """Redis key oluşturur (backward compat)."""
         return f"{_KEY_PREFIX}{session_id}"
+
+    def _user_key(self, session_id: str, user_id: int) -> str:
+        """User-scoped Redis key oluşturur."""
+        return f"{_KEY_PREFIX}user:{user_id}:session:{session_id}"
+
+    # ── User-scoped metodlar ─────────────────────────────
+
+    async def load_for_user(
+        self, session_id: str, user_id: int
+    ) -> list[dict[str, str]]:
+        """User-scoped: Konuşma geçmişini Redis'ten yükler."""
+        try:
+            raw = await redis_service.get_value(self._user_key(session_id, user_id))
+            if raw is None:
+                return []
+            return json.loads(raw)
+        except Exception as exc:
+            logger.error(
+                "Konuşma geçmişi yüklenirken hata: %s (session=%s, user=%d)",
+                str(exc),
+                session_id,
+                user_id,
+            )
+            return []
+
+    async def save_for_user(
+        self,
+        session_id: str,
+        user_id: int,
+        messages: list[dict[str, str]],
+    ) -> None:
+        """User-scoped: Konuşma geçmişini Redis'e kaydeder."""
+        try:
+            trimmed = messages[-_MAX_MESSAGES:]
+            await redis_service.set_value(
+                self._user_key(session_id, user_id),
+                json.dumps(trimmed, ensure_ascii=False),
+                expire=self._ttl,
+            )
+        except Exception as exc:
+            logger.error(
+                "Konuşma geçmişi kaydedilirken hata: %s (session=%s, user=%d)",
+                str(exc),
+                session_id,
+                user_id,
+            )
+
+    async def clear_for_user(self, session_id: str, user_id: int) -> None:
+        """User-scoped: Konuşma geçmişini siler."""
+        try:
+            await redis_service.delete_value(self._user_key(session_id, user_id))
+            # Eski format key de temizle (backward compat)
+            await redis_service.delete_value(self._key(session_id))
+            logger.info("Konuşma geçmişi silindi: %s (user=%d)", session_id, user_id)
+        except Exception as exc:
+            logger.error(
+                "Konuşma geçmişi silinirken hata: %s (session=%s, user=%d)",
+                str(exc),
+                session_id,
+                user_id,
+            )
+
+    # ── Backward compat metodlar ─────────────────────────
 
     async def load(self, session_id: str) -> list[dict[str, str]]:
         """

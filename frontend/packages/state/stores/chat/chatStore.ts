@@ -2,23 +2,27 @@ import { createStore } from "zustand/vanilla";
 
 import type { ChatStore, ChatStoreInitialState } from "./types";
 
+const WELCOME_MESSAGE = {
+  id: "welcome-message",
+  role: "assistant" as const,
+  content:
+    "Merhaba! Ben KOBİ AI asistanınız. Size nasıl yardımcı olabilirim? İşletmenizle ilgili sorularınızı sorabilir, ürün veya siparişleriniz hakkında bilgi alabilirsiniz.",
+  createdAt: new Date().toISOString(),
+  isOptimistic: false,
+};
+
 const defaultChatState = {
   sessionId: null,
-  optimisticMessages: [
-    {
-      id: "welcome-message",
-      role: "assistant",
-      content: "Merhaba! Ben KOBİ AI asistanınız. Size nasıl yardımcı olabilirim? İşletmenizle ilgili sorularınızı sorabilir, ürün veya siparişleriniz hakkında bilgi alabilirsiniz.",
-      createdAt: new Date().toISOString(),
-      isOptimistic: false,
-    },
-  ],
+  optimisticMessages: [WELCOME_MESSAGE],
   isTyping: false,
   pendingMessage: "",
 } satisfies ChatStoreInitialState;
 
 function createSessionId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
 
@@ -29,7 +33,18 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) =>
   createStore<ChatStore>()((set, get) => ({
     ...defaultChatState,
     ...initialState,
-    setSessionId: (sessionId) => set({ sessionId }),
+    setSessionId: (sessionId) => {
+      // Runtime guard against objects or invalid session IDs
+      if (typeof sessionId !== "string" && sessionId !== null) {
+        console.warn("Invalid sessionId ignored:", sessionId);
+        return;
+      }
+      if (sessionId === "[object Object]") {
+        console.warn("Detected [object Object] as sessionId, ignoring.");
+        return;
+      }
+      set({ sessionId });
+    },
     ensureSessionId: () => {
       const activeSessionId = get().sessionId;
 
@@ -44,6 +59,12 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) =>
     addOptimisticMessage: (message) =>
       set((state) => ({
         optimisticMessages: [...state.optimisticMessages, message],
+      })),
+    removeMessage: (messageId) =>
+      set((state) => ({
+        optimisticMessages: state.optimisticMessages.filter(
+          (m) => m.id !== messageId,
+        ),
       })),
     replaceOptimisticMessage: (messageId, nextMessage) =>
       set((state) => ({
@@ -66,10 +87,16 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) =>
       })),
     setTyping: (isTyping) => set({ isTyping }),
     setPendingMessage: (message) => set({ pendingMessage: message }),
+    clearMessages: () =>
+      set({
+        optimisticMessages: [WELCOME_MESSAGE],
+        isTyping: false,
+        pendingMessage: "",
+      }),
     clearChat: () =>
       set({
         sessionId: null,
-        optimisticMessages: [],
+        optimisticMessages: [WELCOME_MESSAGE],
         isTyping: false,
         pendingMessage: "",
       }),

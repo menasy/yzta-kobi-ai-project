@@ -33,6 +33,14 @@ export function useSendMessage(options: UseSendMessageOptions = {}) {
         void queryClient.invalidateQueries({
           queryKey: queryKeys.chat.history(variables.session_id),
         });
+        // Conversation detay cache'ini güncelle
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.chat.conversation(data.data.session_id),
+        });
+        // Conversation listesini güncelle (title, preview değişebilir)
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.chat.conversations(),
+        });
         options.onSuccess?.(data, variables);
       },
       onError: (error, variables) => {

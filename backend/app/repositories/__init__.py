@@ -3,6 +3,7 @@
 
 from .audit_log_repository import AuditLogRepository
 from .base import BaseRepository
+from .conversation_message_repository import ConversationMessageRepository
 from .conversation_repository import ConversationRepository
 from .customer_repository import CustomerRepository
 from .inventory_movement_repository import InventoryMovementRepository
@@ -31,6 +32,7 @@ __all__ = [
     "ShipmentRepository",
     "ShipmentEventRepository",
     "ConversationRepository",
+    "ConversationMessageRepository",
     "NotificationRepository",
     "AuditLogRepository",
 ]

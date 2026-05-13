@@ -39,6 +39,7 @@ export function AppHeader({
   logoHref,
   onLogout,
   unreadNotificationCount = 0,
+  showNotifications = false,
 }: AppHeaderProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -227,7 +228,7 @@ export function AppHeader({
 
         {/* Sağ: Auth Aksiyon Alanı */}
         <div className="flex items-center gap-4 flex-shrink-0">
-          {isAuthenticated && (
+          {isAuthenticated && showNotifications && (
             <Link
               href="/notifications"
               className="relative flex h-9 w-9 items-center justify-center rounded-full border border-border/50 text-muted-foreground transition-all hover:bg-accent hover:text-primary"

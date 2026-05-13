@@ -13,7 +13,10 @@ from .chat import (
     ChatMessageRequest,
     ChatResponse,
     ConversationListResponse,
+    ConversationMessageResponse,
     ConversationResponse,
+    ConversationWithMessagesResponse,
+    CreateConversationRequest,
 )
 from .common import (
     IdResponse,
@@ -129,6 +132,9 @@ __all__ = [
     "ChatResponse",
     "ConversationResponse",
     "ConversationListResponse",
+    "ConversationMessageResponse",
+    "ConversationWithMessagesResponse",
+    "CreateConversationRequest",
     # Common
     "PaginationParams",
     "ShippingAddressBase",

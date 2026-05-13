@@ -6,7 +6,10 @@
 import asyncio
 
 import re
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from .context import AgentContext
 
 from google import genai
 from google.genai import errors as genai_errors
@@ -53,30 +56,29 @@ class AgentOrchestrator:
     def __init__(self, db: AsyncSession, settings: Settings | None = None) -> None:
         self._settings = settings or get_settings()
         self._memory = ConversationMemory()
-        self._registry = self._build_registry(db)
+        self._db = db
         self._client = genai.Client(api_key=self._settings.GEMINI_API_KEY)
 
-    def _build_registry(self, db: AsyncSession) -> ToolRegistry:
-        """Tool'ları oluşturup registry'ye kaydeder."""
+    def _build_registry(self, context: "AgentContext") -> ToolRegistry:
+        """Tool'arı role göre oluşturup registry'ye kaydeder."""
         registry = ToolRegistry()
 
-        # Order tools
-        registry.register(GetOrderStatusTool(db))
-        registry.register(GetOrdersByPhoneTool(db))
+        # Herkesin erişebildiği temel araçlar
+        registry.register(GetOrderStatusTool(self._db))
+        registry.register(GetCargoStatusTool(self._db))
+        registry.register(CheckProductStockTool(self._db))
 
-        # Inventory tools
-        registry.register(CheckProductStockTool(db))
-        registry.register(GetLowStockReportTool(db))
-        registry.register(GetStockPredictionTool(db)) # Yeni stok tahmin aracı
-
-        # Cargo tools (DB session gerektirmez)
-        registry.register(GetCargoStatusTool())
+        # Sadece Admin'in erişebildiği operasyonel araçlar
+        if context.role == "admin":
+            registry.register(GetOrdersByPhoneTool(self._db))
+            registry.register(GetLowStockReportTool(self._db))
+            registry.register(GetStockPredictionTool(self._db))
 
         return registry
 
-    def _build_config(self) -> types.GenerateContentConfig:
+    def _build_config(self, registry: ToolRegistry) -> types.GenerateContentConfig:
         """LLM çağrısı için config oluşturur (system prompt + tools)."""
-        declarations = self._registry.get_function_declarations()
+        declarations = registry.get_function_declarations()
         tools = types.Tool(function_declarations=declarations) if declarations else None
 
         return types.GenerateContentConfig(
@@ -112,34 +114,34 @@ class AgentOrchestrator:
 
         return contents
 
-    async def run(self, message: str, session_id: str) -> str:
+    async def run(self, message: str, context: "AgentContext") -> str:
         """
         Agent'ı çalıştırır.
 
         Args:
             message: Kullanıcı mesajı.
-            session_id: Konuşma oturum ID'si.
+            context: Güvenlik ve sahiplik bilgilerini içeren AgentContext.
 
         Returns:
             LLM'in ürettiği final Türkçe yanıt.
-
-        Raises:
-            ExternalServiceError: LLM API hatası durumunda.
         """
-        # 1. Konuşma geçmişini yükle
-        history = await self._memory.load(session_id)
+        # 1. Konuşma geçmişini yükle (user-scoped)
+        history = await self._memory.load_for_user(context.session_id, context.user_id)
 
-        # 2. İçerikleri oluştur
+        # 2. Registry ve Config oluştur (Role bazlı)
+        registry = self._build_registry(context)
+        config = self._build_config(registry)
+        
+        # 3. İçerikleri oluştur
         contents = self._build_contents(history, message)
-        config = self._build_config()
 
-        # 3. ReAct döngüsü
-        final_text = await self._react_loop(contents, config)
+        # 4. ReAct döngüsü
+        final_text = await self._react_loop(contents, config, registry, context)
 
-        # 4. Konuşma geçmişini güncelle
+        # 5. Konuşma geçmişini güncelle
         history.append({"role": "user", "content": message})
         history.append({"role": "assistant", "content": final_text})
-        await self._memory.save(session_id, history)
+        await self._memory.save_for_user(context.session_id, context.user_id, history)
 
         return final_text
 
@@ -147,13 +149,14 @@ class AgentOrchestrator:
         self,
         contents: list[types.Content],
         config: types.GenerateContentConfig,
+        registry: ToolRegistry,
+        context: "AgentContext",
     ) -> str:
         """
         ReAct döngüsü: LLM çağır → tool varsa çalıştır → sonucu geri ver → tekrarla.
         Max _MAX_ITERATIONS iterasyon güvenliği var.
         """
         for iteration in range(1, _MAX_ITERATIONS + 1):
-            await asyncio.sleep(2)
             logger.debug("ReAct iterasyon %d/%d", iteration, _MAX_ITERATIONS)
 
             # LLM çağrısı (async)
@@ -174,15 +177,16 @@ class AgentOrchestrator:
 
                 logger.error("Gemini API hatası: %s", error_text)
                 raise ExternalServiceError(
-                    message="AI sağlayıcısı yanıt veremedi. Lütfen tekrar deneyin.",
+                    message="AI sağlayıcısı şu anda yanıt veremiyor. Lütfen tekrar deneyin.",
                 )
             except Exception as exc:
                 logger.error("Beklenmeyen LLM hatası: %s", str(exc), exc_info=True)
                 raise ExternalServiceError(
-                    message="AI sağlayıcısı yanıt veremedi.",
+                    message="AI sağlayıcısına erişilemiyor. Lütfen biraz sonra tekrar deneyin.",
                 )
 
             # Yanıtı kontrol et
+            logger.debug("LLM Yanıtı: %s", str(response))
             if not response.candidates:
                 logger.warning("LLM boş yanıt döndü.")
                 return "Üzgünüm, şu anda yanıt üretemiyorum. Lütfen tekrar deneyin."
@@ -208,7 +212,7 @@ class AgentOrchestrator:
                 iteration,
             )
 
-            result = await self._registry.execute(tool_name, **tool_args)
+            result = await registry.execute(tool_name, context=context, **tool_args)
 
             # Model yanıtını ve tool sonucunu contents'e ekle
             contents.append(candidate.content)
@@ -312,3 +316,23 @@ class AgentOrchestrator:
                 texts.append(part.text)
 
         return "\n".join(texts) if texts else "Yanıt üretilemedi."
+
+    @staticmethod
+    def _is_rate_limit_error(error_text: str) -> bool:
+        """Error mesajının kota veya hız limiti hatası olup olmadığını kontrol eder."""
+        error_text = error_text.upper()
+        indicators = [
+            "429",
+            "QUOTA_EXHAUSTED",
+            "RATE_LIMIT_EXCEEDED",
+            "RESOURCE_EXHAUSTED",
+        ]
+        return any(indicator in error_text for indicator in indicators)
+
+    @staticmethod
+    def _build_rate_limit_reply(error_text: str) -> str:
+        """Kota hatası durumunda kullanıcıya dönülecek dostane mesaj."""
+        return (
+            "AI servisinin kullanım limiti doldu. "
+            "Lütfen kısa süre sonra tekrar deneyin."
+        )

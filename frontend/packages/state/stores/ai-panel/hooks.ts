@@ -40,6 +40,7 @@ export function useAiPanelChatActions(): ChatActions {
   const addOptimisticMessage = useAiPanelChatStore(
     (state) => state.addOptimisticMessage,
   );
+  const removeMessage = useAiPanelChatStore((state) => state.removeMessage);
   const replaceOptimisticMessage = useAiPanelChatStore(
     (state) => state.replaceOptimisticMessage,
   );
@@ -50,6 +51,7 @@ export function useAiPanelChatActions(): ChatActions {
   const setPendingMessage = useAiPanelChatStore(
     (state) => state.setPendingMessage,
   );
+  const clearMessages = useAiPanelChatStore((state) => state.clearMessages);
   const clearChat = useAiPanelChatStore((state) => state.clearChat);
 
   return useMemo(
@@ -57,17 +59,21 @@ export function useAiPanelChatActions(): ChatActions {
       setSessionId,
       ensureSessionId,
       addOptimisticMessage,
+      removeMessage,
       replaceOptimisticMessage,
       appendAssistantMessage,
       setTyping,
       setPendingMessage,
+      clearMessages,
       clearChat,
     }),
     [
       addOptimisticMessage,
       appendAssistantMessage,
+      clearMessages,
       clearChat,
       ensureSessionId,
+      removeMessage,
       replaceOptimisticMessage,
       setPendingMessage,
       setSessionId,

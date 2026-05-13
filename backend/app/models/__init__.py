@@ -15,6 +15,7 @@ from .order_status_history import OrderStatusHistory
 from .shipment import Shipment
 from .shipment_event import ShipmentEvent
 from .conversation import Conversation
+from .conversation_message import ConversationMessage
 from .notification import Notification
 from .audit_log import AuditLog
 
@@ -32,6 +33,7 @@ __all__ = [
     "Shipment",
     "ShipmentEvent",
     "Conversation",
+    "ConversationMessage",
     "Notification",
     "AuditLog",
 ]

@@ -18,7 +18,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Literal
 
-from sqlalchemy import delete, select, text
+from sqlalchemy import delete, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -485,15 +485,51 @@ async def _seed_already_completed(session: AsyncSession) -> bool:
             SELECT 1
             FROM seed_runs
             WHERE seed_name = :seed_name
-              AND version = :version
-              AND checksum = :checksum
               AND status = 'success'
             LIMIT 1
             """
         ),
-        {"seed_name": SEED_NAME, "version": SEED_VERSION, "checksum": SEED_CHECKSUM},
+        {"seed_name": SEED_NAME},
     )
     return result.scalar_one_or_none() is not None
+
+
+async def _database_has_business_data(session: AsyncSession) -> bool:
+    probes = (
+        select(User.id).limit(1),
+        select(Customer.id).limit(1),
+        select(Product.id).limit(1),
+        select(Order.id).limit(1),
+        select(Shipment.id).limit(1),
+    )
+    for probe in probes:
+        result = await session.execute(probe)
+        if result.scalar_one_or_none() is not None:
+            return True
+    return False
+
+
+async def _database_has_seed_fingerprint(session: AsyncSession) -> bool:
+    demo_emails = [person.email for person in PEOPLE]
+    demo_skus = [product.sku for product in PRODUCTS[:5]]
+
+    probes = (
+        select(User.id).where(User.email.in_(demo_emails)).limit(1),
+        select(Product.id).where(Product.sku.in_(demo_skus)).limit(1),
+        select(Order.id).where(Order.order_number.like("KOBI-DEMO-%")).limit(1),
+        select(Shipment.id).where(Shipment.tracking_number.like("KOBI-DEMO-%")).limit(1),
+        select(Notification.id).where(
+            or_(
+                Notification.payload["seed"].as_string() == SEED_NAME,
+                Notification.title.like("%demo%"),
+            )
+        ).limit(1),
+    )
+    for probe in probes:
+        result = await session.execute(probe)
+        if result.scalar_one_or_none() is not None:
+            return True
+    return False
 
 
 async def _record_seed_success(session: AsyncSession, summary: dict[str, int]) -> None:
@@ -1339,8 +1375,16 @@ async def seed_database() -> dict[str, int]:
     async with session_factory() as session:
         async with session.begin():
             if await _seed_already_completed(session):
-                logger.info("Seed daha önce başarıyla çalışmış; tekrar veri yazılmadı.")
-                return {"skipped": 1}
+                logger.info("Seed daha once basariyla calismis; tekrar veri yazilmadi.")
+                return {"skipped": 1, "reason": "already_seeded"}
+
+            has_business_data = await _database_has_business_data(session)
+            has_seed_fingerprint = await _database_has_seed_fingerprint(session)
+            if has_business_data and not has_seed_fingerprint:
+                logger.warning(
+                    "Seed metadata bulunamadi ancak mevcut is verisi tespit edildi; demo seed otomatik olarak atlandi."
+                )
+                return {"skipped": 1, "reason": "existing_business_data"}
 
             users = await _upsert_users_and_addresses(session)
             people_by_email = {person.email: person for person in PEOPLE}

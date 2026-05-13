@@ -25,6 +25,7 @@ export interface ChatActions {
   setSessionId: (sessionId: string | null) => void;
   ensureSessionId: () => string;
   addOptimisticMessage: (message: OptimisticChatMessage) => void;
+  removeMessage: (messageId: string) => void;
   replaceOptimisticMessage: (
     messageId: string,
     nextMessage: OptimisticChatMessage,
@@ -32,6 +33,7 @@ export interface ChatActions {
   appendAssistantMessage: (message: AssistantMessageInput) => void;
   setTyping: (isTyping: boolean) => void;
   setPendingMessage: (message: string) => void;
+  clearMessages: () => void;
   clearChat: () => void;
 }
 

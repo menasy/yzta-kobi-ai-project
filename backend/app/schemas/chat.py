@@ -20,6 +20,7 @@ class ChatMessageRequest(BaseModel):
         ...,
         min_length=1,
         max_length=100,
+        pattern=r"^[a-zA-Z0-9\-_]{1,100}$",
         description="Konuşma oturum ID'si",
     )
     content: str = Field(
@@ -43,6 +44,11 @@ class ChatMessageRequest(BaseModel):
     )
 
 
+class CreateConversationRequest(BaseModel):
+    """POST /chat/conversations isteği."""
+    title: str | None = Field(None, max_length=255, description="Sohbet başlığı (opsiyonel)")
+
+
 # ── Response Schemas ─────────────────────────────────────
 
 
@@ -58,12 +64,15 @@ class ChatResponse(BaseModel):
 
 
 class ConversationResponse(BaseModel):
-    """Konuşma oturumu response."""
+    """Konuşma oturumu response (detaylı)."""
 
     id: int
     session_id: str
+    user_id: int | None = None
     customer_id: int | None = None
-    user_identifier: str | None = None
+    title: str | None = None
+    last_message_preview: str | None = None
+    message_count: int = 0
     channel: str
     status: str
     last_message_at: datetime | None = None
@@ -78,9 +87,30 @@ class ConversationListResponse(BaseModel):
 
     id: int
     session_id: str
+    title: str | None = None
+    last_message_preview: str | None = None
+    message_count: int = 0
     channel: str
     status: str
     last_message_at: datetime | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ConversationMessageResponse(BaseModel):
+    """Tek mesaj response."""
+
+    id: int
+    role: str
+    content: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ConversationWithMessagesResponse(BaseModel):
+    """Konuşma detayı + mesajlar response."""
+
+    conversation: ConversationResponse
+    messages: list[ConversationMessageResponse]

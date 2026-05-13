@@ -13,10 +13,11 @@ import {
   useUser,
 } from "@repo/state/stores/auth";
 import { AppHeader } from "@repo/ui-web";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export function GlobalHeader() {
   const pathname = usePathname();
+  const router = useRouter();
   const user = useUser();
   const isAuthenticated = useIsAuthenticated();
   const isSessionLoading = useIsSessionLoading();
@@ -24,7 +25,8 @@ export function GlobalHeader() {
   const { logout } = useLogout({
     onSuccess: () => {
       clearAuth();
-      window.location.href = "/auth/login";
+      router.replace("/auth/login");
+      router.refresh();
     },
   });
 
@@ -43,9 +45,10 @@ export function GlobalHeader() {
   const logoHref = isAuthenticated
     ? getDefaultPathForRole(userRole)
     : "/";
+  const canReadNotifications = !isSessionLoading && userRole === "admin";
 
   const { unreadCount } = useUnreadNotifications({
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && canReadNotifications,
   });
 
   return (
@@ -64,7 +67,8 @@ export function GlobalHeader() {
       }
       activePathname={pathname}
       onLogout={handleLogout}
-      unreadNotificationCount={unreadCount}
+      showNotifications={canReadNotifications}
+      unreadNotificationCount={canReadNotifications ? unreadCount : 0}
     />
   );
 }

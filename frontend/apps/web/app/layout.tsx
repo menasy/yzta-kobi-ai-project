@@ -4,6 +4,7 @@ import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { Toaster } from "sonner";
+import { isJwtExpired } from "@repo/domain/auth/utils/jwt";
 
 import { Providers } from "@/components/providers";
 
@@ -77,7 +78,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const cookieStore = await cookies();
-  const hasAuthCookie = cookieStore.has("access_token");
+  const accessToken = cookieStore.get("access_token")?.value ?? null;
+  const hasAuthCookie = Boolean(accessToken) && !isJwtExpired(accessToken);
 
   return (
     <html

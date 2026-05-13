@@ -41,6 +41,7 @@ export function useChatActions(): ChatActions {
   const addOptimisticMessage = useChatStore(
     (state) => state.addOptimisticMessage,
   );
+  const removeMessage = useChatStore((state) => state.removeMessage);
   const replaceOptimisticMessage = useChatStore(
     (state) => state.replaceOptimisticMessage,
   );
@@ -49,6 +50,7 @@ export function useChatActions(): ChatActions {
   );
   const setTyping = useChatStore((state) => state.setTyping);
   const setPendingMessage = useChatStore((state) => state.setPendingMessage);
+  const clearMessages = useChatStore((state) => state.clearMessages);
   const clearChat = useChatStore((state) => state.clearChat);
 
   return useMemo(
@@ -56,17 +58,21 @@ export function useChatActions(): ChatActions {
       setSessionId,
       ensureSessionId,
       addOptimisticMessage,
+      removeMessage,
       replaceOptimisticMessage,
       appendAssistantMessage,
       setTyping,
       setPendingMessage,
+      clearMessages,
       clearChat,
     }),
     [
       addOptimisticMessage,
       appendAssistantMessage,
+      clearMessages,
       clearChat,
       ensureSessionId,
+      removeMessage,
       replaceOptimisticMessage,
       setPendingMessage,
       setSessionId,

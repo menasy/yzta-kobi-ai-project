@@ -6,7 +6,10 @@ import {
   isProtectedPath,
   resolveKnownAuthRole,
 } from "@repo/domain/auth/access/policy";
-import { extractAuthRoleFromToken } from "@repo/domain/auth/utils/jwt";
+import {
+  extractAuthRoleFromToken,
+  isJwtExpired,
+} from "@repo/domain/auth/utils/jwt";
 
 /**
  * Next.js Middleware — Route Koruması
@@ -21,13 +24,15 @@ import { extractAuthRoleFromToken } from "@repo/domain/auth/utils/jwt";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const authToken = request.cookies.get("access_token")?.value;
-  const hasAuthCookie = Boolean(authToken);
-  const knownRole = resolveKnownAuthRole(extractAuthRoleFromToken(authToken));
+  const authToken = request.cookies.get("access_token")?.value ?? null;
+  const hasUsableAuthToken = Boolean(authToken) && !isJwtExpired(authToken);
+  const knownRole = hasUsableAuthToken
+    ? resolveKnownAuthRole(extractAuthRoleFromToken(authToken))
+    : null;
   const loginUrl = new URL("/auth/login", request.url);
 
   // Korumalı sayfaya cookie olmadan gelindi → login'e yönlendir
-  if (isProtectedPath(pathname) && !hasAuthCookie) {
+  if (isProtectedPath(pathname) && !hasUsableAuthToken) {
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
   }

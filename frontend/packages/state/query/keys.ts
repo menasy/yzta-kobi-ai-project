@@ -141,6 +141,9 @@ export const queryKeys = {
 
   chat: {
     all: chat.all,
+    conversations: () => chat.scope("conversations"),
+    conversation: (sessionId: string) =>
+      chat.detail("conversation", { sessionId }),
     history: (sessionId?: string) =>
       sessionId
         ? chat.detail("history", { sessionId })

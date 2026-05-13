@@ -1,6 +1,7 @@
 import type { AuthRole } from "../types/auth.types";
 
 export interface AuthTokenClaims {
+  exp?: unknown;
   role?: unknown;
   roles?: unknown;
   user_role?: unknown;
@@ -17,7 +18,16 @@ function decodeBase64Url(value: string): string | null {
   );
 
   try {
-    return atob(padded);
+    if (typeof atob === "function") {
+      return atob(padded);
+    }
+
+    const bufferCtor = (globalThis as { Buffer?: typeof Buffer }).Buffer;
+    if (bufferCtor) {
+      return bufferCtor.from(padded, "base64").toString("utf-8");
+    }
+
+    return null;
   } catch {
     return null;
   }
@@ -81,4 +91,26 @@ export function extractAuthRoleFromToken(
   token?: string | null,
 ): AuthRole | null {
   return extractAuthRoleFromClaims(decodeJwtClaims(token));
+}
+
+export function extractTokenExpiryFromClaims(
+  claims: AuthTokenClaims | null,
+): number | null {
+  if (!claims || typeof claims.exp !== "number" || !Number.isFinite(claims.exp)) {
+    return null;
+  }
+
+  return claims.exp;
+}
+
+export function isJwtExpired(
+  token?: string | null,
+  nowMs: number = Date.now(),
+): boolean {
+  const exp = extractTokenExpiryFromClaims(decodeJwtClaims(token));
+  if (exp === null) {
+    return false;
+  }
+
+  return exp * 1000 <= nowMs;
 }

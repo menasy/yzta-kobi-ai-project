@@ -2,7 +2,7 @@
 # Sipariş sorgulama tool'ları.
 # OrderQueryService üzerinden çalışır — doğrudan repository veya DB session kullanmaz.
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,6 +12,9 @@ from app.services.order_query_service import OrderQueryService
 
 from .base import BaseTool, ToolResult
 
+if TYPE_CHECKING:
+    from app.agent.context import AgentContext
+
 logger = get_logger(__name__)
 
 
@@ -20,28 +23,42 @@ class GetOrderStatusTool(BaseTool):
 
     name = "get_order_status"
     description = (
-        "Verilen sipariş ID'sine göre siparişin durumunu, toplam tutarını ve "
-        "müşteri bilgisini döndürür. Müşteri sipariş numarası veya ID'si ile "
-        "sipariş durumu sorduğunda bu aracı kullan."
+        "Müşteri kendi aktif siparişlerini sorduğunda veya belirli bir "
+        "sipariş ID'sine/numarasına göre siparişin durumunu sorduğunda bu aracı kullan. "
+        "Eğer müşteri sipariş ID'si vermemişse, sadece aracı çağır, müşterinin "
+        "aktif siparişleri listelenecektir."
     )
     parameters = {
         "type": "object",
         "properties": {
             "order_id": {
                 "type": "integer",
-                "description": "Sorgulanacak sipariş ID'si veya numarası.",
+                "description": "Sorgulanacak sipariş ID'si veya numarası. Belirtilmezse müşterinin aktif siparişleri döner.",
             },
         },
-        "required": ["order_id"],
     }
 
     def __init__(self, db: AsyncSession) -> None:
         self._service = OrderQueryService(db)
 
-    async def execute(self, **kwargs: Any) -> ToolResult:
+    async def execute(self, context: "AgentContext", **kwargs: Any) -> ToolResult:
         order_id: int | None = kwargs.get("order_id")
+        
+        # Admin olmayanlar için customer_id zorunluluğu
+        customer_id = context.customer_id if context.role != "admin" else None
+
         if order_id is None:
-            return ToolResult(success=False, error="Sipariş ID'si belirtilmedi.")
+            # Müşteri sipariş ID belirtmeden sordu, kendi aktif siparişlerini getir
+            if customer_id is None:
+                return ToolResult(success=False, error="Sipariş sorgulamak için giriş yapmalısınız.")
+            
+            try:
+                orders = await self._service.get_active_orders_for_customer(customer_id)
+                if not orders:
+                    return ToolResult(success=True, data="Sipariş kaydı bulamadım.")
+                return ToolResult(success=True, data=orders)
+            except AppException as exc:
+                return ToolResult(success=False, error=exc.message)
 
         try:
             order_id = int(order_id)
@@ -49,7 +66,8 @@ class GetOrderStatusTool(BaseTool):
             return ToolResult(success=False, error="Geçersiz sipariş ID'si.")
 
         try:
-            detail = await self._service.get_order_detail(order_id)
+            # Service seviyesinde security enforcement
+            detail = await self._service.get_order_detail(order_id=order_id, customer_id=customer_id)
             return ToolResult(success=True, data=detail)
         except AppException as exc:
             return ToolResult(success=False, error=exc.message)
@@ -77,7 +95,11 @@ class GetOrdersByPhoneTool(BaseTool):
     def __init__(self, db: AsyncSession) -> None:
         self._service = OrderQueryService(db)
 
-    async def execute(self, **kwargs: Any) -> ToolResult:
+    async def execute(self, context: "AgentContext", **kwargs: Any) -> ToolResult:
+        # Güvenlik kontrolü: Sadece admin bu tool'u kullanabilir
+        if context.role != "admin":
+            return ToolResult(success=False, error="Bu bilgiye erişim yetkiniz yok.")
+
         phone: str | None = kwargs.get("phone")
         if not phone:
             return ToolResult(success=False, error="Telefon numarası belirtilmedi.")

@@ -26,6 +26,7 @@ logger = get_logger(__name__)
 if TYPE_CHECKING:
     from app.agent.orchestrator import AgentOrchestrator
     from app.services.auth_service import AuthService
+    from app.services.chat_history_service import ConversationService
     from app.services.customer_support_service import CustomerSupportService
     from app.services.forecasting_service import ForecastEngine
     from app.services.inventory_service import InventoryService
@@ -223,3 +224,10 @@ async def get_agent_orchestrator(db: DBSession) -> AgentOrchestrator:
     from app.agent.orchestrator import AgentOrchestrator
 
     return AgentOrchestrator(db=db, settings=get_settings())
+
+
+async def get_conversation_service(db: DBSession) -> "ConversationService":
+    """ConversationService dependency — kalıcı sohbet geçmişi yönetimi."""
+    from app.services.chat_history_service import ConversationService
+
+    return ConversationService(db=db)

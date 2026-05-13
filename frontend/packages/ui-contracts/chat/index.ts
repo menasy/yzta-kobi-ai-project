@@ -20,4 +20,6 @@ export interface ChatMessageListProps {
 
 export interface ChatWindowProps {
   className?: string;
+  sessionId: string | null;
+  onNewChat?: (newSessionId?: string) => void;
 }

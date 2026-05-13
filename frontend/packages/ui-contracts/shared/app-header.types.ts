@@ -50,6 +50,11 @@ export interface AppHeaderProps {
    * Okunmamış bildirim sayısı (bell icon badge için)
    */
   unreadNotificationCount?: number;
+
+  /**
+   * Bildirim aksiyonunun görünür olup olmayacağı
+   */
+  showNotifications?: boolean;
   
   /**
    * Ekstra class'lar
