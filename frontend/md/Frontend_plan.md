@@ -19,9 +19,8 @@
 9. [API Entegrasyon Katmanı](#9-api-entegrasyon-katmanı)
 10. [Component Mimarisi](#10-component-mimarisi)
 11. [SSR / CSR Hibrit Strateji](#11-ssr--csr-hibrit-strateji)
-12. [i18n — Çoklu Dil Desteği](#12-i18n--çoklu-dil-desteği)
-13. [Geliştirme Yol Haritası — Gün Gün](#13-geliştirme-yol-haritası--gün-gün)
-14. [Geliştirme Kuralları](#14-geliştirme-kuralları)
+12. [Geliştirme Yol Haritası — Gün Gün](#12-geliştirme-yol-haritası--gün-gün)
+13. [Geliştirme Kuralları](#13-geliştirme-kuralları)
 
 ---
 
@@ -159,7 +158,6 @@ apps/web
       → packages/core
           → (dış kütüphaneler)
   → packages/state
-  → packages/i18n
   → packages/theme
   → packages/ui-contracts
 ```
@@ -531,28 +529,6 @@ kobi-agent/
     │   ├── package.json
     │   └── tsconfig.json
     │
-    ├── i18n/                                   # Çoklu dil desteği
-    │   ├── config/
-    │   │   ├── index.ts                        # i18next konfigürasyonu
-    │   │   └── languages.ts                    # Desteklenen diller: tr, en
-    │   ├── locales/
-    │   │   ├── tr/
-    │   │   │   ├── common.json                 # Ortak: butonlar, mesajlar
-    │   │   │   ├── auth.json                   # Giriş, kayıt ekranları
-    │   │   │   ├── chat.json                   # Chat arayüzü
-    │   │   │   ├── orders.json                 # Sipariş ekranları
-    │   │   │   ├── products.json               # Ürün ekranları
-    │   │   │   ├── inventory.json              # Stok ekranları
-    │   │   │   └── shipments.json              # Kargo ekranları
-    │   │   └── en/
-    │   │       └── ... (tr ile aynı yapı)
-    │   ├── utils/
-    │   │   └── getTranslation.ts               # Server Component'ler için çeviri yardımcısı
-    │   ├── types/
-    │   │   └── index.ts                        # TypeScript i18n tipleri
-    │   ├── index.ts
-    │   ├── package.json
-    │   └── tsconfig.json
     │
     ├── ui-contracts/                           # Paylaşılan prop tip sözleşmeleri
     │   │                                       # packages/ui ve apps/web arasındaki köprü
@@ -1581,50 +1557,9 @@ export default function OrdersLoading() {
 
 ---
 
-## 12. i18n — Çoklu Dil Desteği
-
-### Desteklenen Diller
-
-- **Türkçe (tr)** — Varsayılan
-- **İngilizce (en)** — İkincil
-
-### Locale Dosyası Örneği
-
-```json
-// packages/i18n/locales/tr/orders.json
-{
-  "title": "Siparişler",
-  "columns": {
-    "id": "Sipariş No",
-    "customer": "Müşteri",
-    "status": "Durum",
-    "amount": "Tutar",
-    "date": "Tarih"
-  },
-  "status": {
-    "pending":    "Bekliyor",
-    "processing": "Hazırlanıyor",
-    "shipped":    "Kargoda",
-    "delivered":  "Teslim Edildi",
-    "cancelled":  "İptal"
-  },
-  "filters": {
-    "all":      "Tümü",
-    "search":   "Müşteri ara...",
-    "dateRange":"Tarih Aralığı"
-  },
-  "empty": "Henüz sipariş bulunmamaktadır.",
-  "error": "Siparişler yüklenirken hata oluştu."
-}
-```
-
-### Dil Seçici
-
-Kullanıcı dil tercihini değiştirdiğinde Zustand `language.store.ts` güncellenir, URL yeniden yüklenmeden i18next instance değiştirilir.
-
 ---
 
-## 13. Geliştirme Yol Haritası — Gün Gün
+## 12. Geliştirme Yol Haritası — Gün Gün
 
 Backend planıyla paralel ilerler. Backend'in ilgili endpoint'leri hazır olmadan frontend mock data ile çalışır.
 
@@ -1634,7 +1569,7 @@ Backend planıyla paralel ilerler. Backend'in ilgili endpoint'leri hazır olmada
 
 ```
 Adım 1: Monorepo iskeletini oluştur
-  mkdir -p apps/web packages/{core,domain,state,theme,ui,i18n,ui-contracts,typescript-config,eslint-config}
+  mkdir -p apps/web packages/{core,domain,state,theme,ui,ui-contracts,typescript-config,eslint-config}
   pnpm-workspace.yaml yaz
   turbo.json yaz (build, dev, lint, type-check pipeline)
   kök package.json yaz
@@ -1838,15 +1773,11 @@ Adım 30: Dark mode
   AdminHeader'da tema toggle (Moon/Sun icon)
   globals.css .dark class doğru çalışıyor mu?
 
-Adım 31: i18n Türkçe
-  packages/i18n/locales/tr — tüm namespace'ler
-  Tüm hardcode string'leri t('key') ile değiştir
-
-Adım 32: Responsive kontrol
+Adım 31: Responsive kontrol
   Sidebar mobile'da drawer olarak davranıyor mu?
   Tablolar mobile'da scroll ediyor mu?
 
-Adım 33: Son kontrol
+Adım 32: Son kontrol
   pnpm lint — hata yok
   pnpm type-check — TypeScript hata yok
   docker-compose up → backend ayakta → frontend ile E2E test
@@ -1892,7 +1823,7 @@ Adım 33: Son kontrol
 17. API hataları `ApiError` sınıfıyla yakalanır. `key` alanından hatanın türü belirlenir.
 18. 401 hatası geldiğinde `interceptors.ts` otomatik logout yapar; component'ler bu durumu ayrıca işlemek zorunda değildir.
 19. Kullanıcıya gösterilen hata mesajları backend'in `message` alanından gelir. Hardcode hata mesajı kullanılmaz.
-20. Her mutation başarıya veya hataya göre Sonner toast gösterir. Toast kopyası i18n key'den gelir.
+20. Her mutation başarıya veya hataya göre Sonner toast gösterir.
 
 ### Kod Kalitesi
 

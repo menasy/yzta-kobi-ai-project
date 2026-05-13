@@ -72,6 +72,17 @@ class ProductRepository(BaseRepository[Product]):
         )
         return list(result.scalars().all())
 
+    async def get_by_ids_for_update(self, ids: list[int]) -> list[Product]:
+        """Ürün kayıtlarını transaction içinde kilitleyerek getirir."""
+        if not ids:
+            return []
+        result = await self.session.execute(
+            select(Product)
+            .where(Product.id.in_(ids))
+            .with_for_update()
+        )
+        return list(result.scalars().all())
+
     async def count_active(self) -> int:
         """Aktif ürün sayısını döndürür."""
         result = await self.session.execute(

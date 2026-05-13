@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     # Docker dışında çalışırken localhost:6379, içindeyken redis:6379 kullanılır.
     REDIS_URL: str = "redis://localhost:6379/0"
     REDIS_CONVERSATION_TTL: int = 86400  # 24 saat (saniye)
+    AI_PENDING_ACTION_TTL_SECONDS: int = 1200  # 20 dakika
     RATE_LIMIT_CHAT_MAX_REQUESTS: int = 20
     RATE_LIMIT_CHAT_WINDOW_SECONDS: int = 60
     RABBITMQ_URL: str = "amqp://guest:guest@localhost:5672/"

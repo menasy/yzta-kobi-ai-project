@@ -23,13 +23,38 @@ from app.core.logger import get_logger
 from .memory import ConversationMemory
 from .prompts import SYSTEM_PROMPT
 from .tools import ToolRegistry, ToolResult
+from .tools.admin_action_tools import (
+    CancelPendingActionTool,
+    ExecutePendingActionTool,
+    GetAdminPageContextTool,
+    GetLatestPendingActionTool,
+    GetPendingActionTool,
+)
 from .tools.cargo_tools import GetCargoStatusTool
-from .tools.inventory_tools import CheckProductStockTool, GetLowStockReportTool
+from .tools.inventory_action_tools import (
+    CreatePendingInventoryQuantityUpdateTool,
+    CreatePendingInventoryThresholdUpdateTool,
+    GetDeadStockCandidatesTool,
+)
+from .tools.inventory_tools import (
+    CheckProductStockTool,
+    GetLowStockReportTool,
+    GetStockPredictionTool,
+)
+from .tools.notification_action_tools import (
+    CreatePendingNotificationMarkReadTool,
+    GetNotificationRiskSummaryTool,
+)
+from .tools.order_action_tools import (
+    CreatePendingOrderStatusUpdateTool,
+    GetOrderPriorityReportTool,
+)
 from .tools.order_tools import GetOrderStatusTool, GetOrdersByPhoneTool
-
-from app.services.stock_analysis_service import StockAnalysisService
-
-from .tools.inventory_tools import CheckProductStockTool, GetLowStockReportTool, GetStockPredictionTool
+from .tools.product_action_tools import CreatePendingProductPriceUpdateTool
+from .tools.shipment_action_tools import (
+    CreatePendingShipmentRefreshTool,
+    GetShipmentRiskReportTool,
+)
 
 logger = get_logger(__name__)
 
@@ -73,6 +98,21 @@ class AgentOrchestrator:
             registry.register(GetOrdersByPhoneTool(self._db))
             registry.register(GetLowStockReportTool(self._db))
             registry.register(GetStockPredictionTool(self._db))
+            registry.register(GetDeadStockCandidatesTool(self._db))
+            registry.register(GetOrderPriorityReportTool(self._db))
+            registry.register(GetShipmentRiskReportTool(self._db))
+            registry.register(GetNotificationRiskSummaryTool(self._db))
+            registry.register(GetAdminPageContextTool(self._db))
+            registry.register(CreatePendingProductPriceUpdateTool(self._db))
+            registry.register(CreatePendingOrderStatusUpdateTool(self._db))
+            registry.register(CreatePendingInventoryThresholdUpdateTool(self._db))
+            registry.register(CreatePendingInventoryQuantityUpdateTool(self._db))
+            registry.register(CreatePendingShipmentRefreshTool(self._db))
+            registry.register(CreatePendingNotificationMarkReadTool(self._db))
+            registry.register(ExecutePendingActionTool(self._db))
+            registry.register(CancelPendingActionTool())
+            registry.register(GetPendingActionTool())
+            registry.register(GetLatestPendingActionTool())
 
         return registry
 

@@ -48,8 +48,10 @@ class InventoryQueryService:
 
         return {
             "found": True,
+            "product_id": product.id,
             "product_name": product.name,
             "sku": product.sku,
+            "current_price": float(product.price),
             "quantity": inventory.quantity,
             "available_quantity": inventory.available_quantity,
             "low_stock_threshold": inventory.low_stock_threshold,
@@ -68,8 +70,10 @@ class InventoryQueryService:
 
         return [
             {
+                "product_id": item.product_id,
                 "product_name": item.product.name if item.product else f"Ürün #{item.product_id}",
                 "sku": item.product.sku if item.product else None,
+                "current_price": float(item.product.price) if item.product else None,
                 "quantity": item.quantity,
                 "threshold": item.low_stock_threshold,
                 "deficit": item.low_stock_threshold - item.quantity,

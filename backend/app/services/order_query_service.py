@@ -9,6 +9,7 @@ from app.core.exceptions import NotFoundError
 from app.core.logger import get_logger
 from app.repositories.customer_repository import CustomerRepository
 from app.repositories.order_repository import OrderRepository
+from app.repositories.shipment_repository import ShipmentRepository
 from app.repositories.user_repository import UserRepository
 
 logger = get_logger(__name__)
@@ -23,6 +24,7 @@ class OrderQueryService:
     def __init__(self, db: AsyncSession) -> None:
         self._order_repo = OrderRepository(db)
         self._customer_repo = CustomerRepository(db)
+        self._shipment_repo = ShipmentRepository(db)
         self._user_repo = UserRepository(db)
 
     async def get_order_detail(self, order_id: int, customer_id: int | None = None) -> dict:
@@ -76,23 +78,8 @@ class OrderQueryService:
         """
         Verilen takip numarasının bu müşterinin bir siparişine ait olup olmadığını kontrol eder.
         """
-        # SQLAlchemy ile takip numarasını kullanan gönderiyi (shipment) arayıp siparişe gidebiliriz.
-        # OrderQueryService'in db session'ına erişimi var.
-        from sqlalchemy import select
-        from app.models.shipment import Shipment
-        from app.models.order import Order
-        
-        stmt = (
-            select(Shipment)
-            .join(Order, Shipment.order_id == Order.id)
-            .where(Shipment.tracking_number == tracking_number)
-            .where(Order.customer_id == customer_id)
-        )
-        
-        result = await self._order_repo._db.execute(stmt)
-        shipment = result.scalar_one_or_none()
-        
-        return shipment is not None
+        shipment = await self._shipment_repo.get_by_tracking_with_events(tracking_number)
+        return shipment is not None and shipment.order is not None and shipment.order.customer_id == customer_id
 
     async def get_orders_by_phone(self, phone: str, limit: int = 5) -> list[dict]:
         """

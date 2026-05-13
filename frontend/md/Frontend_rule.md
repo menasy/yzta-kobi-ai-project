@@ -6,7 +6,7 @@ Sen, Next.js 15 (App Router) tabanlı, SSR-first yaklaşım benimseyen, monorepo
 
 ## Proje Bağlamı
 
-Bu proje KOBİ'ler için yapay zeka destekli bir operasyon platformudur. `apps/web` (Next.js) ve `packages/` (core, domain, state, theme, ui, i18n, ui-contracts) katmanlarından oluşan bir monorepo yapısına sahiptir. FRONTEND_PLAN.md tüm mimari kararları, teknoloji seçimlerini ve geliştirme kurallarını detaylıca açıklar; her işlemden önce bu dosyayı referans al.
+Bu proje KOBİ'ler için yapay zeka destekli bir operasyon platformudur. `apps/web` (Next.js) ve `packages/` (core, domain, state, theme, ui, ui-contracts) katmanlarından oluşan bir monorepo yapısına sahiptir. FRONTEND_PLAN.md tüm mimari kararları, teknoloji seçimlerini ve geliştirme kurallarını detaylıca açıklar; her işlemden önce bu dosyayı referans al.
 
 ---
 
@@ -127,7 +127,7 @@ Tüm domain API çağrıları aşağıdaki akışı izler. Endpoint ve token man
 
 Sen, Next.js (App Router) tabanlı, modern frontend mimarilerinde uzman, monorepo (Turborepo + pnpm), Zustand, TanStack Query design system konularında deneyimli kıdemli bir frontend mimarı ve geliştiricisin. Tüm kararlarını bu uzmanlık doğrultusunda, production-grade kaliteyi hedefleyerek ver.
 
-Öncelikle mevcut proje yapısını dikkatlice ve bütünsel olarak analiz et. Geliştirme yapmadan önce md  dosyalarını plan ve rule oku  tüm proje akışı açıklanmakta; bu dosyayı mutlaka analiz et. Projenin mimarisini, veri akışını, state yönetimini, query yapısını, responsive sistemini, tema yapısını, dosya organizasyonunu, genel klasör mimarisini ve i18n sistemini tam olarak anlayarak hareket et.
+Öncelikle mevcut proje yapısını dikkatlice ve bütünsel olarak analiz et. Geliştirme yapmadan önce md  dosyalarını plan ve rule oku  tüm proje akışı açıklanmakta; bu dosyayı mutlaka analiz et. Projenin mimarisini, veri akışını, state yönetimini, query yapısını, responsive sistemini, tema yapısını, dosya organizasyonunu, genel klasör mimarisini tam olarak anlayarak hareket et.
 
 Yapılacak her değişiklik mevcut proje yapısı, mimari kararlar ve sistem akışı ile tamamen uyumlu olmalı; hiçbir değişiklik var olan akışı, dosya yapısını veya mimari bütünlüğü bozmamalıdır.
 
@@ -138,7 +138,7 @@ Büyük veriler yanlış yerde tutulmamalı
 Server state ile client state birbirine karıştırılmamalı
 Query cache kontrollü ve bilinçli yönetilmeli
 SSR mümkün olan her yerde korunmalı
-Mevcut monorepo mimarisi, Zustand, React Query, i18n, tema ve responsive sistem bozulmamalı
+- Mevcut monorepo mimarisi, Zustand, React Query, tema ve responsive sistem bozulmamalı
 
 ## Rota ve Erişim Yetkileri (Access Matrix)
 

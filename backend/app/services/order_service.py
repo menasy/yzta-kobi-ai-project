@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import BadRequestError, ForbiddenError, NotFoundError
+from app.core.exceptions import BadRequestError, ConflictError, ForbiddenError, NotFoundError
 from app.core.logger import get_logger
 from app.models.product import Product
 from app.models.user import User
@@ -33,6 +33,13 @@ logger = get_logger(__name__)
 MAX_ORDER_ITEM_QUANTITY = 10000
 DASHBOARD_TIMEZONE = ZoneInfo("Europe/Istanbul")
 WEEKDAY_LABELS_TR = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
+ORDER_STATUS_TRANSITIONS = {
+    "pending": {"processing", "cancelled"},
+    "processing": {"shipped", "cancelled"},
+    "shipped": {"delivered"},
+    "delivered": set(),
+    "cancelled": set(),
+}
 
 
 class OrderService:
@@ -147,6 +154,17 @@ class OrderService:
             raise NotFoundError(message=f"{order_id} numaralı sipariş bulunamadı.")
         return AdminOrderResponse.model_validate(order)
 
+    async def get_admin_order_detail_by_number(self, order_number: str) -> AdminOrderResponse:
+        """Admin için sipariş numarasıyla sipariş detayını getirir."""
+        order = await self._order_repo.get_by_order_number_public(order_number)
+        if order is None:
+            raise NotFoundError(message=f"{order_number} numaralı sipariş bulunamadı.")
+
+        detailed = await self._order_repo.get_admin_order_by_id(order.id)
+        if detailed is None:
+            raise NotFoundError(message=f"{order_number} numaralı sipariş bulunamadı.")
+        return AdminOrderResponse.model_validate(detailed)
+
     async def update_order_status(
         self,
         order_id: int,
@@ -154,11 +172,35 @@ class OrderService:
         changed_by_user: User,
     ) -> AdminOrderResponse:
         """Admin sipariş status güncelleme akışını yönetir."""
+        return await self.update_order_status_by_user_id(
+            order_id=order_id,
+            payload=payload,
+            changed_by_user_id=changed_by_user.id,
+        )
+
+    async def update_order_status_by_user_id(
+        self,
+        order_id: int,
+        payload: OrderStatusUpdate,
+        changed_by_user_id: int,
+        *,
+        expected_old_status: str | None = None,
+    ) -> AdminOrderResponse:
+        """Admin sipariş status güncelleme akışını user_id ile yönetir."""
         order = await self._order_repo.get(order_id)
         if order is None:
             raise NotFoundError(message=f"{order_id} numaralı sipariş bulunamadı.")
 
         old_status = order.status
+        if expected_old_status is not None and old_status != expected_old_status:
+            raise ConflictError(
+                message=(
+                    f"Sipariş durumu bekleyen aksiyon oluşturulduktan sonra değişmiş "
+                    f"({expected_old_status} → {old_status}). Lütfen tekrar onay oluşturun."
+                )
+            )
+        self.validate_status_transition(old_status, payload.status)
+
         updated = await self._order_repo.update_order_status(order_id, payload.status)
         if updated is None:
             raise NotFoundError(message=f"{order_id} numaralı sipariş bulunamadı.")
@@ -169,7 +211,7 @@ class OrderService:
                     "order_id": order_id,
                     "old_status": old_status,
                     "new_status": payload.status,
-                    "changed_by_user_id": changed_by_user.id,
+                    "changed_by_user_id": changed_by_user_id,
                     "reason": payload.reason,
                 }
             )
@@ -186,10 +228,18 @@ class OrderService:
                 "order_id": order_id,
                 "old_status": old_status,
                 "new_status": payload.status,
-                "changed_by_user_id": changed_by_user.id,
+                "changed_by_user_id": changed_by_user_id,
             },
         )
         return AdminOrderResponse.model_validate(detailed_order)
+
+    async def get_product_sales_since(
+        self,
+        product_ids: list[int],
+        since: datetime,
+    ) -> dict[int, int]:
+        """Ürün bazlı satış miktarlarını döndürür."""
+        return await self._order_repo.get_product_sales_since(product_ids, since)
 
     async def _sync_shipment_status(self, order_id: int, new_order_status: str) -> None:
         """Sipariş durumu değişince ilişkili kargo kaydını senkronize eder."""
@@ -351,6 +401,20 @@ class OrderService:
             return validate_status(status, ORDER_STATUSES, "sipariş durumu")
         except ValueError as exc:
             raise BadRequestError(message=str(exc)) from exc
+
+    def validate_status_transition(self, old_status: str, new_status: str) -> None:
+        """Sipariş status geçişinin iş kuralına uygunluğunu kontrol eder."""
+        if old_status == new_status:
+            return
+        allowed = ORDER_STATUS_TRANSITIONS.get(old_status, set())
+        if new_status not in allowed:
+            allowed_text = ", ".join(sorted(allowed)) or "geçiş yok"
+            raise ConflictError(
+                message=(
+                    f"Sipariş durumu '{old_status}' durumundan '{new_status}' durumuna "
+                    f"geçirilemez. İzin verilen geçişler: {allowed_text}."
+                )
+            )
 
     def _generate_order_number(self) -> str:
         today = datetime.now(tz=UTC).strftime("%Y%m%d")

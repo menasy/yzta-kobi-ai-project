@@ -8,7 +8,7 @@ from collections.abc import Mapping
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import InsufficientStockError, NotFoundError
+from app.core.exceptions import BadRequestError, ConflictError, InsufficientStockError, NotFoundError
 from app.core.logger import get_logger
 from app.models.inventory import Inventory
 from app.models.product import Product
@@ -46,6 +46,10 @@ class InventoryService:
         *,
         quantity: int | None = None,
         low_stock_threshold: int | None = None,
+        expected_quantity: int | None = None,
+        expected_low_stock_threshold: int | None = None,
+        created_by_user_id: int | None = None,
+        reason: str | None = None,
     ) -> Inventory:
         """
         Stok miktarı ve/veya eşik değerini günceller.
@@ -61,10 +65,48 @@ class InventoryService:
         if inventory is None:
             raise NotFoundError(message=f"Ürün #{product_id} için stok kaydı bulunamadı.")
 
+        if expected_quantity is not None and inventory.quantity != expected_quantity:
+            raise ConflictError(
+                message=(
+                    f"Ürün #{product_id} stok miktarı bekleyen aksiyon oluşturulduktan sonra değişmiş "
+                    f"({expected_quantity} → {inventory.quantity}). Lütfen tekrar onay oluşturun."
+                )
+            )
+        if (
+            expected_low_stock_threshold is not None
+            and inventory.low_stock_threshold != expected_low_stock_threshold
+        ):
+            raise ConflictError(
+                message=(
+                    f"Ürün #{product_id} düşük stok eşiği bekleyen aksiyon oluşturulduktan sonra değişmiş "
+                    f"({expected_low_stock_threshold} → {inventory.low_stock_threshold}). "
+                    "Lütfen tekrar onay oluşturun."
+                )
+            )
+        if quantity is not None and quantity < 0:
+            raise BadRequestError(message="Stok miktarı negatif olamaz.")
+        if low_stock_threshold is not None and low_stock_threshold < 0:
+            raise BadRequestError(message="Düşük stok eşiği negatif olamaz.")
+
+        previous_quantity = inventory.quantity
         if quantity is not None:
             inventory.quantity = quantity
         if low_stock_threshold is not None:
             inventory.low_stock_threshold = low_stock_threshold
+
+        if quantity is not None and quantity != previous_quantity:
+            await self._movement_repo.create(
+                {
+                    "product_id": product_id,
+                    "order_id": None,
+                    "movement_type": "adjustment",
+                    "quantity_change": quantity - previous_quantity,
+                    "previous_quantity": previous_quantity,
+                    "new_quantity": quantity,
+                    "reason": reason or "Manuel stok güncellemesi",
+                    "created_by_user_id": created_by_user_id,
+                }
+            )
 
         await self._db.flush()
         await self._db.refresh(inventory)

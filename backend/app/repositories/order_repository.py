@@ -276,3 +276,27 @@ class OrderRepository(BaseRepository[Order]):
             (day, float(revenue), order_count)
             for day, revenue, order_count in result.all()
         ]
+
+    async def get_product_sales_since(
+        self,
+        product_ids: list[int],
+        since: datetime,
+    ) -> dict[int, int]:
+        """Verilen ürünler için tarihten sonra satılan miktarları döndürür."""
+        if not product_ids:
+            return {}
+
+        result = await self.session.execute(
+            select(
+                OrderItem.product_id,
+                func.coalesce(func.sum(OrderItem.quantity), 0),
+            )
+            .join(Order, Order.id == OrderItem.order_id)
+            .where(
+                OrderItem.product_id.in_(product_ids),
+                Order.placed_at >= since,
+                Order.status != "cancelled",
+            )
+            .group_by(OrderItem.product_id)
+        )
+        return {int(product_id): int(quantity) for product_id, quantity in result.all()}

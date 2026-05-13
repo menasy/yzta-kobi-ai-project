@@ -14,8 +14,6 @@
       "@repo/theme/*": ["../../packages/theme/*"],
       "@repo/ui-web": ["../../packages/ui-web/index.ts"],
       "@repo/ui-web/*": ["../../packages/ui-web/*"],
-      "@repo/i18n": ["../../packages/i18n/index.ts"],
-      "@repo/i18n/*": ["../../packages/i18n/*"],
       "@repo/ui-contracts": ["../../packages/ui-contracts/index.ts"],
       "@repo/ui-contracts/*": ["../../packages/ui-contracts/*"]
     },

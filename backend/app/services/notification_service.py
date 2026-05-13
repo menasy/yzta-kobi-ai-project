@@ -169,6 +169,20 @@ class NotificationService:
             raise NotFoundError(message=f"{notification_id} numaralı bildirim bulunamadı.")
         return notification
 
+    async def mark_many_read(self, notification_ids: list[int]) -> int:
+        """Birden fazla bildirimi okundu olarak işaretler."""
+        unique_ids = sorted(set(notification_ids))
+        if not unique_ids:
+            return 0
+
+        updated_count = 0
+        for notification_id in unique_ids:
+            notification = await self._repo.mark_as_read(notification_id)
+            if notification is None:
+                raise NotFoundError(message=f"{notification_id} numaralı bildirim bulunamadı.")
+            updated_count += 1
+        return updated_count
+
     async def mark_all_read(self) -> int:
         """Tüm okunmamış bildirimleri okundu olarak işaretler."""
         return await self._repo.mark_all_as_read()

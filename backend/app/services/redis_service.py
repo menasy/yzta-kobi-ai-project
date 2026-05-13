@@ -23,6 +23,11 @@ class RedisService:
         client = await self._get_client()
         await client.delete(key)
 
+    async def list_keys(self, pattern: str) -> list[str]:
+        """Pattern ile eşleşen key'leri SCAN kullanarak listeler."""
+        client = await self._get_client()
+        return [key async for key in client.scan_iter(match=pattern)]
+
     async def incr_with_expire(self, key: str, expire: int) -> int:
         """
         Anahtar değerini artırır; sayaç ilk kez oluştuysa TTL set eder.

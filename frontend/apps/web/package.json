@@ -13,7 +13,6 @@
     "@hookform/resolvers": "^5.2.2",
     "@repo/core": "workspace:*",
     "@repo/domain": "workspace:*",
-    "@repo/i18n": "workspace:*",
     "@repo/state": "workspace:*",
     "@repo/theme": "workspace:*",
     "@repo/ui-contracts": "workspace:*",

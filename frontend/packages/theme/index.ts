@@ -28,9 +28,3 @@ export type { ShadowKey } from "./shadows";
 
 export { radius } from "./radius";
 export type { RadiusKey } from "./radius";
-
-export { density } from "./density";
-export type { DensityKey } from "./density";
-
-export { layout } from "./layout";
-export type { LayoutKey } from "./layout";
