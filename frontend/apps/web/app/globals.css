@@ -1,0 +1,199 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  TÜM RENKLER SADECE BURADAN GELİR.                                  │
+  │  Hiçbir component Tailwind renk skalasını (red-500, blue-600 vb.)   │
+  │  doğrudan kullanamaz. Yalnızca aşağıdaki CSS değişkenleri kullanılır.│
+  │  Yeni renk ihtiyacında: önce buraya ekle, sonra tailwind.config.ts. │
+  └─────────────────────────────────────────────────────────────────────┘
+*/
+
+@layer base {
+  :root {
+    /* ── Arkaplan katmanları ─────────────────────────────────────────── */
+    --background:           0 0% 100%;
+    --background-muted:     0 0% 96%;
+
+    /* ── Metin ───────────────────────────────────────────────────────── */
+    --foreground:           0 0% 9%;
+    --muted-foreground:     0 0% 45%;
+
+    /* ── Kart / Popover ──────────────────────────────────────────────── */
+    --card:                 0 0% 100%;
+    --card-foreground:      0 0% 9%;
+    --popover:              0 0% 100%;
+    --popover-foreground:   0 0% 9%;
+
+    /* ── Marka (Primary) — koyu yeşil-mavi teal ──────────────────────── */
+    --primary:              174 46% 35%;
+    --primary-foreground:   0 0% 100%;
+
+    /* ── İkincil ─────────────────────────────────────────────────────── */
+    --secondary:            0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+
+    /* ── Pasif / Muted ───────────────────────────────────────────────── */
+    --muted:                0 0% 96%;
+
+    /* ── Vurgu ───────────────────────────────────────────────────────── */
+    --accent:               174 30% 90%;
+    --accent-foreground:    174 46% 25%;
+
+    /* ── Tehlike / Hata ──────────────────────────────────────────────── */
+    --destructive:          0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* ── Başarı ──────────────────────────────────────────────────────── */
+    --success:              142 71% 45%;
+    --success-foreground:   0 0% 100%;
+
+    /* ── Uyarı ───────────────────────────────────────────────────────── */
+    --warning:              38 92% 50%;
+    --warning-foreground:   0 0% 9%;
+
+    /* ── Form / Input ────────────────────────────────────────────────── */
+    --border:               0 0% 90%;
+    --input:                0 0% 90%;
+    --ring:                 174 46% 35%;
+
+    /* ── Radius ──────────────────────────────────────────────────────── */
+    --radius:               0.5rem;
+
+    /* ── Dashboard grafik renkleri (Recharts) ────────────────────────── */
+    --chart-1:              174 46% 35%;
+    --chart-2:              38 92% 50%;
+    --chart-3:              0 72% 51%;
+    --chart-4:              142 71% 45%;
+    --chart-5:              0 0% 45%;
+
+    /* ── Sidebar ─────────────────────────────────────────────────────── */
+    --sidebar-background:          0 0% 98%;
+    --sidebar-foreground:          0 0% 22%;
+    --sidebar-primary:             174 46% 35%;
+    --sidebar-primary-foreground:  0 0% 100%;
+    --sidebar-accent:              174 30% 92%;
+    --sidebar-accent-foreground:   174 46% 25%;
+    --sidebar-border:              0 0% 90%;
+    --sidebar-ring:                174 46% 35%;
+
+    /* ── Responsive Spacing (Fluid) ──────────────────────────────────── */
+    --space-page-x:         clamp(1rem, 3vw, 2rem);
+    --space-page-y:         clamp(1.5rem, 4vw, 3rem);
+    --space-section-y:      clamp(2rem, 5vw, 4rem);
+    --space-card:           clamp(1rem, 2vw, 1.5rem);
+    --space-compact-card:   clamp(0.75rem, 1.5vw, 1rem);
+    --space-panel-gap:      clamp(1rem, 2vw, 1.5rem);
+
+    /* ── Responsive Typography (Fluid) ───────────────────────────────── */
+    --text-display:         clamp(2.5rem, 5vw + 1rem, 4.5rem);
+    --text-page-title:      clamp(1.875rem, 4vw + 0.5rem, 3rem);
+    --text-section-title:   clamp(1.5rem, 3vw + 0.5rem, 2.25rem);
+    --text-card-title:      clamp(1.125rem, 2vw + 0.5rem, 1.5rem);
+    --text-body:            clamp(0.875rem, 1vw + 0.5rem, 1rem);
+    --text-caption:         clamp(0.75rem, 0.8vw + 0.5rem, 0.875rem);
+  }
+
+  .dark {
+    /* ── Arkaplan katmanları ─────────────────────────────────────────── */
+    --background:           0 0% 4%;
+    --background-muted:     0 0% 9%;
+
+    /* ── Metin ───────────────────────────────────────────────────────── */
+    --foreground:           0 0% 98%;
+    --muted-foreground:     0 0% 64%;
+
+    /* ── Kart / Popover ──────────────────────────────────────────────── */
+    --card:                 0 0% 9%;
+    --card-foreground:      0 0% 98%;
+    --popover:              0 0% 9%;
+    --popover-foreground:   0 0% 98%;
+
+    /* ── Marka (Primary) — dark'ta daha parlak teal ──────────────────── */
+    --primary:              174 48% 46%;
+    --primary-foreground:   0 0% 4%;
+
+    /* ── İkincil ─────────────────────────────────────────────────────── */
+    --secondary:            0 0% 15%;
+    --secondary-foreground: 0 0% 98%;
+
+    /* ── Pasif / Muted ───────────────────────────────────────────────── */
+    --muted:                0 0% 15%;
+
+    /* ── Vurgu ───────────────────────────────────────────────────────── */
+    --accent:               174 20% 18%;
+    --accent-foreground:    174 48% 70%;
+
+    /* ── Tehlike / Hata ──────────────────────────────────────────────── */
+    --destructive:          0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* ── Başarı ──────────────────────────────────────────────────────── */
+    --success:              142 60% 40%;
+    --success-foreground:   0 0% 100%;
+
+    /* ── Uyarı ───────────────────────────────────────────────────────── */
+    --warning:              38 80% 45%;
+    --warning-foreground:   0 0% 4%;
+
+    /* ── Form / Input ────────────────────────────────────────────────── */
+    --border:               0 0% 22%;
+    --input:                0 0% 22%;
+    --ring:                 174 48% 46%;
+
+    /* ── Dashboard grafik renkleri (dark) ────────────────────────────── */
+    --chart-1:              174 48% 46%;
+    --chart-2:              38 80% 50%;
+    --chart-3:              0 65% 55%;
+    --chart-4:              142 55% 45%;
+    --chart-5:              0 0% 64%;
+
+    /* ── Sidebar (dark) ──────────────────────────────────────────────── */
+    --sidebar-background:          0 0% 6%;
+    --sidebar-foreground:          0 0% 83%;
+    --sidebar-primary:             174 48% 46%;
+    --sidebar-primary-foreground:  0 0% 4%;
+    --sidebar-accent:              174 20% 12%;
+    --sidebar-accent-foreground:   174 48% 70%;
+    --sidebar-border:              0 0% 15%;
+    --sidebar-ring:                174 48% 46%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Scroll bar stillendirme */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground;
+  }
+
+  /* Focus ring tutarlılığı */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+}

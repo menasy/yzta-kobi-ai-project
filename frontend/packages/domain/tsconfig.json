@@ -1,0 +1,14 @@
+{
+  "extends": "@repo/typescript-config/base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "dom", "dom.iterable"],
+    "baseUrl": ".",
+    "paths": {
+      "@repo/state/query": ["../state/query/index.ts"]
+    }
+  },
+  "include": ["."],
+  "exclude": ["dist", "node_modules"]
+}

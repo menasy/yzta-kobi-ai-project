@@ -1,0 +1,21 @@
+{
+  "name": "@repo/theme",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./tokens": "./tokens.ts",
+    "./semantic": "./semantic.ts",
+    "./typography": "./typography.ts",
+    "./spacing": "./spacing.ts",
+    "./breakpoints": "./breakpoints.ts",
+    "./shadows": "./shadows.ts",
+    "./radius": "./radius.ts"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "^5.7.3"
+  }
+}

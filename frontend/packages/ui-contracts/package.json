@@ -1,0 +1,20 @@
+{
+  "name": "@repo/ui-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./chat": "./chat/chat.types.ts",
+    "./dashboard": "./dashboard/dashboard.types.ts",
+    "./orders": "./orders/order-table.types.ts",
+    "./inventory": "./inventory/inventory.types.ts",
+    "./shipments": "./shipments/shipment.types.ts",
+    "./shared/*": "./shared/*"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "^5.7.3"
+  }
+}

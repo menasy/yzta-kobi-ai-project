@@ -1,0 +1,41 @@
+{
+  "name": "@repo/domain",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./auth": "./auth/index.ts",
+    "./auth/*": "./auth/*",
+    "./chat": "./chat/index.ts",
+    "./chat/*": "./chat/*",
+    "./orders": "./orders/index.ts",
+    "./orders/*": "./orders/*",
+    "./products": "./products/index.ts",
+    "./products/*": "./products/*",
+    "./inventory": "./inventory/index.ts",
+    "./inventory/*": "./inventory/*",
+    "./shipments": "./shipments/index.ts",
+    "./shipments/*": "./shipments/*",
+    "./customer": "./customer/index.ts",
+    "./customer/*": "./customer/*",
+    "./notifications": "./notifications/index.ts",
+    "./notifications/*": "./notifications/*",
+    "./health": "./health/index.ts",
+    "./health/*": "./health/*",
+    "./clients/*": "./clients/*"
+  },
+  "dependencies": {
+    "@repo/core": "workspace:*",
+    "@repo/state": "workspace:*",
+    "@tanstack/react-query": "^5.90.0",
+    "zod": "^3.24.3"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/react": "^19.1.4",
+    "react": "^19.1.0",
+    "typescript": "^5.7.3"
+  }
+}

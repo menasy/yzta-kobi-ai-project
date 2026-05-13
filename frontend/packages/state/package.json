@@ -1,0 +1,29 @@
+{
+  "name": "@repo/state",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./query": "./query/index.ts",
+    "./query/client": "./query/client.ts",
+    "./query/keys": "./query/keys.ts",
+    "./query/provider": "./query/provider.tsx",
+    "./stores": "./stores/index.ts",
+    "./stores/auth": "./stores/auth/index.ts",
+    "./stores/chat": "./stores/chat/index.ts",
+    "./stores/theme": "./stores/theme/theme.store.ts",
+    "./stores/ui": "./stores/ui/index.ts"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.0",
+    "zustand": "^5.0.4"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/react": "^19.1.4",
+    "react": "^19.1.0",
+    "typescript": "^5.7.3"
+  }
+}
