@@ -33,3 +33,6 @@ api_router.include_router(orders.router, prefix="/orders", tags=["Sipariş Yöne
 api_router.include_router(shipments.router, prefix="/shipments", tags=["Sevkiyat Yönetimi"])
 
 api_router.include_router(inventory.router, prefix="/inventory", tags=["Inventory Analysis"])
+
+
+api_router.include_router(inventory.router, prefix="/inventory", tags=["inventory"])

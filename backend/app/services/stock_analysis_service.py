@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.inventory_movement import InventoryMovement
 from app.core.exceptions import BadRequestError, NotFoundError, OptionalDependencyError
 from app.repositories.inventory_repository import InventoryRepository
 from app.repositories.product_repository import ProductRepository
@@ -11,7 +12,8 @@ from app.schemas.forecast import (
     MarketSimulationResponse,
     StockAnalysisResponse,
 )
-
+from datetime import datetime, timedelta
+from sqlalchemy import select, func
 
 class StockAnalysisService:
     """Tahminleme destekli stok sağlık analizi servisi."""
@@ -163,3 +165,75 @@ class StockAnalysisService:
             risky_products=simulation_results,
             summary=f"Bu senaryoda {len(simulation_results)} ürün risk altına giriyor.",
         )
+    
+
+    async def get_stock_forecast_graph(self, product_id: int) -> list[dict]:
+        """Frontend grafiği için geçmiş stok hareketlerini ve gelecek tahminlerini birleştirir."""
+        
+        # 1. Hazırlık
+        today = datetime.now().date()
+        seven_days_ago = today - timedelta(days=7)
+        
+        # 2. Mevcut Stok ve Ürün Kontrolü
+        product = await self._product_repo.get(product_id)
+        if not product:
+            raise NotFoundError(message="Ürün bulunamadı.")
+        
+        current_qty = await self.get_current_stock(product_id)
+
+        # 3. Geçmiş Verileri Çek (inventory_movements tablosundan)
+        query = (
+            select(
+                func.date(InventoryMovement.created_at).label("date"),
+                func.avg(InventoryMovement.new_quantity).label("daily_stock")
+            )
+            .filter(
+                InventoryMovement.product_id == product_id,
+                InventoryMovement.created_at >= seven_days_ago
+            )
+            .group_by(func.date(InventoryMovement.created_at))
+            .order_by("date")
+        )
+        
+        result = await self._inventory_repo.session.execute(query)
+        history = result.all()
+
+        final_data = []
+
+        # 4. Geçmişi Formatla (Actual)
+        for row in history:
+            final_data.append({
+                "date": row.date.strftime("%Y-%m-%d"),
+                "actual": float(row.daily_stock),
+                "forecast": None
+            })
+
+        # 5. Gelecek Tahminlerini Al (Mevcut ForecastEngine'i kullanarak)
+        try:
+            forecasts = await self._get_forecast_engine().predict_next_week(product_id)
+            
+            # Köprü Noktası: Bugünün verisini forecast'e de ekle ki çizgi birleşsin
+            if final_data and final_data[-1]["date"] == today.strftime("%Y-%m-%d"):
+                final_data[-1]["forecast"] = float(current_qty)
+            else:
+                final_data.append({
+                    "date": today.strftime("%Y-%m-%d"),
+                    "actual": float(current_qty),
+                    "forecast": float(current_qty)
+                })
+
+            # Tahminleri Ekle
+            for i, f in enumerate(forecasts[:5]): # Sonraki 5 gün
+                future_date = today + timedelta(days=i+1)
+                # Basit bir azaltma mantığı: Mevcut stoktan tahmin edilen talepleri çıkararak ilerle
+                current_qty -= f.estimated_sales
+                final_data.append({
+                    "date": future_date.strftime("%Y-%m-%d"),
+                    "actual": None,
+                    "forecast": max(0, round(float(current_qty), 2))
+                })
+        except Exception:
+            # Tahmin motoru hata verirse en azından geçmişi döndür
+            pass
+
+        return final_data
