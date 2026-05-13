@@ -47,8 +47,8 @@ from app.models import (
 )
 
 SEED_NAME = "kobi_demo_seed"
-SEED_VERSION = "2026-05-13.1"
-SEED_CHECKSUM = "kobi-demo-seed-v1"
+SEED_VERSION = "2026-05-13.light.1"
+SEED_CHECKSUM = "kobi-demo-light-seed-v1"
 DEFAULT_PASSWORD = os.getenv("SEED_DEMO_PASSWORD", "Demo12345!")
 ADMIN_EMAIL = os.getenv("SEED_ADMIN_EMAIL", "admin@kobi.local")
 ADMIN_PASSWORD = os.getenv("SEED_ADMIN_PASSWORD", "Admin123!")
@@ -102,15 +102,17 @@ class OrderSeed:
 
 
 PRODUCTS: tuple[ProductSeed, ...] = (
+    # 8 product types only: enough to cover critical stock, low stock, normal stock,
+    # fast-selling, dead-stock, high-ticket/B2B and shipment/order demo scenarios.
     ProductSeed(
-        "Hatay Zahterli Nane 100 g",
-        "GDA-NANE-100",
-        "Kurutulmuş nane ve zahter aromasıyla yöresel baharat karışımı.",
-        Decimal("135.00"),
+        "Soğuk Sıkım Zeytinyağı 750 ml",
+        "GDA-ZYT-750",
+        "Ege zeytinlerinden düşük asitli, cam şişede naturel sızma zeytinyağı.",
+        Decimal("432.00"),
         "Gıda",
-        "/product/nane.webp",
-        18,
-        12,
+        "/product/zeytin-yagi.jpg",
+        0,
+        6,
     ),
     ProductSeed(
         "Acı Pul Biber 250 g",
@@ -129,28 +131,8 @@ PRODUCTS: tuple[ProductSeed, ...] = (
         Decimal("187.50"),
         "Gıda",
         "/product/recel.webp",
-        31,
+        22,
         8,
-    ),
-    ProductSeed(
-        "Soğuk Sıkım Zeytinyağı 750 ml",
-        "GDA-ZYT-750",
-        "Ege zeytinlerinden düşük asitli, cam şişede naturel sızma zeytinyağı.",
-        Decimal("432.00"),
-        "Gıda",
-        "/product/zeytin-yagi.jpg",
-        0,
-        6,
-    ),
-    ProductSeed(
-        "Üzüm Pekmezi 400 g",
-        "GDA-PKM-400",
-        "Katkısız üzüm pekmezi, kahvaltı ve tatlı tarifleri için uygundur.",
-        Decimal("195.00"),
-        "Gıda",
-        "/product/pekmez.webp",
-        7,
-        9,
     ),
     ProductSeed(
         "Filtre Kahve Harmanı 250 g",
@@ -159,78 +141,8 @@ PRODUCTS: tuple[ProductSeed, ...] = (
         Decimal("285.00"),
         "Kahve",
         "/product/pekmez.webp",
-        64,
-        15,
-    ),
-    ProductSeed(
-        "Türk Kahvesi 200 g",
-        "KHV-TRK-200",
-        "Taş değirmende öğütülmüş, geleneksel Türk kahvesi.",
-        Decimal("165.00"),
-        "Kahve",
-        "/product/nane.webp",
-        22,
-        10,
-    ),
-    ProductSeed(
-        "Keten Bez Çanta",
-        "TEK-BEZ-001",
-        "Pamuk astarlı, günlük kullanıma uygun el dikimi bez çanta.",
-        Decimal("249.00"),
-        "Tekstil",
-        "/product/recel.webp",
-        42,
+        36,
         12,
-    ),
-    ProductSeed(
-        "El Dokuması Peştamal",
-        "TEK-PES-001",
-        "Hızlı kuruyan, pamuklu yöresel peştamal.",
-        Decimal("389.00"),
-        "Tekstil",
-        "/product/zeytin-yagi.jpg",
-        15,
-        8,
-    ),
-    ProductSeed(
-        "Organik Pamuk Mutfak Önlüğü",
-        "TEK-ONL-001",
-        "Ayarlanabilir askılı, dayanıklı mutfak önlüğü.",
-        Decimal("325.00"),
-        "Tekstil",
-        "/product/pulbiber.webp",
-        11,
-        7,
-    ),
-    ProductSeed(
-        "Lavanta Sabunu 90 g",
-        "KZM-SBN-090",
-        "Soğuk proses lavanta sabunu, hassas ciltler için nazik formül.",
-        Decimal("89.00"),
-        "Kozmetik",
-        "/product/nane.webp",
-        83,
-        20,
-    ),
-    ProductSeed(
-        "Zeytinyağlı El Kremi 75 ml",
-        "KZM-KRM-075",
-        "Zeytinyağı ve shea yağı içeren yoğun nemlendirici krem.",
-        Decimal("145.00"),
-        "Kozmetik",
-        "/product/zeytin-yagi.jpg",
-        28,
-        12,
-    ),
-    ProductSeed(
-        "Gül Suyu Tonik 150 ml",
-        "KZM-GUL-150",
-        "Alkolsüz, ferahlatıcı doğal gül suyu toniği.",
-        Decimal("155.00"),
-        "Kozmetik",
-        "/product/recel.webp",
-        9,
-        10,
     ),
     ProductSeed(
         "Seramik Kahve Kupası",
@@ -239,98 +151,28 @@ PRODUCTS: tuple[ProductSeed, ...] = (
         Decimal("275.00"),
         "El Yapımı",
         "/product/pekmez.webp",
-        37,
-        10,
-    ),
-    ProductSeed(
-        "Ahşap Sunum Tahtası",
-        "ELI-AHS-001",
-        "Ceviz ağacından yağlanmış doğal sunum tahtası.",
-        Decimal("520.00"),
-        "El Yapımı",
-        "/product/zeytin-yagi.jpg",
-        5,
-        6,
-    ),
-    ProductSeed(
-        "Makrome Duvar Süsü",
-        "ELI-MAK-001",
-        "Pamuk ipten el yapımı dekoratif makrome duvar süsü.",
-        Decimal("690.00"),
-        "El Yapımı",
-        "/product/nane.webp",
-        3,
-        4,
-    ),
-    ProductSeed(
-        "Geri Dönüşümlü Defter A5",
-        "OFS-DFT-A5",
-        "Kraft kapaklı, 80 yaprak çizgili ofis defteri.",
-        Decimal("95.00"),
-        "Ofis",
-        "/product/recel.webp",
-        110,
-        25,
-    ),
-    ProductSeed(
-        "Bambu Masa Organizer",
-        "OFS-ORG-001",
-        "Kalem, not ve küçük aksesuarlar için bambu masa düzenleyici.",
-        Decimal("310.00"),
-        "Ofis",
-        "/product/pekmez.webp",
-        24,
-        10,
-    ),
-    ProductSeed(
-        "Doğal Balmumu Mum",
-        "EV-MUM-001",
-        "Pamuk fitilli, hafif bal aromalı doğal balmumu mum.",
-        Decimal("180.00"),
-        "Ev Yaşam",
-        "/product/pulbiber.webp",
-        52,
-        14,
-    ),
-    ProductSeed(
-        "Keçe Bardak Altlığı 4'lü",
-        "EV-KCE-004",
-        "Renkli keçe bardak altlığı seti.",
-        Decimal("125.00"),
-        "Ev Yaşam",
-        "/product/nane.webp",
-        73,
-        18,
-    ),
-    ProductSeed(
-        "Nar Ekşisi 330 ml",
-        "YRS-NAR-330",
-        "Katkısız, yoğun kıvamlı yöresel nar ekşisi.",
-        Decimal("215.00"),
-        "Yöresel",
-        "/product/pekmez.webp",
-        16,
-        9,
-    ),
-    ProductSeed(
-        "Kuru Domates 200 g",
-        "YRS-DOM-200",
-        "Zeytinyağlı mezelere uygun güneşte kurutulmuş domates.",
-        Decimal("168.00"),
-        "Yöresel",
-        "/product/pulbiber.webp",
-        48,
-        12,
-    ),
-    ProductSeed(
-        "Tarhana 500 g",
-        "YRS-TRH-500",
-        "Ev yapımı geleneksel tarhana, fermante lezzet.",
-        Decimal("155.00"),
-        "Yöresel",
-        "/product/recel.webp",
-        6,
+        34,
         8,
+    ),
+    ProductSeed(
+        "Keten Bez Çanta",
+        "TEK-BEZ-001",
+        "Pamuk astarlı, günlük kullanıma uygun el dikimi bez çanta.",
+        Decimal("249.00"),
+        "Tekstil",
+        "/product/recel.webp",
+        18,
+        8,
+    ),
+    ProductSeed(
+        "Lavanta Sabunu 90 g",
+        "KZM-SBN-090",
+        "Soğuk proses lavanta sabunu, hassas ciltler için nazik formül.",
+        Decimal("89.00"),
+        "Kozmetik",
+        "/product/nane.webp",
+        48,
+        15,
     ),
     ProductSeed(
         "B2B Kahvaltılık Paket",
@@ -339,18 +181,8 @@ PRODUCTS: tuple[ProductSeed, ...] = (
         Decimal("1850.00"),
         "B2B Paket",
         "/product/zeytin-yagi.jpg",
-        14,
-        5,
-    ),
-    ProductSeed(
-        "Kurumsal Hediye Kutusu",
-        "B2B-HDY-001",
-        "Kahve, sabun ve yöresel ürünlerden oluşan kurumsal hediye kutusu.",
-        Decimal("980.00"),
-        "B2B Paket",
-        "/product/recel.webp",
-        27,
-        8,
+        9,
+        4,
     ),
 )
 
@@ -365,7 +197,16 @@ PEOPLE: tuple[PersonSeed, ...] = (
         "Rıhtım Cd. No:12 Kat:4",
         "34710",
     ),
-    PersonSeed("Ayşe Demir", OWNER_EMAIL, "905321000002", "admin", "İzmir", "Konak", "Gazi Blv. No:45", "35210"),
+    PersonSeed(
+        "Ayşe Demir",
+        OWNER_EMAIL,
+        "905321000002",
+        "admin",
+        "İzmir",
+        "Konak",
+        "Gazi Blv. No:45",
+        "35210",
+    ),
     PersonSeed(
         "Demo Kullanıcı",
         DEMO_EMAIL,
@@ -409,64 +250,12 @@ PEOPLE: tuple[PersonSeed, ...] = (
         "06680",
         "web",
     ),
-    PersonSeed(
-        "Burak Yıldız",
-        "burak.yildiz@example.com",
-        "905334440104",
-        "customer",
-        "Antalya",
-        "Muratpaşa",
-        "Lara Cd. No:55",
-        "07160",
-        "whatsapp",
-    ),
-    PersonSeed(
-        "Gizem Koç",
-        "gizem.koc@example.com",
-        "905334440105",
-        "customer",
-        "Bursa",
-        "Osmangazi",
-        "Altıparmak Cd. No:31",
-        "16050",
-        "web",
-    ),
-    PersonSeed(
-        "Ece Polat",
-        "ece.polat@example.com",
-        "905334440106",
-        "customer",
-        "Eskişehir",
-        "Odunpazarı",
-        "Atatürk Blv. No:74",
-        "26020",
-        "agent",
-    ),
-    PersonSeed(
-        "Fırat Gıda Dağıtım",
-        "siparis@firatgida.com",
-        "905334440107",
-        "customer",
-        "Gaziantep",
-        "Şahinbey",
-        "İnönü Cd. No:113",
-        "27010",
-        "web",
-    ),
-    PersonSeed(
-        "Zeynep Aksoy",
-        "zeynep.aksoy@example.com",
-        "905334440108",
-        "customer",
-        "Trabzon",
-        "Ortahisar",
-        "Uzun Sk. No:9",
-        "61030",
-        "whatsapp",
-    ),
 )
 
-CUSTOMER_PROFILES: tuple[PersonSeed, ...] = PEOPLE[4:]
+CUSTOMER_PROFILES: tuple[PersonSeed, ...] = tuple(
+    person for person in PEOPLE if person.role == "customer"
+)
+
 
 
 def _now() -> datetime:
@@ -681,107 +470,79 @@ async def _upsert_products(session: AsyncSession) -> dict[str, Product]:
 
 
 def _order_seeds() -> list[OrderSeed]:
-    customer_emails = [person.email for person in CUSTOMER_PROFILES]
-    sku_pairs = [
-        ("GDA-NANE-100", "GDA-PUL-250"),
-        ("GDA-ZYT-750", "GDA-PKM-400"),
-        ("KHV-FLT-250", "KHV-TRK-200"),
-        ("TEK-BEZ-001", "KZM-SBN-090"),
-        ("ELI-KUP-001", "EV-MUM-001"),
-        ("YRS-NAR-330", "YRS-DOM-200"),
-        ("B2B-KAH-010", "GDA-REC-460"),
-        ("OFS-DFT-A5", "OFS-ORG-001"),
-        ("TEK-PES-001", "TEK-ONL-001"),
-        ("B2B-HDY-001", "KZM-KRM-075"),
-        ("ELI-AHS-001", "ELI-MAK-001"),
-        ("YRS-TRH-500", "KZM-GUL-150"),
+    """Small but complete order set: one clear example per operational scenario."""
+    return [
+        OrderSeed(
+            number="KOBI-DEMO-0001",
+            customer_email=DEMO_EMAIL,
+            status="pending",
+            days_ago=0,
+            hour=9,
+            item_skus=("GDA-REC-460",),
+            quantities=(1,),
+            notes="Yeni alınmış, henüz işlenmemiş sipariş.",
+        ),
+        OrderSeed(
+            number="KOBI-DEMO-0002",
+            customer_email="satinalma@maviperakende.com",
+            status="processing",
+            days_ago=0,
+            hour=11,
+            item_skus=("KHV-FLT-250", "KZM-SBN-090"),
+            quantities=(2, 3),
+            notes="Operasyon ekibi tarafından hazırlanan sipariş.",
+        ),
+        OrderSeed(
+            number="KOBI-DEMO-0003",
+            customer_email="selin.arslan@example.com",
+            status="shipped",
+            days_ago=1,
+            hour=13,
+            item_skus=("TEK-BEZ-001",),
+            quantities=(1,),
+            notes="Kargoda ilerleyen normal sipariş.",
+        ),
+        OrderSeed(
+            number="KOBI-DEMO-0004",
+            customer_email="operasyon@denizkafe.com",
+            status="delivered",
+            days_ago=3,
+            hour=10,
+            item_skus=("B2B-KAH-010",),
+            quantities=(1,),
+            notes="Başarıyla teslim edilen B2B sipariş.",
+        ),
+        OrderSeed(
+            number="KOBI-DEMO-0005",
+            customer_email="satinalma@maviperakende.com",
+            status="shipped",
+            days_ago=5,
+            hour=15,
+            item_skus=("GDA-PUL-250", "GDA-ZYT-750"),
+            quantities=(2, 1),
+            notes="Tahmini teslim tarihi geçmiş, gecikme senaryosu.",
+        ),
+        OrderSeed(
+            number="KOBI-DEMO-0006",
+            customer_email="selin.arslan@example.com",
+            status="shipped",
+            days_ago=4,
+            hour=16,
+            item_skus=("ELI-KUP-001",),
+            quantities=(1,),
+            notes="Dağıtımda sorun yaşanan teslimat senaryosu.",
+        ),
+        OrderSeed(
+            number="KOBI-DEMO-0007",
+            customer_email=DEMO_EMAIL,
+            status="cancelled",
+            days_ago=6,
+            hour=14,
+            item_skus=("GDA-REC-460",),
+            quantities=(1,),
+            notes="Müşteri talebiyle iptal edilen sipariş.",
+        ),
     ]
-    statuses: list[OrderStatus] = [
-        "pending", "processing", "shipped", "delivered", "delivered", "cancelled",
-        "processing", "shipped", "delivered", "delivered", "pending", "shipped",
-        "delivered", "cancelled", "processing", "delivered", "shipped", "delivered",
-        "processing", "delivered", "cancelled", "shipped", "delivered", "pending",
-        "delivered", "processing", "shipped", "delivered", "cancelled", "delivered",
-        "shipped", "processing", "delivered", "pending", "delivered", "shipped",
-        "processing", "delivered", "cancelled", "delivered", "shipped", "processing",
-        "pending", "delivered",
-    ]
-    days = [
-        0,
-        0,
-        1,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        9,
-        10,
-        12,
-        14,
-        16,
-        18,
-        20,
-        22,
-        24,
-        26,
-        28,
-        30,
-        32,
-        34,
-        36,
-        38,
-        40,
-        42,
-        44,
-        46,
-        48,
-        50,
-        52,
-        54,
-        56,
-        58,
-        13,
-        11,
-        8,
-        6,
-        4,
-        2,
-        0,
-        15,
-    ]
-    seeds: list[OrderSeed] = []
-    for index, status in enumerate(statuses, start=1):
-        pair = sku_pairs[(index - 1) % len(sku_pairs)]
-        if index % 10 == 0:
-            items = ("B2B-HDY-001", "B2B-KAH-010", "GDA-ZYT-750")
-            quantities = (3, 2, 6)
-            notes = "Yüksek tutarlı kurumsal sipariş."
-        elif index % 7 == 0:
-            items = (pair[0], pair[1], "GDA-PUL-250")
-            quantities = (2 + index % 3, 1 + index % 2, 2)
-            notes = "Çok ürünlü paket sipariş."
-        else:
-            items = pair
-            quantities = (1 + index % 4, 1 + (index // 3) % 3)
-            notes = None
-        if status == "cancelled":
-            notes = "Müşteri talebiyle iptal edildi; iade süreci destek kaydına bağlandı."
-        seeds.append(
-            OrderSeed(
-                number=f"KOBI-DEMO-{index:04d}",
-                customer_email=customer_emails[(index - 1) % len(customer_emails)],
-                status=status,
-                days_ago=days[index - 1],
-                hour=9 + (index % 9),
-                item_skus=items,
-                quantities=quantities,
-                notes=notes,
-            )
-        )
-    return seeds
 
 
 def _status_steps(status: OrderStatus) -> list[tuple[str | None, str, str]]:
@@ -900,6 +661,7 @@ async def _upsert_orders(
 
 
 def _shipment_status_for_order(order: Order, index: int) -> ShipmentStatus | None:
+    """Deterministic compact shipment scenarios for the small demo set."""
     if order.status == "pending":
         return None
     if order.status == "processing":
@@ -908,10 +670,10 @@ def _shipment_status_for_order(order: Order, index: int) -> ShipmentStatus | Non
         return "cancelled"
     if order.status == "delivered":
         return "delivered"
-    if index % 9 == 0:
-        return "failed"
-    if index % 5 == 0:
+    if order.order_number == "KOBI-DEMO-0005":
         return "delayed"
+    if order.order_number == "KOBI-DEMO-0006":
+        return "failed"
     return "in_transit"
 
 
@@ -1107,7 +869,7 @@ async def _seed_inventory_movements(
             )
             count += 1
 
-    manual_adjustments = ("GDA-PUL-250", "GDA-ZYT-750", "ELI-MAK-001", "YRS-TRH-500")
+    manual_adjustments = ("GDA-PUL-250", "GDA-ZYT-750", "ELI-KUP-001")
     for sku in manual_adjustments:
         product = products[sku]
         previous = quantities[product.id]
@@ -1130,7 +892,7 @@ async def _seed_inventory_movements(
         )
         count += 1
 
-    for sku in ("KZM-SBN-090", "OFS-DFT-A5", "EV-KCE-004"):
+    for sku in ("KZM-SBN-090", "KHV-FLT-250"):
         product = products[sku]
         previous = quantities[product.id]
         new_quantity = previous + 6
@@ -1203,16 +965,9 @@ async def _seed_notifications(
             {"product_id": products["GDA-ZYT-750"].id, "sku": "GDA-ZYT-750"},
         ),
         (
-            "LOW_STOCK_ALERT",
-            "Stok eşiği aşıldı",
-            "Acı Pul Biber 250 g kritik seviyeye yaklaştı.",
-            "warning",
-            {"product_id": products["GDA-PUL-250"].id, "sku": "GDA-PUL-250"},
-        ),
-        (
             "SYSTEM",
             "Yeni sipariş alındı",
-            f"{latest_order.order_number} numaralı sipariş ödeme sonrası oluşturuldu.",
+            f"{latest_order.order_number} numaralı sipariş oluşturuldu.",
             "info",
             {"order_id": latest_order.id},
         ),
@@ -1231,37 +986,16 @@ async def _seed_notifications(
             {"shipment_id": failed.id if failed else None},
         ),
         (
-            "AI_AGENT",
-            "Müşteri mesajı",
-            "AI asistan toplu alım indirimi sorusunu yanıtladı.",
-            "info",
-            {"conversation": "conv-demo-b2b-discount"},
-        ),
-        (
-            "TASK_ASSIGNMENT",
-            "İnsan desteğine aktarıldı",
-            "İade talebi operasyon kullanıcısına atandı.",
-            "warning",
-            {"category": "support"},
-        ),
-        (
             "DAILY_SUMMARY",
             "Günlük operasyon özeti hazır",
-            "Bugün yeni sipariş, kritik stok ve geciken kargo özetleri güncellendi.",
+            "Bugün kritik stok, yeni sipariş ve geciken kargo özetleri güncellendi.",
             "info",
             {"date": _now().date().isoformat()},
-        ),
-        (
-            "SYSTEM_REPORT",
-            "Forecast analizi güncellendi",
-            "Son 60 günlük satış hareketleri stok tahmini için hazırlandı.",
-            "info",
-            {"source": "seed"},
         ),
     ]
     for index, (type_, title, message, severity, payload) in enumerate(notification_specs):
         created_at = _now() - timedelta(hours=index * 3)
-        is_read = index in {2, 7, 8}
+        is_read = index == 4
         payload["seed"] = SEED_NAME
         session.add(
             Notification(
@@ -1290,11 +1024,9 @@ async def _seed_conversations(
     await session.flush()
 
     scenarios = [
-        ("conv-demo-order-where", "selin.arslan@example.com", "web", "resolved", "Siparişim nerede?"),
-        ("conv-demo-stock-query", "burak.yildiz@example.com", "whatsapp", "resolved", "Zeytinyağı stokta var mı?"),
-        ("conv-demo-return", "gizem.koc@example.com", "web", "handoff", "İade yapmak istiyorum."),
-        ("conv-demo-delay", "zeynep.aksoy@example.com", "whatsapp", "active", "Kargom gecikti."),
-        ("conv-demo-b2b-discount", "operasyon@denizkafe.com", "agent", "resolved", "Toplu alım indirimi var mı?"),
+        ("conv-demo-order-where", DEMO_EMAIL, "web", "resolved", "Siparişim nerede?"),
+        ("conv-demo-stock-query", "satinalma@maviperakende.com", "web", "resolved", "Zeytinyağı stokta var mı?"),
+        ("conv-demo-delay", "selin.arslan@example.com", "agent", "active", "Kargom gecikti."),
     ]
     redis_messages: dict[str, list[dict[str, str]]] = {}
     for index, (session_id, email, channel, status, question) in enumerate(scenarios):
@@ -1317,8 +1049,7 @@ async def _seed_conversations(
             {
                 "role": "assistant",
                 "content": (
-                    "Kontrol ettim. Sipariş ve stok bilgilerinizi sistemdeki güncel veriye göre özetledim; "
-                    "gereken durumda operasyon ekibine görev açtım."
+                    "Kontrol ettim. Sipariş, stok veya kargo bilgisini güncel operasyon verisine göre özetledim."
                 ),
             },
         ]
@@ -1346,7 +1077,6 @@ async def _seed_audit_logs(session: AsyncSession, users: dict[str, User]) -> int
         (users[ADMIN_EMAIL], "LOGIN_SUCCESS", "user", str(users[ADMIN_EMAIL].id), None, {"email": ADMIN_EMAIL}),
         (actor, "ORDER_STATUS_UPDATED", "order", "KOBI-DEMO-0003", {"status": "processing"}, {"status": "shipped"}),
         (actor, "INVENTORY_UPDATED", "inventory", "GDA-PUL-250", {"quantity": 7}, {"quantity": 4}),
-        (None, "NOTIFICATION_CREATED", "notification", "LOW_STOCK_ALERT", None, {"severity": "critical"}),
         (None, "SYSTEM_SEED_COMPLETED", "seed", SEED_NAME, None, {"version": SEED_VERSION}),
     ]
     for index, (user, action, entity_type, entity_id, old_values, new_values) in enumerate(specs):

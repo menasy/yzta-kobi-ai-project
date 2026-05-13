@@ -1,1692 +1,837 @@
-# KobiAI (KOBİ AI Agent)
+<table border="0">
+  <tr>
+    <td width="65%" border="0">
+      <h1>KobiAI — KOBİ AI Agent</h1>
+      <p><strong>Küçük ve Orta Ölçekli İşletmeler için Yapay Zekâ Destekli Operasyon Otomasyonu</strong></p>
+      <p>KobiAI, KOBİ’ler ve kooperatifler için geliştirilmiş tam kapsamlı, yapay zekâ destekli bir operasyon platformudur. Ürün yönetimi, envanter takibi, sipariş izleme, kargo gözetimi ve müşteri iletişimini tek bir birleşik panelde toplar — iş verilerinizi anlayan ve bu veriler üzerinden aksiyon almanıza yardımcı olabilen konuşma tabanlı bir yapay zekâ ajanı ile birlikte çalışır.</p>
+    </td>
+    <td width="35%" border="0">
+      <img src="assets/logo-opengraph-image.png" alt="KobiAI Logo" width="100%">
+    </td>
+  </tr>
+</table>
 
-KobiAI, KOBİ'lerin günlük operasyonlarını tek panelden yönetmesini hedefleyen, yapay zeka destekli bir operasyon otomasyon platformudur. Mevcut kod tabanı; ürün, stok, sipariş, kargo, bildirim ve müşteri etkileşimi akışlarını aynı sistem içinde birleştirir. Bu README, proje kökündeki tek ana dokümandır; backend, frontend, AI agent, auth, veritabanı, seed ve Docker akışlarını birlikte açıklar.
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square\&logo=fastapi\&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square\&logo=next.js\&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=flat-square\&logo=postgresql\&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat-square\&logo=redis\&logoColor=white)
+![Gemini](https://img.shields.io/badge/Google_Gemini-AI-4285F4?style=flat-square\&logo=google\&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square\&logo=docker\&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square\&logo=typescript\&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square\&logo=python\&logoColor=white)
 
-Kod tabanında marka ve servis adları `KobiAi`, `KOBİ Agent` ve `KOBİ AI Agent` biçimlerinde geçebilir. Bu dokümanda proje adı tutarlı olması için `KobiAI` olarak kullanılmıştır.
+---
 
-## 1. Proje Özeti
+## İçindekiler
 
-### Ne yapar?
+1. [Genel Bakış](#genel-bakış)
+2. [Problem Tanımı](#problem-tanımı)
+3. [Hedef Kullanıcılar](#hedef-kullanıcılar)
+4. [Temel Özellikler](#temel-özellikler)
 
-Platform, iki ana kullanım eksenine odaklanır:
+   * [Admin Özellikleri](#admin-özellikleri)
+   * [Müşteri Özellikleri](#müşteri-özellikleri)
+   * [Yapay Zekâ Destekli Özellikler](#yapay-zekâ-destekli-özellikler)
+   * [Deterministik Destek Endpoint’leri](#deterministik-destek-endpointleri)
+   * [Bildirimler ve Gerçek Zamanlı Özellikler](#bildirimler-ve-gerçek-zamanlı-özellikler)
+   * [Tahminleme ve Analitik](#tahminleme-ve-analitik)
+5. [Yapay Zekâ Sistemi Derinlemesine İnceleme](#yapay-zekâ-sistemi-derinlemesine-inceleme)
+6. [Mimari Genel Bakış](#mimari-genel-bakış)
+7. [Backend Mimarisi](#backend-mimarisi)
+8. [Frontend Mimarisi](#frontend-mimarisi)
+9. [Teknoloji Yığını](#teknoloji-yığını)
+10. [API Genel Bakış](#api-genel-bakış)
+11. [Kimlik Doğrulama ve Yetkilendirme](#kimlik-doğrulama-ve-yetkilendirme)
+12. [Veritabanı, Migration ve Seed](#veritabanı-migration-ve-seed)
+13. [Yerel Kurulum](#yerel-kurulum)
+14. [Ortam Değişkenleri](#ortam-değişkenleri)
+15. [Demo Akışı](#demo-akışı)
+16. [Mevcut Sınırlamalar](#mevcut-sınırlamalar)
+17. [Yol Haritası](#yol-haritası)
+18. [Proje Yapısı](#proje-yapısı)
+19. [Geliştirme Standartları](#geliştirme-standartları)
+20. [Dokümantasyon Notları](#dokümantasyon-notları)
 
-- **Yönetim paneli:** admin kullanıcılar ürünleri, siparişleri, envanteri, kargo durumlarını ve bildirimleri yönetir.
-- **Müşteri deneyimi:** customer kullanıcılar ürünleri inceler, sipariş oluşturur, kendi siparişlerini takip eder ve AI destekli sohbet ekranını kullanır.
+---
 
-### Hangi problemi çözer?
+## Genel Bakış
 
-Kod tabanının hedeflediği problem, KOBİ operasyonlarının dağınık araçlar arasında yönetilmesidir:
+KobiAI, küçük ve orta ölçekli işletmelerin pratik ihtiyaçları için tasarlanmış yapay zekâ destekli bir operasyon otomasyon platformudur. Envanter, siparişler, kargolar ve müşteri hizmetleri için ayrı ayrı araçlar kullanmayı gerektirmek yerine, KobiAI tüm bu süreçleri tek bir admin panelinde ve sade bir müşteri arayüzünde birleştirir — her ikisi de operasyonel verilerinizi okuyabilen ve daha iyi, daha hızlı kararlar almanıza yardımcı olabilen gerçek bir yapay zekâ ajanı ile güçlendirilmiştir.
 
-- müşteri iletişimi farklı kanallara dağılır,
-- sipariş ve kargo takibi manuel yürür,
-- kritik stok görünürlüğü zayıftır,
-- yönetici aksiyonları gecikmeli alınır,
-- operasyon ekipleri veri yerine yorumla karar verir.
+Platform **production odaklı bir mimari** üzerine kuruludur: katmanlı bir FastAPI backend, Turborepo monorepo içinde Next.js App Router frontend, kalıcı veri için PostgreSQL, önbellekleme ve konuşma belleği için Redis ve yapay zekâ motoru olarak Google Gemini. Genişletilebilir olacak şekilde tasarlanmıştır — yeni araçlar, entegrasyonlar veya modüller çekirdek mantığı yeniden yazmadan eklenebilir.
 
-### Temel değer önerisi
+---
 
-- müşteri iletişimini standartlaştırmak,
-- sipariş ve teslimat görünürlüğünü artırmak,
-- kritik stokları erken fark etmek,
-- yöneticiye operasyonel özet ve uyarılar üretmek,
-- AI destekli soru-cevap ile destek ve operasyon yükünü azaltmak,
-- dashboard üzerinden günlük performansı hızlı izlenebilir hale getirmek.
+## Problem Tanımı
 
-### Hedef kullanıcılar
+Küçük bir işletmeyi yönetmek sürekli yangın söndürmek gibidir. İşletme sahipleri ve operasyon ekipleri, can sıkıcı derecede manuel olan tekrar eden problemlerle karşılaşır:
 
-- projeye yeni katılan geliştiriciler,
-- backend geliştiricileri,
-- frontend geliştiricileri,
-- demo / hackathon jürileri,
-- sistemi teknik olarak inceleyen ekipler,
-- daha sonra projeyi devralacak AI coding agent'ler.
+* **Müşteri soruları tekrar eder ve zaman alır.** “Siparişim nerede?” ve “Bu ürün stokta var mı?” gibi sorular her gün ciddi destek emeği tüketir.
+* **Envanter sorunları çok geç fark edilir.** Düşük stok veya hareketsiz stok, çoğu zaman ancak müşteri şikâyetinden ya da kaçırılmış satıştan sonra görülür.
+* **Kargolar izlenmeden kalır.** Gecikmeler sessizce birikir ve ancak müşteriler durumu yükselttiğinde fark edilir.
+* **Sipariş yönetimi dağınıktır.** Durum güncellemeleri için birden fazla ekranda gezinmek ve birden fazla kişiyle iletişim kurmak gerekir.
+* **Akıllı bir katman yoktur.** Dashboard’lar veri gösterir ama bu veriyle ne yapılması gerektiğini söylemez. Adminler grafikleri yorumlamak ve kararları manuel almak zorunda kalır.
+* **Bildirimler önceliklendirilmeden birikir.** Önemli operasyon uyarıları gürültü içinde kaybolur.
 
-## 2. Ürün Amacı ve Kapsam
+KobiAI, yapılandırılmış bir operasyon dashboard’unu, verilerinizi bilen ve onları anlamanıza ve aksiyona dönüştürmenize yardımcı olabilen konuşma tabanlı bir yapay zekâ ajanı ile birleştirerek bu problemlere doğrudan çözüm sunar — karar mekanizmanızı tamamen devralmadan.
 
-Bu proje, KOBİ'lerin günlük operasyonlarını tek panelde toplama fikri üzerine kurulmuş bir MVP / ürünleşebilir demo mimarisidir. Kod tabanı, tek bir panelde aşağıdaki iş akışlarını bir araya getirir:
+---
 
-- ürün kataloğu ve stok yönetimi,
-- sipariş oluşturma ve sipariş yaşam döngüsü,
-- kargo oluşturma, gecikme izleme ve teslimat durumu,
-- bildirim merkezi,
-- AI destekli operasyon ve destek asistanı,
-- temel dashboard ve haftalık performans görünümü.
+## Hedef Kullanıcılar
 
-Mevcut mimari hackathon/MVP kullanımına uygundur; aynı zamanda katmanlı backend, monorepo frontend, migration/seed ve env yönetimi sayesinde ürünleşme yönünde geliştirilebilir bir temel sunar.
+| Kullanıcı Tipi                                | KobiAI Nasıl Yardımcı Olur                                                                                                 |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **KOBİ Sahipleri**                            | Her tabloyu manuel incelemeden günlük operasyon özetleri, düşük stok uyarıları ve yapay zekâ destekli içgörüler alır       |
+| **Operasyon / Admin Kullanıcıları**           | Ürünleri, envanteri, siparişleri, kargoları ve bildirimleri yapay zekâ desteğiyle tek panelden yönetir                     |
+| **Müşteri Destek Ekipleri**                   | Deterministik destek endpoint’leri ve yapay zekâ destekli müşteri sohbeti ile tekrar eden soruları azaltır                 |
+| **Müşteriler**                                | Ürünleri inceler, sipariş verir, kargo takibi yapar, profilini yönetir ve doğal dille soru sorar                           |
+| **Kooperatifler ve Küçük E-ticaret Ekipleri** | Küçük bir ekip içinde ortak ürün ve sipariş sistemini net rol ayrımıyla yönetir                                            |
+| **Geliştiriciler**                            | Mevcut katmanlı mimariyi kullanarak platformu yeni yapay zekâ araçları, entegrasyonlar veya servis modülleriyle genişletir |
 
-## 3. Mevcut Özellikler
+---
 
-Aşağıdaki maddeler doğrudan mevcut koddan türetilmiştir; kodda olmayan özellikler bilerek listelenmemiştir.
+## Temel Özellikler
 
-### Genel platform özellikleri
+### Admin Özellikleri
 
-- Cookie tabanlı JWT auth sistemi
-- `admin` ve `customer` rolleri
-- merkezi API response formatı
-- PostgreSQL + Alembic migration yapısı
-- Redis tabanlı konuşma hafızası, SSE ve rate limit desteği
-- idempotent demo seed sistemi
-- Docker ile backend + PostgreSQL + Redis local kurulum akışı
+#### Dashboard ve Analitik
 
-### Admin tarafı
+* **Genel bakış kartları**, bugünün siparişlerini, aktif kargoları, düşük stoklu ürünleri ve okunmamış bildirimleri tek bakışta gösterir.
+* **Haftalık performans grafiği**, Recharts kullanarak sipariş hacmini ve gelir trendlerini görselleştirir.
+* **Stok sağlığı metrikleri**, kritik envanter seviyelerini operasyonel engellere dönüşmeden önce tespit eder.
+* **Geciken kargo takibi**, beklenen teslimat süresini aşan gönderileri öne çıkarır.
 
-- dashboard genel bakış ekranı
-- haftalık performans grafiği
-- ürün listeleme / oluşturma / güncelleme / silme
-- düşük stok ve kritik stok görünümü
-- envanter güncelleme
-- sipariş listeleme ve sipariş durumu güncelleme
-- kargo oluşturma, kargo detay görüntüleme ve durum yenileme
-- geciken kargo listesi
-- bildirim merkezi ve okunma yönetimi
-- AI chat ekranı ve global AI asistan paneli
+#### Ürün Yönetimi
 
-### Customer tarafı
+* Ad, SKU, kategori, fiyat, açıklama ve görseller dahil ürünler için tam CRUD.
+* Arama ve filtreleme destekli ürün listeleme.
+* Ürün detay ve düzenleme görünümleri.
 
-- kayıt ve giriş
-- ürün katalog ekranı
-- ürün detayından doğrudan sipariş oluşturma
-- kendi siparişlerini listeleme
-- sipariş detayını görüntüleme
-- profil ve varsayılan adres yönetimi
-- AI chat ekranı
+#### Envanter Yönetimi
 
-### AI / destek tarafı
+* Ürün bazlı mevcut miktar, düşük stok eşiği ve yeniden sipariş miktarı takibi.
+* **Düşük stok** ve **kritik stok** seviyeleri için görsel göstergeler.
+* Admin panelinden envanter güncelleme.
+* Yapay zekâ ajanı araçları üzerinden yapay zekâ destekli envanter eşik önerileri.
 
-- authenticated chat endpoint'i
-- Redis tabanlı konuşma hafızası
-- Gemini function-calling tabanlı tool orchestration
-- sipariş, stok, kritik stok ve kargo tool'ları
-- bildirim sistemi üzerinden AI özet üretimi
-- public müşteri destek sorgu endpoint'leri:
-  - sipariş numarası ile sorgu,
-  - ürün / SKU ile stok sorgu,
-  - takip numarası ile kargo sorgu
+#### Sipariş Yönetimi
 
-### Operasyon ve analiz tarafı
+* Durum filtreleriyle tam sipariş listeleme.
+* Ürün kalemleri, müşteri ve adres bilgilerini gösteren sipariş detay görünümü.
+* Admin panelinden doğrudan **sipariş durumu güncelleme**.
+* Yapay zekâ ajanı tarafından öne çıkarılan sipariş öncelik içgörüleri.
 
-- düşük stok uyarıları
-- shipment delay bildirimi
-- günlük gecikme özeti
-- haftalık sipariş/gelir dashboard verisi
-- ürün bazlı haftalık stok tahmini endpoint'i
-- market growth simülasyonu ve stok analizi servisleri
+#### Kargo Yönetimi
 
-## 4. Teknoloji Stack
+* Siparişlere bağlı kargo oluşturma.
+* Takip numarası ve kargo firması atama.
+* Otomatik işaretleme ile **geciken kargo takibi**.
+* Kargo durumu yenileme; şu anda gerçek kargo API’leriyle genişletilecek şekilde tasarlanmıştır.
+
+#### Bildirim Merkezi
+
+* Operasyonel olaylar için merkezi bildirim akışı: düşük stok, kargo gecikmeleri, yeni siparişler.
+* Okunmamış bildirim sayısı ve okundu olarak işaretleme işlemleri.
+* Bildirim akışında oluşturulan ve gösterilen **günlük operasyonel gecikme özeti**.
+* SSE tabanlı gerçek zamanlı bildirim iletimi. Bkz. [Bildirimler ve Gerçek Zamanlı Özellikler](#bildirimler-ve-gerçek-zamanlı-özellikler).
+
+#### AI Chat Paneli (Global)
+
+* Admin arayüzünün tamamında erişilebilen kalıcı yapay zekâ asistan paneli.
+* Rol farkındalığına sahip araç erişimiyle Gemini desteklidir — yapay zekâ bir admin ile konuştuğunu bilir ve admin seviyesindeki araçları kullanıma açar.
+* Talep üzerine sorgular için (“Kaç sipariş beklemede?”, “Hangi ürünler kritik seviyede düşük?”) veya proaktif öneriler için kullanılabilir.
+* Güvenli yazma işlemleri için **AI Action Co-Pilot** iş akışını destekler. Bkz. [Yapay Zekâ Destekli Özellikler](#yapay-zekâ-destekli-özellikler).
+
+---
+
+### Müşteri Özellikleri
+
+#### Hesap ve Kimlik Doğrulama
+
+* Müşteri kayıt ve giriş işlemleri.
+* HttpOnly cookie tabanlı oturum; localStorage’da token tutulmaz.
+* Kişisel bilgiler dahil profil yönetimi.
+* Adres defteri yönetimi: oluşturma, güncelleme, varsayılan adres seçimi.
+
+#### Ürün Kataloğu
+
+* Kategori filtreleme ve arama destekli herkese açık ürün listeleme.
+* Stok uygunluğu göstergesine sahip ürün detay sayfası.
+
+#### Sipariş Verme ve Takip
+
+* Ürün detayından veya katalogdan doğrudan sipariş oluşturma.
+* Tüm geçmiş ve aktif siparişleri listeleyen “Siparişlerim” sayfası.
+* Ürün kalemleri, durum ve kargo takip bilgilerini gösteren sipariş detay görünümü.
+* Kimliği doğrulanmış yapay zekâ sohbeti üzerinden doğal dilde sipariş durumu sorguları.
+
+#### Müşteri AI Chat
+
+* Müşteri kapsamlı araç setine sahip, kimlik doğrulamalı yapay zekâ sohbet endpoint’i.
+* Müşteriler doğal dille şu soruları sorabilir: “Son siparişim nerede?”, “X ürünü stokta var mı?”, “Geçen ay ne sipariş etmiştim?”
+* Yapay zekâ ajanı bu soruları gerçek veri araçlarını kullanarak yanıtlar — tahmin yürütmez.
+
+---
+
+### Yapay Zekâ Destekli Özellikler
+
+Bu, KobiAI’nin temel ayrıştırıcı özelliğidir. Yapay zekâ katmanı basit bir soru-cevap widget’ı değildir — canlı operasyonel verilerinize erişebilen **araç orkestrasyonlu bir ajandır**.
+
+#### Gemini Tabanlı Ajan
+
+* `google-genai` SDK’sı üzerinden **Google Gemini** ile çalışır.
+* Yanıt oluşturmadan önce gerçek veriyi almak için **function calling (tool use)** kullanır.
+* Tüm operasyonel yanıtlar veritabanı sonuçlarına dayandırılır — ajan işletme verisini halüsinasyonla üretmez.
+
+#### Araç Kayıt Sistemi ve Rol Farkındalıklı Erişim
+
+* Araçlar, kullanıcı rollerine göre anahtarlanan bir **ToolRegistry** içinde kayıtlıdır.
+* **Admin araçları** şunları kapsar: envanter sorguları, sipariş durumu, kargo durumu, bildirim özetleri, düşük stok tespiti, hareketsiz stok adayları, sipariş öncelik raporları, kargo risk raporları.
+* **Müşteri araçları** şunları kapsar: müşteriye göre sipariş arama, siparişe göre kargo takibi, ürün stok sorgusu.
+* Rol ayrımı ajan bağlamı seviyesinde uygulanır — bir müşteri oturumu admin araçlarını çağıramaz.
+
+#### Redis Konuşma Belleği
+
+* Konuşma geçmişi oturum bazlı olarak Redis’te saklanır.
+* Bu sayede yapay zekâ mesajlar arasında bağlamı hatırlayabilen çok turlu konuşmalar yapabilir.
+* Bellek oturum kapsamındadır ve otomatik olarak süresi dolacak şekilde ayarlanır.
+
+#### Yapay Zekâ İçgörüleri
+
+Ajan, talep üzerine veya proaktif olarak yapılandırılmış içgörüler üretebilir:
+
+* **Hareketsiz stok adayları** — envanteri olan ancak yakın zamanda sipariş hareketi olmayan ürünler.
+* **Sipariş öncelik raporu** — durum ve yaşa göre dikkat gerektiren siparişler.
+* **Kargo risk raporu** — mevcut durum ve geçen süreye göre gecikme riski olan kargolar.
+* **Bildirim risk özeti** — mevcut okunmamış operasyon uyarılarının önceliklendirilmiş özeti.
+* **Admin sayfa bağlamı** — admin belirli bir bölüme gittiğinde yapay zekâ ilgili sayfaya uygun bağlamsal özetler sunabilir.
+
+#### AI Action Co-Pilot (Bekleyen Aksiyon Deseni)
+
+Yazma işlemleri için KobiAI, **güvenli aksiyon onay deseni** uygular:
+
+1. Yapay zekâ alabileceği bir aksiyonu belirler. Örneğin: “X ürünü kritik seviyede düşük — yeniden sipariş eşiğini güncelleyebilirim.”
+2. Hemen işlem yapmak yerine önerilen değişiklik ve gerekçesiyle birlikte bir **bekleyen aksiyon** oluşturur.
+3. Admin’e önerilen aksiyon gösterilir ve işlemin uygulanması için adminin **açıkça onay vermesi** gerekir.
+4. Ancak onaydan sonra servis katmanı değişikliği uygular.
+
+Şu anda desteklenen yapay zekâ destekli aksiyonlar:
+
+* Ürün fiyatı güncelleme
+* Sipariş durumu güncelleme
+* Envanter eşiği / miktarı güncelleme
+* Kargo durumu yenileme
+* Bildirimi okundu olarak işaretleme
+
+Bu desen, **yapay zekânın insan onayı olmadan yıkıcı veya yazma etkisi olan değişiklikler yapmamasını** sağlar ve operatörü kontrolün merkezinde tutar.
+
+---
+
+### Deterministik Destek Endpoint’leri
+
+LLM sohbetinden ayrı olarak KobiAI, model çıkarımı olmadan deterministik sonuçlar döndüren yapılandırılmış destek endpoint’leri sunar:
+
+* **Sipariş numarasına göre sipariş arama** — verilen sipariş referansı için sipariş durumunu, ürünleri ve takip bilgisini döndürür.
+* **Ürün adına veya SKU’ya göre stok sorgusu** — kimlik doğrulama gerektirmeden mevcut stok uygunluğunu döndürür.
+* **Takip numarasına göre kargo takibi** — verilen takip referansı için kargo durumunu döndürür.
+
+Bu endpoint’ler hızlı, güvenilir ve LLM gecikmesi olmadan müşteri tarafı widget’lara veya chatbot’lara entegre edilmeye uygundur.
+
+---
+
+### Bildirimler ve Gerçek Zamanlı Özellikler
+
+* Tam bildirim geçmişi ve okunmamış sayısı rozeti içeren **bildirim merkezi**.
+* Bağlı istemcilere gerçek zamanlı bildirim iletimi için **Server-Sent Events (SSE)** endpoint’i.
+* **Günlük gecikme özeti** — kargo gecikmelerinin planlanmış veya tetiklenmiş özeti, bildirim olarak gösterilir.
+* Backend servisleri ile SSE akışı arasındaki bildirim akışı için Redis event bus olarak kullanılır.
+* Bildirimler operasyonel olaylar tarafından üretilir: düşük stok eşiklerinin aşılması, kargo gecikmeleri, yeni siparişler.
+
+---
+
+### Tahminleme ve Analitik
+
+* Yakın dönem sipariş geçmişine göre ürün bazlı **haftalık talep tahmini**.
+* Ürünleri sağlıklı, düşük, kritik ve hareketsiz stok kategorilerine ayıran **stok sağlığı analizi**.
+* **Pazar büyüme simülasyonu** — büyüme senaryosu planlaması için genişletilebilir tahminleme modeli.
+* Sipariş, gelir ve envanter trendlerini toplayan dashboard performans metrikleri.
+
+---
+
+## Yapay Zekâ Sistemi Derinlemesine İnceleme
+
+Yapay zekâ sistemi, her yanıtı üretmeden önce gerçek araç sonuçlarına dayandıran bir **ReAct (Reasoning + Acting)** döngü desenini izler.
+
+```txt
+User Message
+    │
+    ▼
+Chat Endpoint  (POST /api/chat or /api/chat/customer)
+    │
+    ▼
+Agent Context Builder
+    ├── Loads user role and identity
+    ├── Loads conversation history from Redis
+    └── Selects role-appropriate ToolRegistry
+    │
+    ▼
+Gemini (google-genai)
+    ├── Receives system prompt + conversation history + tools
+    └── Decides: respond directly OR call a tool
+    │
+    ▼
+Tool Dispatcher
+    ├── Resolves tool name → Service method
+    ├── Executes service layer query
+    └── Returns ToolResult (structured data)
+    │
+    ▼
+Gemini (second pass with tool result)
+    └── Generates final human-readable response
+    │
+    ▼
+Redis Memory Update
+    └── Appends turn to session history
+    │
+    ▼
+API Response → Frontend
+```
+
+### Temel Tasarım Kararları
+
+| Karar                               | Gerekçe                                                                                                                           |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **Araç tabanlı grounding**          | Operasyonel veri halüsinasyonunu önler. Yapay zekâ sipariş durumlarını veya stok seviyelerini asla uydurmaz.                      |
+| **Rol kapsamlı araç kayıt sistemi** | Admin ve müşteri oturumları farklı araçları görür. Erişim kontrolü yalnızca API seviyesinde değil, ajan seviyesinde de uygulanır. |
+| **Bellek için Redis**               | Hafif, hızlı ve oturum kapsamlıdır. Her mesaj turu için veritabanına yazma yapılmaz.                                              |
+| **Bekleyen aksiyon deseni**         | Yazma işlemleri hemen uygulanmaz, aşamalı olarak hazırlanır. Her veri değişikliği için insan onayı gerekir.                       |
+| **Rol bazlı system prompt**         | Her rol, bağlamı, erişilebilir araçları ve beklenen davranışı açıklayan özelleştirilmiş bir system prompt alır.                   |
+| **ToolResult tipi**                 | Tüm araçlar tipli bir `ToolResult` nesnesi döndürür; bu, araç çıktısı ayrıştırmayı güvenilir ve tutarlı hale getirir.             |
+
+---
+
+## Mimari Genel Bakış
+
+```txt
+┌─────────────────────────────────────────────┐
+│              Browser / Client               │
+│                                             │
+│  Next.js App Router (TypeScript)            │
+│  ├── TanStack Query (server state)          │
+│  ├── Zustand (client/UI state)              │
+│  └── API Client (fetch + cookie auth)       │
+└──────────────────┬──────────────────────────┘
+                   │ HTTP / SSE
+┌──────────────────▼──────────────────────────┐
+│              FastAPI Application            │
+│                                             │
+│  ├── API Router Layer                       │
+│  ├── Dependency Injection (auth, DB, Redis) │
+│  ├── Service Layer (business logic)         │
+│  ├── Repository Layer (DB access)           │
+│  └── Agent Layer (AI orchestration)         │
+└───────┬──────────────┬──────────────────────┘
+        │              │
+┌───────▼──────┐  ┌────▼─────────────────────┐
+│  PostgreSQL  │  │         Redis             │
+│  (primary DB)│  │  (cache + AI memory +     │
+│  + Alembic   │  │   notification events)    │
+└──────────────┘  └──────────────────────────┘
+                          │
+              ┌───────────▼──────────┐
+              │    Google Gemini     │
+              │  (via google-genai)  │
+              └──────────────────────┘
+```
+
+---
+
+## Backend Mimarisi
+
+Backend, temiz mimari prensiplerini izleyen **katmanlı bir FastAPI uygulamasıdır**. Her katmanın tek bir sorumluluğu vardır; bu da kod tabanını test edilebilir ve genişletilebilir hale getirir.
+
+### Katman Sorumlulukları
+
+| Katman              | Konum                       | Sorumluluk                                                          |
+| ------------------- | --------------------------- | ------------------------------------------------------------------- |
+| **API / Endpoints** | `backend/app/api/`          | HTTP yönlendirme, istek ayrıştırma, yanıt formatlama                |
+| **Dependencies**    | `backend/app/api/deps/`     | Auth doğrulama, DB session injection, Redis injection               |
+| **Services**        | `backend/app/services/`     | İş mantığı, repository’ler arası orkestrasyon                       |
+| **Repositories**    | `backend/app/repositories/` | SQLAlchemy async ORM ile veritabanı sorguları                       |
+| **Models**          | `backend/app/models/`       | SQLAlchemy ORM tablo tanımları                                      |
+| **Schemas**         | `backend/app/schemas/`      | Pydantic v2 request/response doğrulama                              |
+| **Agent**           | `backend/app/agent/`        | AI orchestrator, tool registry, system prompts, pending actions     |
+| **Integrations**    | `backend/app/integrations/` | Dış API adaptörleri: kargo sağlayıcıları vb.                        |
+| **Workers**         | `backend/app/workers/`      | Background task workers; mevcut fakat varsayılan olarak aktif değil |
+| **Core**            | `backend/app/core/`         | Config, security, response builder, exception handlers              |
+| **DB**              | `backend/app/db/`           | Async engine, session factory, health check                         |
+
+### Temel Backend Desenleri
+
+* **Standart `ApiResponse` wrapper’ı** — tüm endpoint’ler tutarlı bir zarf döndürür: `{ success, data, message, errors }`.
+* **Async SQLAlchemy** — tüm veritabanı işlemleri bloklamayan I/O için tamamen async çalışır.
+* **Dependency injection** — auth user, DB session ve Redis client her istek için FastAPI `Depends` ile enjekte edilir.
+* **Exception handling** — global exception handler’lar domain exception’larını uygun HTTP status code’larına eşler.
+* **Alembic migrations** — tüm şema değişiklikleri versiyonlanır ve yeniden üretilebilir durumdadır.
+* **Idempotent seed sistemi** — demo verisi ilk çalıştırmada seed edilir ve tekrar çalıştırmaya güvenlidir.
+* **Health endpoint’i** — `/health`, hazır olduğunu bildirmeden önce DB ve Redis bağlantısını kontrol eder.
+
+### Dizin Referansı
+
+```txt
+backend/
+├── app/
+│   ├── api/           # Routers and endpoint handlers
+│   │   ├── v1/        # Versioned API routes
+│   │   └── deps/      # FastAPI dependencies (auth, DB, Redis)
+│   ├── agent/         # AI agent: orchestrator, tools, memory, prompts
+│   ├── core/          # Config, security utils, response builder
+│   ├── db/            # Async engine, session factory, health
+│   ├── integrations/  # External service adapters
+│   ├── models/        # SQLAlchemy ORM models
+│   ├── repositories/  # Async database query layer
+│   ├── schemas/       # Pydantic v2 schemas
+│   ├── services/      # Business logic layer
+│   └── workers/       # Background workers (optional/extendable)
+├── alembic/           # Migration scripts
+├── scripts/           # Seed and utility scripts
+├── pyproject.toml
+└── Dockerfile
+```
+
+---
+
+## Frontend Mimarisi
+
+Frontend, **Turborepo monorepo** içinde yer alan, uygulama, paylaşılan paketler ve UI primitive’leri arasında temiz bir ayrım kullanan bir **Next.js 15 App Router** uygulamasıdır.
+
+### Uygulama Yapısı (`frontend/apps/web/`)
+
+Route group’lar admin, müşteri ve public alanlarını ayırır:
+
+```txt
+app/
+├── (admin)/           # Admin-only pages (dashboard, products, orders, etc.)
+├── (customer)/        # Customer-facing pages (catalog, my orders, profile)
+├── (public)/          # Unauthenticated pages (login, register, landing)
+└── layout.tsx         # Root layout with theme, auth gate, notification SSE
+```
+
+### Monorepo Paketleri (`frontend/packages/`)
+
+| Paket          | Sorumluluk                                                              |
+| -------------- | ----------------------------------------------------------------------- |
+| `core`         | API client, temel fetch yardımcıları, auth token handling               |
+| `domain`       | Domain’e özgü React hook’ları: useProducts, useOrders, useInventory vb. |
+| `state`        | Global UI state için Zustand store’ları: notifications, AI panel, auth  |
+| `theme`        | Tailwind config, CSS değişkenleri, dark/light theme token’ları          |
+| `ui-web`       | Uygulama seviyesinde UI component’leri: cards, tables, forms, charts    |
+| `ui-contracts` | Paylaşılan component interface tipleri ve prop contract’ları            |
+| `i18n`         | Internationalization yardımcıları ve string sabitleri                   |
+
+### Temel Frontend Desenleri
+
+* **TanStack Query**, tüm server state’i yönetir: veri çekme, cache, invalidation, optimistic update. Manuel loading state veya `useEffect` fetch zincirleri yoktur.
+* **Zustand**, global UI state’i yönetir: AI panel open/close, notification drawer, auth session.
+* **System readiness gate** — app, protected route’ları render etmeden önce backend health kontrolü yapar; böylece startup sırasında eksik render engellenir.
+* **Auth session sync** — session state backend’den türetilir: HttpOnly cookie’ler. Frontend token saklamaz; cookie’ye güvenir ve session’ı `/auth/me` çağrısı ile doğrular.
+* **Global AI assistant panel** — tüm admin sayfalarında kullanılabilen, chat API ile çalışan ve rol farkındalıklı bağlam kullanan slide-over panel.
+* **Notification SSE** — root layout içinde kalıcı EventSource bağlantısı gerçek zamanlı bildirimleri alır ve Zustand notification store’unu günceller.
+* **Domain hook’ları**, tüm veri çekmeyi soyutlar. Page component’leri raw API call değil hook kullanır. Bu, UI’ı transport katmanından ayırır.
+
+---
+
+## Teknoloji Yığını
 
 ### Backend
 
-| Teknoloji | Durum | Not |
-| --- | --- | --- |
-| Python 3.12 | Kullanılıyor | `backend/pyproject.toml` |
-| FastAPI | Kullanılıyor | Ana HTTP API katmanı |
-| SQLAlchemy 2.x Async | Kullanılıyor | Async ORM ve session yönetimi |
-| Alembic | Kullanılıyor | Migration sistemi |
-| PostgreSQL 16 | Kullanılıyor | `docker-compose.yml` içinde `db` servisi |
-| Redis 7 | Kullanılıyor | chat memory, SSE event dağıtımı, rate limiting |
-| Pydantic / pydantic-settings | Kullanılıyor | schema ve config yönetimi |
-| python-jose | Kullanılıyor | JWT üretimi / doğrulama |
-| passlib[bcrypt] | Kullanılıyor | şifre hashleme |
-| pandas | Kullanılıyor | basit forecast hesapları |
-| google-genai | Aktif | mevcut orchestrator Gemini kullanıyor |
-| anthropic | Bağımlılık var | fakat aktif orchestrator akışına bağlı değil |
-| Docker | Kullanılıyor | backend container, db, redis |
+| Teknoloji            | Versiyon    | Neden                                                                                  |
+| -------------------- | ----------- | -------------------------------------------------------------------------------------- |
+| **Python**           | 3.12        | Modern async desteği, type hints, performans iyileştirmeleri                           |
+| **FastAPI**          | 0.115       | OpenAPI generation ile yüksek performanslı async HTTP framework                        |
+| **SQLAlchemy**       | 2.x (async) | Tam async desteğe sahip olgun ORM; çoğu Python geliştiricisi için tanıdık              |
+| **PostgreSQL**       | 16          | Yapılandırılmış operasyonel veri için güvenilir, zengin özellikli ilişkisel veritabanı |
+| **Alembic**          | latest      | SQLAlchemy modellerine bağlı şema migration yönetimi                                   |
+| **Redis**            | 7           | AI konuşma belleği, bildirim olayları ve caching için in-memory store                  |
+| **Pydantic**         | v2          | Request/response schema’ları için hızlı ve ergonomik veri doğrulama ve serialization   |
+| **python-jose**      | latest      | JWT token üretimi ve doğrulama                                                         |
+| **passlib / bcrypt** | latest      | Güvenli parola hashing                                                                 |
+| **google-genai**     | latest      | AI agent function calling için resmi Google Gemini SDK                                 |
+| **Docker / Compose** | latest      | Yeniden üretilebilir yerel geliştirme ve deployment ortamı                             |
 
 ### Frontend
 
-| Teknoloji | Durum | Not |
-| --- | --- | --- |
-| Next.js 15 | Kullanılıyor | App Router yapısı |
-| React 19 | Kullanılıyor | UI katmanı |
-| TypeScript | Kullanılıyor | tüm frontend packages |
-| pnpm + Turbo | Kullanılıyor | monorepo/workspace orchestration |
-| TanStack Query v5 | Kullanılıyor | server state, cache, invalidation |
-| Zustand | Kullanılıyor | auth, chat, system, UI state |
-| Tailwind CSS | Kullanılıyor | tasarım sistemi tabanı |
-| Radix UI + shadcn-benzeri wrapper'lar | Kullanılıyor | `frontend/packages/ui-web/components/shadcn` |
-| react-hook-form + zod | Kullanılıyor | form yönetimi ve doğrulama |
-| framer-motion | Kullanılıyor | animasyonlar |
-| recharts | Kullanılıyor | dashboard grafikleri |
-| next-themes | Kullanılıyor | fakat uygulama şu anda zorunlu light theme ile açılıyor |
+| Teknoloji                   | Versiyon | Neden                                                                        |
+| --------------------------- | -------- | ---------------------------------------------------------------------------- |
+| **Next.js**                 | 15       | Server components, streaming ve file-based routing destekli App Router       |
+| **React**                   | 19       | Concurrent özelliklere sahip component modeli                                |
+| **TypeScript**              | 5        | API contract’ları dahil tüm frontend genelinde type safety                   |
+| **pnpm**                    | latest   | Monorepo’lar için hızlı ve disk verimli package manager                      |
+| **Turborepo**               | latest   | Cache ve paralel task execution ile monorepo build orchestration             |
+| **TanStack Query**          | v5       | Cache ve background refetch ile deklaratif server state yönetimi             |
+| **Zustand**                 | latest   | UI ve session data için hafif global state                                   |
+| **Tailwind CSS**            | v3       | Theme package üzerinden tutarlı design token’ları kullanan utility-first CSS |
+| **Radix UI / shadcn-style** | latest   | Temel olarak kullanılan erişilebilir, unstyled component primitive’leri      |
+| **Framer Motion**           | latest   | Sayfa geçişleri ve mikro etkileşimler için animation library                 |
+| **Recharts**                | latest   | Dashboard performans görselleştirmeleri için composable chart library        |
+| **next-themes**             | latest   | Sistem farkındalıklı dark/light theme yönetimi                               |
 
-### Kaynak doğruluğu notu
+### AI Stack
 
-- Backend için **asıl bağımlılık kaynağı** `backend/pyproject.toml` dosyasıdır.
-- Proje kökündeki `requirements.txt` dosyası daha dar ve kısmen eski bir liste görünümündedir; Poetry tabanlı backend bağımlılıklarını tam temsil etmez.
+| Bileşen                   | Teknoloji               | Rol                                                      |
+| ------------------------- | ----------------------- | -------------------------------------------------------- |
+| **LLM**                   | Google Gemini           | Reasoning, doğal dil üretimi, tool call orchestration    |
+| **Tool Interface**        | Gemini Function Calling | Tipli input/output ile yapılandırılmış tool invocation   |
+| **Conversation Memory**   | Redis (per-session)     | Veritabanı yazımı olmadan çok turlu bağlam               |
+| **Tool Registry**         | Custom (Python)         | Role-scoped tool registration and dispatch               |
+| **Agent Context**         | Custom orchestrator     | Request başına system prompt, history ve tools oluşturur |
+| **Pending Action System** | Custom (service layer)  | Admin onayı bekleyen aşamalı write operation’lar         |
 
-## 5. Klasör Mimarisi
+---
 
-### Proje kökü
+## API Genel Bakış
 
-```text
-.
-├── backend/
-├── frontend/
-├── docker-compose.yml
-├── README.md
-└── requirements.txt
-```
-
-### Kök seviyesindeki önemli dosyalar
-
-- `backend/`: FastAPI uygulaması, AI agent, servis katmanı, migration ve seed.
-- `frontend/`: Next.js tabanlı monorepo; web app + shared packages.
-- `docker-compose.yml`: varsayılan local stack; `api`, `db`, `redis`.
-- `README.md`: bu ana teknik doküman.
-- `requirements.txt`: legacy/minimal Python dependency listesi; backend için ana kaynak değildir.
-
-### Backend klasör yapısı
-
-```text
-backend/
-├── app/
-│   ├── agent/
-│   │   ├── orchestrator.py
-│   │   ├── memory.py
-│   │   ├── prompts.py
-│   │   └── tools/
-│   ├── api/
-│   │   ├── router.py
-│   │   └── endpoints/
-│   ├── core/
-│   ├── db/
-│   ├── integrations/
-│   │   └── cargo/
-│   ├── mappers/
-│   ├── middlewares/
-│   ├── models/
-│   ├── repositories/
-│   ├── schemas/
-│   ├── services/
-├── alembic/
-├── scripts/
-├── Dockerfile
-├── entrypoint.sh
-├── pyproject.toml
-└── .env.example
-```
-
-#### Backend klasörlerinin rolü
-
-- `app/main.py`: FastAPI giriş noktası.
-- `app/api/endpoints/`: domain bazlı HTTP endpoint'ler.
-- `app/core/`: config, security, response builder, exceptions, dependencies, rate limiting.
-- `app/db/`: async engine, session factory, schema bootstrap.
-- `app/models/`: SQLAlchemy ORM modelleri.
-- `app/schemas/`: request/response Pydantic şemaları.
-- `app/repositories/`: DB erişim katmanı.
-- `app/services/`: iş kuralları ve uygulama servisleri.
-- `app/agent/`: AI orchestrator, prompt, tool registry, Redis memory.
-- `app/integrations/cargo/`: mock kargo provider ve provider abstraction.
-- `alembic/`: migration dosyaları.
-- `scripts/`: seed ve bootstrap script'leri.
-
-### Frontend klasör yapısı
-
-```text
-frontend/
-├── apps/
-│   ├── .env.example
-│   └── web/
-│       ├── app/
-│       ├── components/
-│       ├── middleware.ts
-│       └── public/
-├── packages/
-│   ├── core/
-│   ├── domain/
-│   ├── state/
-│   ├── theme/
-│   ├── ui-contracts/
-│   ├── ui-web/
-│   └── i18n/
-├── package.json
-├── pnpm-workspace.yaml
-└── turbo.json
-```
-
-#### Frontend klasörlerinin rolü
-
-- `apps/web/app/`: Next.js App Router sayfaları ve route group layout'ları.
-- `apps/web/components/`: app-level provider, auth, system ve navigation bileşenleri.
-- `apps/web/public/product/`: seed veride kullanılan demo ürün görselleri.
-- `packages/core/`: ortak HTTP client, error handling ve utility'ler.
-- `packages/domain/`: domain bazlı API modülleri, hook'lar, type ve schema'lar.
-- `packages/state/`: TanStack Query client + Zustand store'ları.
-- `packages/ui-web/`: tekrar kullanılabilir UI bileşenleri.
-- `packages/theme/`: tasarım token'ları.
-- `packages/ui-contracts/`: bazı UI contract tanımları.
-- `package.json`: monorepo root script'leri.
-
-## 6. Yüksek Seviye Sistem Mimarisi
-
-```text
-Next.js Web App
-   │
-   ├── TanStack Query / Zustand
-   │
-   ▼
-FastAPI API
-   │
-   ├── Endpoint Layer
-   ├── Dependency Layer
-   ├── Service Layer
-   ├── Repository Layer
-   │
-   ├── PostgreSQL
-   ├── Redis
-   │   ├── Chat memory
-   │   ├── Notification pub/sub
-   │   └── Rate limiting
-   │
-   └── AI Agent Orchestrator
-       ├── Prompt
-       ├── Tool Registry
-       ├── Order / Inventory / Cargo tools
-       └── Gemini API
-```
-
-### Varsayılan local runtime bileşenleri
-
-- `api`: FastAPI backend
-- `db`: PostgreSQL
-- `redis`: Redis
-
-- gerçek kargo provider entegrasyonu
-- frontend container servisi
-
-Bu nedenle mevcut local kurulumun standart yolu:
-
-1. backend + db + redis için `docker compose up --build`
-2. frontend'i ayrı olarak `pnpm dev` ile başlatmak
-
-## 7. Backend Mimarisi
-
-### 7.1 Uygulama nasıl başlıyor?
-
-Backend giriş noktası `backend/app/main.py` dosyasıdır. Container tarafında başlangıç akışı `backend/entrypoint.sh` ile şöyledir:
-
-1. PostgreSQL bağlantısı hazır olana kadar beklenir
-2. `python scripts/bootstrap_alembic.py`
-3. `alembic upgrade head`
-4. `python scripts/seed_all.py`
-5. `uvicorn app.main:app --host 0.0.0.0 --port 8000`
-
-`bootstrap_alembic.py`, legacy tablolar mevcut ama `alembic_version` yoksa veritabanını mevcut revizyona stamp etmek için geliştirme kolaylığı sağlar. Yetkili migration kaynağı yine Alembic'tir.
-
-### 7.2 FastAPI başlangıç davranışı
-
-`app/main.py` içinde:
-
-- FastAPI app oluşturulur.
-- `api_router`, `settings.API_PREFIX` altında mount edilir.
-- `RequestIDMiddleware`, `CORSMiddleware` ve `SecurityHeadersMiddleware` eklenir.
-- global exception handler'lar tanımlanır.
-- `/health` endpoint'i API prefix dışında public olarak sunulur.
-- `lifespan` içinde development ortamında `ensure_schema()` çağrılır.
-
-`ensure_schema()` development rahatlığı için `Base.metadata.create_all()` çalıştırabilir; yine de migration otoritesi Alembic olarak düşünülmelidir.
-
-### 7.3 Request yaşam döngüsü
-
-Genel backend akışı şu şekildedir:
-
-```text
-HTTP Request
-→ Middleware
-→ Pydantic validation
-→ Auth dependency / role check
-→ Service layer
-→ Repository layer
-→ SQLAlchemy
-→ Response builder
-→ Standard ApiResponse
-```
-
-### 7.4 Middleware katmanı
-
-#### RequestIDMiddleware
-
-- Her request için `request_id` üretir veya gelen `X-Request-ID` header'ını kullanır.
-- `request.state.request_id` alanına yazar.
-- response'a `X-Request-ID` ekler.
-- süre ölçümü ve structured logging yapar.
-
-#### CORS
-
-- `allow_credentials=True` ile cookie auth akışını destekler.
-- origin listesi `CORS_ORIGINS` ve development regex fallback ile yönetilir.
-
-#### SecurityHeadersMiddleware
-
-- `X-Content-Type-Options`
-- `X-Frame-Options`
-- `X-XSS-Protection`
-- `Referrer-Policy`
-- `Content-Security-Policy`
-
-header'larını ekler.
-
-### 7.5 Katmanlı mimari
-
-#### Endpoint layer
-
-- route tanımı yapar,
-- schema ile input alır,
-- dependency injection ile servis alır,
-- doğrudan repository veya SQL çağırmaz,
-- sonucu `success_response()` ile döner.
-
-#### Service layer
-
-- iş kurallarını uygular,
-- auth, stok, sipariş, kargo, bildirim, forecast gibi domain davranışlarını yönetir,
-- repository'leri orkestre eder.
-
-#### Repository layer
-
-- SQLAlchemy sorgularını tutar,
-- aggregate bazlı veri erişimini kapsüller,
-- business rule içermez.
-
-#### Model / schema ayrımı
-
-- `models/`: persistence/ORM yapıları.
-- `schemas/`: request/response ve validation yapıları.
-
-### 7.6 Dependency injection ve session yönetimi
-
-`app/core/dependencies.py`:
-
-- DB session'ı `get_db_session()` ile sağlar.
-- `get_current_user()` cookie'den kullanıcıyı çözer.
-- `get_admin_user()` admin yetkisini enforce eder.
-- servis factory'lerini request scope'ta sağlar.
-- AI orchestrator'ı DB session ile üretir.
-
-`app/db/session.py`:
-
-- async engine ve session factory singleton benzeri lazy yapıda tutulur,
-- request sonunda commit/rollback yönetilir,
-- shutdown'da bağlantılar kapatılır.
-
-### 7.7 Response formatı
-
-Tüm API yanıtları `app/core/responses.py` içindeki `ApiResponse` modeli üzerinden standardize edilir:
+Tüm API route’ları `/api/v1/` altında versioned olarak yer alır. Her yanıt standart envelope formatını izler:
 
 ```json
 {
-  "statusCode": 200,
-  "key": "SUCCESS",
-  "message": "İşlem başarıyla tamamlandı.",
-  "data": {},
+  "success": true,
+  "data": { ... },
+  "message": "Operation successful",
   "errors": null
 }
 ```
 
-Pagination kullanılan yerlerde `PaginatedData` tipli `items`, `total`, `page`, `size`, `pages` yapısı kullanılabilir.
+### Endpoint Grupları
 
-### 7.8 Hata yönetimi
+| Grup                | Base Path               | Açıklama                                                          |
+| ------------------- | ----------------------- | ----------------------------------------------------------------- |
+| **Auth**            | `/api/v1/auth`          | Login, logout, refresh token, current user (`/me`)                |
+| **Users / Profile** | `/api/v1/users`         | Profil okuma/güncelleme, parola değiştirme                        |
+| **Addresses**       | `/api/v1/addresses`     | Address CRUD, varsayılan adres seçimi                             |
+| **Products**        | `/api/v1/products`      | Product CRUD (admin), product listing (public/customer)           |
+| **Inventory**       | `/api/v1/inventory`     | Inventory read/update, low-stock and critical-stock queries       |
+| **Orders**          | `/api/v1/orders`        | Order creation (customer), listing, status update (admin), detail |
+| **Shipments**       | `/api/v1/shipments`     | Shipment creation, status update, delayed shipment listing        |
+| **Notifications**   | `/api/v1/notifications` | Notification listing, mark-as-read, unread count, SSE stream      |
+| **Chat / AI**       | `/api/v1/chat`          | Admin AI chat; müşteri AI chat için `/api/v1/chat/customer`       |
+| **Forecast**        | `/api/v1/forecast`      | Weekly demand forecast, stock health analysis                     |
+| **Support**         | `/api/v1/support`       | Deterministic order lookup, stock query, cargo tracking           |
+| **Health**          | `/health`               | DB + Redis connectivity check, service readiness döndürür         |
 
-Global exception handler'lar:
+---
 
-- `AppException` türevleri için standart hata cevabı üretir.
-- `RequestValidationError` için `VALIDATION_ERROR` döner.
-- `SQLAlchemyError` için DB hazır değilse `DATABASE_NOT_READY` / `503` döner.
-- beklenmeyen hatalar için `INTERNAL_ERROR` / `500` döner.
+## Kimlik Doğrulama ve Yetkilendirme
 
-Bu yapı, endpoint içinde tekrarlı `try/except` ihtiyacını büyük ölçüde ortadan kaldırır.
+KobiAI genelinde **HttpOnly cookie tabanlı kimlik doğrulama** kullanır.
 
-### 7.9 Backend domain servisleri
+* Login sırasında backend, `access_token` ve `refresh_token` değerlerini HttpOnly, Secure, SameSite cookie’leri olarak set eder.
+* **Token’lar `localStorage` veya `sessionStorage` içinde saklanmaz** — bu, yaygın bir XSS saldırı yüzeyini ortadan kaldırır.
+* Access token, kullanıcı ID’si ve rolünü (`admin` veya `customer`) içeren imzalı bir JWT’dir.
+* Refresh token, tekrar login gerektirmeden session’ları sessizce yenilemek için kullanılır.
+* **Backend doğruluğun ana kaynağıdır** — frontend auth state’i local storage’dan değil, yükleme sırasında `/auth/me` çağrısından türetir.
+* **Rol tabanlı erişim**, dependency katmanında uygulanır: `Depends(get_current_admin_user)` ve `Depends(get_current_user)`. Frontend route guard’ları yalnızca UX kolaylığıdır — backend enforcement’ın yerini almaz.
+* Yapay zekâ ajanı da kimliği doğrulanmış kullanıcı bağlamını alır ve ajan katmanında role-scoped tool access uygular.
 
-Önemli servisler:
+---
 
-- `AuthService`: register, login, refresh, logout mantığı
-- `UserService`: profil ve adres self-service işlemleri
-- `ProductService`: ürün CRUD ve low stock görünümü
-- `InventoryService`: stok güncelleme, order deduction, low stock notification tetikleme
-- `OrderService`: sipariş oluşturma, statü güncelleme, dashboard hesapları
-- `ShipmentService`: kargo oluşturma, refresh, delayed listesi, order sync
-- `NotificationService`: bildirim listeleme, mark-read, delay summary, Redis event publish
-- `CustomerSupportService`: public ve deterministik müşteri destek sorguları
-- `ForecastingService`: pandas ile basit haftalık tahmin
-- `StockAnalysisService`: stok sağlık analizi, dashboard özeti, simülasyon
+## Veritabanı, Migration ve Seed
 
+### PostgreSQL
 
-## 8. API Domainleri ve Endpoint Yapısı
+PostgreSQL 16 birincil veri deposu olarak kullanılır. Tüm tablolar SQLAlchemy async ORM modelleri olarak tanımlanır ve Alembic ile versioned hale getirilir.
 
-Tüm route'lar varsayılan olarak `/api` prefix'i altındadır. Tek istisna health endpoint'idir: `/health`.
-
-### 8.1 Auth endpoint'leri
-
-| Method | Path | Auth | Açıklama |
-| --- | --- | --- | --- |
-| `POST` | `/api/auth/register` | Public | Yeni kullanıcı kaydı oluşturur; kayıt olan kullanıcı customer rolü ile açılır |
-| `POST` | `/api/auth/login` | Public | Email/şifre ile giriş yapar, token'ları HttpOnly cookie olarak set eder |
-| `POST` | `/api/auth/refresh` | Refresh cookie | Yeni access token üretir |
-| `POST` | `/api/auth/logout` | Public/Auth | Auth cookie'lerini temizler |
-| `GET` | `/api/auth/me` | Authenticated | Aktif kullanıcı bilgisini döner |
-
-### 8.2 User endpoint'leri
-
-| Method | Path | Auth | Açıklama |
-| --- | --- | --- | --- |
-| `GET` | `/api/user/profile` | Authenticated | Kullanıcının kendi profilini getirir |
-| `PATCH` | `/api/user/profile` | Authenticated | Kullanıcının kendi profilini günceller |
-| `GET` | `/api/user/address` | Authenticated | Varsayılan adresi getirir |
-| `PUT` | `/api/user/address` | Authenticated | Varsayılan adresi oluşturur/günceller |
-
-### 8.3 Product endpoint'leri
-
-| Method | Path | Auth | Açıklama |
-| --- | --- | --- | --- |
-| `GET` | `/api/products` | Public | Ürün listesi |
-| `GET` | `/api/products/{product_id}` | Public | Ürün detayları |
-| `GET` | `/api/products/low-stock` | Admin | Kritik/düşük stokta ürünleri listeler |
-| `POST` | `/api/products` | Admin | Yeni ürün oluşturur |
-| `PUT` | `/api/products/{product_id}` | Admin | Ürünü günceller |
-| `DELETE` | `/api/products/{product_id}` | Admin | Ürünü siler |
-
-### 8.4 Public customer support endpoint'leri
-
-Bu grup AI chat'ten ayrıdır; deterministik, read-only müşteri destek sorgularıdır.
-
-| Method | Path | Auth | Açıklama |
-| --- | --- | --- | --- |
-| `GET` | `/api/support/orders/{order_number}` | Public | Sipariş numarasına göre sipariş durumu |
-| `GET` | `/api/support/stock` | Public | `query` parametresi ile ürün/SKU stok sorgusu |
-| `GET` | `/api/support/cargo/{tracking_number}` | Public | Takip numarasına göre kargo durumu |
-
-### 8.5 Order endpoint'leri
-
-| Method | Path | Auth | Açıklama |
-| --- | --- | --- | --- |
-| `POST` | `/api/orders` | Customer | Doğrudan sipariş oluşturur |
-| `GET` | `/api/orders/my` | Customer | Kendi siparişlerini listeler |
-| `GET` | `/api/orders/my/{order_id}` | Customer | Kendi sipariş detayını getirir |
-| `GET` | `/api/orders` | Admin | Tüm siparişleri listeler |
-| `GET` | `/api/orders/{order_id}` | Admin | Sipariş detayı |
-| `PATCH` | `/api/orders/{order_id}/status` | Admin | Sipariş durumunu günceller |
-| `GET` | `/api/orders/summary/today` | Admin | Günlük özet verisi |
-| `GET` | `/api/orders/dashboard/overview` | Admin | Dashboard overview verisi |
-
-### 8.6 Inventory endpoint'leri
-
-| Method | Path | Auth | Açıklama |
-| --- | --- | --- | --- |
-| `GET` | `/api/inventory` | Admin | Envanter listesi |
-| `GET` | `/api/inventory/low-stock` | Admin | Düşük stok listesini getirir |
-| `GET` | `/api/inventory/critical-stocks` | Admin | Kritik stok analizi |
-| `GET` | `/api/inventory/analysis/{product_id}` | Admin | Ürün bazlı stok sağlık analizi |
-| `PUT` | `/api/inventory/{product_id}` | Admin | Stok ve eşik güncellemesi |
-| `GET` | `/api/inventory/dashboard-summary` | Admin | Dashboard için stok özeti |
-| `GET` | `/api/inventory/simulate` | Admin | Büyüme faktörüne göre simülasyon |
-
-### 8.7 Shipment endpoint'leri
-
-| Method | Path | Auth | Açıklama |
-| --- | --- | --- | --- |
-| `POST` | `/api/shipments` | Admin | Siparişe bağlı kargo oluşturur |
-| `GET` | `/api/shipments` | Admin | Kargo listesi / filtreleme |
-| `GET` | `/api/shipments/delayed` | Admin | Geciken veya overdue kargolar |
-| `GET` | `/api/shipments/{tracking_number}` | Admin | Kargo detayı |
-| `PATCH` | `/api/shipments/{tracking_number}/refresh` | Admin | Kargo durumunu provider üzerinden yeniler |
-
-### 8.8 Notification endpoint'leri
-
-| Method | Path | Auth | Açıklama |
-| --- | --- | --- | --- |
-| `GET` | `/api/notifications` | Admin | Tüm bildirimler |
-| `GET` | `/api/notifications/unread` | Admin | Okunmamış bildirimler |
-| `GET` | `/api/notifications/daily-summary` | Admin | AI destekli günlük gecikme özeti |
-| `GET` | `/api/notifications/stream` | Admin | SSE canlı bildirim akışı |
-| `PATCH` | `/api/notifications/read-all` | Admin | Tüm bildirimleri okundu işaretler |
-| `PATCH` | `/api/notifications/{notification_id}/read` | Admin | Tek bildirimi okundu işaretler |
-
-### 8.9 Chat / AI endpoint'leri
-
-| Method | Path | Auth | Açıklama |
-| --- | --- | --- | --- |
-| `POST` | `/api/chat/message` | Authenticated | AI agent'a mesaj gönderir |
-| `GET` | `/api/chat/history/{session_id}` | Authenticated | Redis'teki chat geçmişini getirir |
-| `DELETE` | `/api/chat/history/{session_id}` | Authenticated | Chat geçmişini temizler |
-
-### 8.10 Forecast endpoint'i
-
-| Method | Path | Auth | Açıklama |
-| --- | --- | --- | --- |
-| `GET` | `/api/forecast/{product_id}` | Admin | Ürün bazlı haftalık talep / stok forecast |
-
-### 8.11 Health endpoint'i
-
-| Method | Path | Auth | Açıklama |
-| --- | --- | --- | --- |
-| `GET` | `/health` | Public | DB, migration ve seed readiness kontrolü |
-
-## 9. Auth ve Yetkilendirme Sistemi
-
-### 9.1 Roller
-
-Mevcut kod tabanında geçerli roller:
-
-- `admin`
-- `customer`
-
-`operator` rolü artık aktif sistem rolü değildir. `a9c4d2e7f1b8_normalize_legacy_user_roles.py` migration'ı legacy `operator` kayıtlarını `admin` olarak normalize eder.
-
-### 9.2 Login nasıl çalışır?
-
-1. Kullanıcı `POST /api/auth/login` ile email/şifre gönderir.
-2. `AuthService` kullanıcıyı bulur, şifreyi bcrypt ile doğrular.
-3. Başarılı girişte access + refresh JWT üretilir.
-4. Token'lar response body'ye değil, **HttpOnly cookie** olarak yazılır.
-5. `last_login_at` güncellenir.
-
-### 9.3 Cookie / token modeli
-
-- `access_token`: kısa/orta ömürlü JWT
-- `refresh_token`: daha uzun ömürlü JWT
-- `AUTH_COOKIE_HTTPONLY=true`
-- `AUTH_COOKIE_SAMESITE=lax` varsayılanı kullanılır
-- frontend tüm isteklerde `credentials: "include"` ile çalışır
-- `Authorization: Bearer` akışı kullanılmaz
-
-### 9.4 Refresh akışı
-
-`POST /api/auth/refresh`:
-
-- refresh cookie doğrulanır,
-- yeni access token üretilir,
-- mevcut refresh token kalan ömrüyle tekrar yazılır.
-
-Mevcut yapıda stateful refresh session store veya refresh token rotation yoktur; bu, mimarinin basit tutulduğunu gösterir.
-
-### 9.5 Backend yetki kontrolü
-
-- `get_current_user()`: cookie'den access token çözer, user yükler, aktiflik kontrol eder
-- `get_admin_user()`: `role == admin` kuralını enforce eder
-- customer yetkisi gerektiren sipariş endpoint'lerinde doğrudan rol doğrulaması uygulanır
-
-### 9.6 Frontend auth guard mantığı
-
-Frontend iki katmanda auth davranışı uygular:
-
-#### Next.js middleware
-
-`frontend/apps/web/middleware.ts`:
-
-- `access_token` cookie'sini okur
-- JWT içindeki role claim'ini **imzayı doğrulamadan** parse eder
-- korumalı path'lerde kullanıcıyı login'e yönlendirir
-- auth sayfalarına giriş yapmış kullanıcı gelirse rol bazlı ana ekrana redirect eder
-
-Bu katman UX amaçlıdır; **gerçek yetki doğrulaması backend'dedir**.
-
-#### Session senkronizasyonu
-
-`AuthSessionSync`:
-
-- cookie varsa `/api/auth/me` çağırır,
-- store'u gerçek backend user verisiyle doldurur,
-- 401 alırsa auth store temizlenir ve login'e yönlendirme yapılır.
-
-### 9.7 Rol bazlı erişim
-
-#### Public rotalar
-
-- `/`
-- `/products`
-- `/products/[id]`
-- `/auth/login`
-- `/auth/register`
-
-#### Tüm authenticated kullanıcılar
-
-- `/chat`
-- `/profile`
-
-#### Customer'a özel
-
-- `/orders/my`
-- `/orders/my/[id]`
-
-#### Admin'e özel
-
-- `/dashboard`
-- `/dashboard/products`
-- `/orders`
-- `/inventory`
-- `/shipments`
-- `/notifications`
-
-Not: `/profile` route'u fiziksel olarak authenticated route group altında yer alır; middleware policy listesinde açıkça tanımlı değildir. Buna rağmen sayfa veri yüklerken backend auth endpoint'leri üzerinden doğrulanır ve yetkisiz kullanım 401 / redirect akışıyla engellenir.
-
-## 10. AI Sistemi / Agent Mimarisi
-
-Bu proje açısından en kritik katman `backend/app/agent/` altındaki AI altyapısıdır. Sistem, genel amaçlı serbest sohbetten çok; sipariş, stok ve kargo gibi operasyonel veri kaynaklarına kontrollü erişen tool tabanlı bir yardımcı olarak tasarlanmıştır.
-
-### 10.1 AI katmanının amacı
-
-AI agent'in mevcut kod içindeki ana amacı:
-
-- müşteri veya kullanıcı sorularını Türkçe yanıtlamak,
-- sipariş / stok / kargo sorularında gerçek veri kaynaklarını kullanmak,
-- düşük stok ve gecikme verilerini yönetsel içgörüye dönüştürmek,
-- serbest metin üzerinden daha doğal bir operasyon arayüzü sunmak.
-
-### 10.2 AI ile hangi kanallardan konuşulur?
-
-#### 1. Authenticated chat API
-
-- `POST /api/chat/message`
-- tam sayfa `/chat`
-- global yüzen AI paneli
-
-Bu, Gemini tabanlı gerçek AI katmandır.
-
-#### 2. Bildirim özetleri
-
-`NotificationService.get_daily_delay_summary()` geciken kargoları AI ile özetler ve yöneticiler için sistem raporu üretir.
-
-#### 3. Public support endpoint'leri
-
-`/api/support/*` endpoint'leri kullanıcı sorularını cevaplar, fakat LLM çağırmaz. Bunlar deterministik, read-only müşteri destek servisleridir. README boyunca bunları AI ile ilişkili destek yüzeyi olarak anıyoruz, ancak teknik olarak `/api/chat` akışından ayrıdır.
-
-### 10.3 Temel dosyalar
-
-| Dosya | Rolü |
-| --- | --- |
-| `backend/app/agent/orchestrator.py` | merkezi agent döngüsü |
-| `backend/app/agent/prompts.py` | system prompt |
-| `backend/app/agent/memory.py` | Redis konuşma hafızası |
-| `backend/app/agent/tools/base.py` | base tool contract ve `ToolResult` |
-| `backend/app/agent/tools/__init__.py` | `ToolRegistry` |
-| `backend/app/agent/tools/order_tools.py` | sipariş tool'ları |
-| `backend/app/agent/tools/inventory_tools.py` | stok tool'ları |
-| `backend/app/agent/tools/cargo_tools.py` | kargo tool'u |
-
-### 10.4 Orchestrator nasıl çalışır?
-
-`AgentOrchestrator` akışı:
-
-1. `ConversationMemory` üzerinden Redis'ten `session_id` bazlı konuşma geçmişi yüklenir.
-2. Geçmiş + yeni kullanıcı mesajı Gemini `Content` formatına çevrilir.
-3. `SYSTEM_PROMPT` ve tool declaration listesi ile Gemini'ye istek atılır.
-4. Model function call üretirse ilgili tool `ToolRegistry` üzerinden çalıştırılır.
-5. Tool sonucu tekrar modele verilir.
-6. Model nihai metin cevabı üretirse cevap döndürülür.
-7. Kullanıcı mesajı ve assistant cevabı Redis'e geri kaydedilir.
-
-Bu döngü en fazla **5 iterasyon** ile sınırlandırılmıştır. Böylece sonsuz tool döngüsü engellenir.
-
-### 10.5 Kullanılan model/provider durumu
-
-Kod gerçeği şu şekildedir:
-
-- `Settings` içinde `LLM_PROVIDER`, `LLM_MODEL`, `GEMINI_API_KEY` alanları vardır.
-- aktif orchestrator implementasyonu `google.genai` istemcisi ile **Gemini** kullanır.
-- `anthropic` bağımlılığı yüklü olsa da mevcut `AgentOrchestrator` içinde aktif provider switch yapılmamaktadır.
-
-Pratik sonuç:
-
-- AI chat'in düzgün çalışması için `GEMINI_API_KEY` gereklidir.
-- `LLM_PROVIDER` şu an daha çok geleceğe dönük / konfigürasyon niyeti taşır.
-
-### 10.6 Prompt davranışı
-
-`prompts.py` içindeki system prompt:
-
-- tüm yanıtların Türkçe olmasını ister,
-- sipariş / telefon / stok / kritik stok / kargo sorularında ilgili tool'un zorunlu kullanılmasını ister,
-- uydurma bilgi üretmemeyi zorunlu kılar,
-- fiyat/iade/iptal gibi karar gerektiren konularda kullanıcıyı işletme yetkilisine yönlendirir.
-
-Bu prompt, agent'i serbest üretim yapan bir chatbot yerine operasyonel güvenlik sınırları olan bir yardımcıya dönüştürür.
-
-### 10.7 Memory sistemi
-
-`ConversationMemory`:
-
-- Redis üzerinde `chat:{session_id}` anahtarları kullanır,
-- son **10 mesajı** tutar,
-- TTL değeri `REDIS_CONVERSATION_TTL` ile yönetilir,
-- varsayılan olarak 24 saatlik yaşam döngüsü hedefler,
-- hata durumunda sistemi düşürmez; boş geçmiş ile devam eder.
-
-Önemli ayrım:
-
-- **Mesaj geçmişi** Redis'tedir.
-- **Conversation SQL modeli** ise metadata tutar; tam chat transcript'i değildir.
-
-### 10.8 Tool sistemi
-
-Tool'lar `ToolRegistry` üzerinden modele function declaration olarak sunulur. Her tool bir servis çağırır; repository veya raw SQL'e doğrudan gitmez.
-
-| Tool adı | Dosya | Veri kaynağı | Ne yapar? |
-| --- | --- | --- | --- |
-| `get_order_status` | `order_tools.py` | `OrderQueryService` | sipariş ID'sine göre sipariş durumu, tutar, müşteri, tarih |
-| `get_orders_by_phone` | `order_tools.py` | `OrderQueryService` | telefon numarasına göre son 5 sipariş |
-| `check_product_stock` | `inventory_tools.py` | `InventoryQueryService` | ürün adına göre stok ve low-stock bilgisi |
-| `get_low_stock_report` | `inventory_tools.py` | `InventoryQueryService` | kritik stok listesini döndürür |
-| `get_stock_prediction` | `inventory_tools.py` | `StockAnalysisService` | ürün ID'si için stok riski / tahmin analizi |
-| `get_cargo_status` | `cargo_tools.py` | `CargoQueryService` | tracking number ile kargo durumu |
-
-### 10.9 AI hangi backend servislerinden veri alır?
-
-AI doğrudan ORM sorgusu yapmaz; aşağıdaki servisler üzerinden veri alır:
-
-- `OrderQueryService`
-- `InventoryQueryService`
-- `StockAnalysisService`
-- `CargoQueryService`
-- dolaylı olarak `NotificationService` içindeki günlük özet akışı
-
-Bu servisler de repository katmanı üzerinden DB erişimi yapar.
-
-### 10.10 Güvenlik ve veri erişim sınırları
-
-Mevcut agent tasarımı aşağıdaki güvenlik sınırlarına sahiptir:
-
-- `/api/chat/message` authenticated kullanıcı ister
-- chat endpoint'i rate-limitedir
-- agent tool seti **read-only** veri sorgularına odaklanır
-- agent üzerinden sipariş değiştirme, stok güncelleme, admin aksiyonu çalıştırma yoktur
-- tool'lar service layer kullanır; repository/SQL'e doğrudan bağlanmaz
-- konuşma geçmişi sınırlı ve TTL'li tutulur
-
-### 10.11 AI ve frontend ilişkisi
-
-Frontend tarafında AI iki yüzeyde kullanılır:
-
-- `/chat` tam sayfa sohbet ekranı
-- çoğu authenticated layout içinde görünen global AI paneli
-
-Her iki yüzey de aynı backend `/api/chat` endpoint'ini kullanır. Ancak global AI paneli için ayrı Zustand provider (`AiPanelChatStoreProvider`) kullanıldığı için panel state'i, tam sayfa chat state'inden izoledir.
-
-### 10.12 Örnek senaryolar
-
-Mevcut kodun yanıtlayabildiği senaryolar:
-
-- "Siparişim nerede?"
-- "0532... numarasına ait siparişlerimi göster"
-- "Bu ürün stokta var mı?"
-- "Kritik stokta neler var?"
-- "Şu takip numarasının kargosu nerede?"
-- "Bugünkü geciken kargoların özetini çıkar"
-
-Kısmen destekli / sınırlı senaryolar:
-
-- stok tahminleri (`get_stock_prediction`) mümkün, ancak tool ürün adı değil `product_id` bekler
-- doğal dilden çok karmaşık operasyon komutları için orchestration henüz sınırlıdır
-
-- AI orchestration read-only ve sınırlı tool seti ile çalışıyor
-
-### 10.14 AI mimarisi hakkında dürüst notlar
-
-- Aktif AI katmanı müşteri destek ve read-only operasyon soruları için uygundur.
-- Çok adımlı write-action agent, görev planlama veya role-aware tool orchestration henüz yoktur.
-- Public support endpoint'leri ile Gemini chat katmanı birbirinden ayrıdır; sistem tek bir omnichannel agent seviyesinde birleşmiş değildir.
-
-## 11. Frontend Mimarisi
-
-### 11.1 Organizasyon yapısı
-
-Frontend, `frontend/` altında bir monorepo olarak kurulmuştur.
-
-- `apps/web`: kullanıcıya görünen Next.js uygulaması
-- `packages/core`: altyapı ve API client
-- `packages/domain`: domain hook/API katmanı
-- `packages/state`: query client + store'lar
-- `packages/ui-web`: reusable bileşenler
-- `packages/theme`: tasarım token'ları
-
-Bu yapı, feature'leri doğrudan `app/` içine yığmak yerine, veri ve UI sorumluluklarını ayrıştırır.
-
-### 11.2 Next.js başlangıç noktaları
-
-Önemli dosyalar:
-
-- `frontend/apps/web/app/layout.tsx`
-- `frontend/apps/web/middleware.ts`
-- `frontend/apps/web/components/providers/index.tsx`
-
-`layout.tsx`:
-
-- `Providers` ağacını kurar
-- cookie varlığına göre auth başlangıç durumu verir
-- `MessageContainer` ve `sonner` toaster'ı mount eder
-
-`Providers`:
-
-- `ThemeProvider`
-- `QueryProvider`
-- `SystemStoreProvider`
-- `AuthStoreProvider`
-- `UIStoreProvider`
-- `MessageStoreProvider`
-- `ChatStoreProvider`
-- `SystemStatusSync`
-- `AuthSessionSync`
-- `SystemGate`
-
-şeklinde katmanlanır.
-
-### 11.3 App Router route yapısı
-
-Route group'lar fiziksel klasör olarak ayrılmıştır:
-
-- `(public)`
-- `(authenticated)`
-- `(admin)`
-- `auth`
-
-Ancak URL path'ler route group adlarını içermez.
-
-### 11.4 Frontend sayfa haritası
-
-#### Public / ortak sayfalar
-
-| Route | Açıklama |
-| --- | --- |
-| `/` | role-aware home; public/customer/admin varyantı |
-| `/auth/login` | giriş |
-| `/auth/register` | kayıt |
-| `/products` | ürün listesi |
-| `/products/[id]` | ürün detay sayfası |
-
-#### Authenticated ortak sayfalar
-
-| Route | Açıklama |
-| --- | --- |
-| `/chat` | authenticated AI chat |
-| `/profile` | profil ve adres yönetimi |
-
-#### Customer odaklı sayfalar
-
-| Route | Açıklama |
-| --- | --- |
-| `/orders/my` | customer sipariş listesi |
-| `/orders/my/[id]` | customer sipariş detayı |
-
-#### Admin odaklı sayfalar
-
-| Route | Açıklama |
-| --- | --- |
-| `/dashboard` | genel bakış ekranı |
-| `/dashboard/products` | ürün yönetim listesi |
-| `/dashboard/products/new` | yeni ürün oluşturma |
-| `/dashboard/products/[id]` | ürün düzenleme/detay |
-| `/orders` | sipariş listesi |
-| `/orders/[id]` | sipariş detayı ve status güncelleme |
-| `/inventory` | envanter ve düşük stok görünümü |
-| `/shipments` | kargo listeleme, özet ve oluşturma |
-| `/shipments/[tracking_number]` | kargo detay sayfası |
-| `/notifications` | bildirim merkezi |
-
-### 11.5 Veri akışı
-
-Frontend veri akışı genel olarak şu modeldedir:
-
-```text
-Page
-→ UI component
-→ domain hook
-→ domain API module / client
-→ @repo/core ApiClient
-→ backend ApiResponse
-→ TanStack Query cache
-→ UI render
-```
-
-### 11.6 API client yapısı
-
-`frontend/packages/core/client/client.ts`:
-
-- base URL `NEXT_PUBLIC_API_BASE_URL`
-- tüm isteklerde `credentials: "include"`
-- `Authorization` header'ını bilerek kaldırır
-- backend `ApiResponse<T>` formatını parse eder
-- HTTP hata veya `statusCode >= 400` durumunda `ApiError` fırlatır
-
-Bu nedenle frontend auth modeli tamamen cookie tabanlıdır; access token Zustand'a yazılmaz.
-
-### 11.7 TanStack Query kullanımı
-
-`frontend/packages/state/query/client.ts`:
-
-- ortak query client tanımlar
-- retry/backoff davranışı merkezidir
-- bazı sistem-hazırlık hata anahtarlarında retry kapatılır
-
-`packages/domain/*/hooks` yapısında:
-
-- query key standardizasyonu vardır
-- mutation sonrası ilgili query'ler invalidate edilir
-- çoğu hook `useSystemReady()` kontrolü ile backend hazır değilse çalışmaz
-
-### 11.8 Zustand state yönetimi
-
-Önemli store'lar:
-
-- `authStore`: user, session loading, isAuthenticated
-- `systemStore`: health status / ready / error
-- `chatStore`: session id, optimistic messages, typing durumu
-- `uiStore`: panel ve genel UI state'leri
-- `messageStore`: uygulama içi mesajlaşma / toast benzeri yapı
-
-### 11.9 Auth ve redirect akışı
-
-- Next middleware UX-level guard sağlar
-- `AuthSessionSync` backend `/api/auth/me` ile gerçek session'ı doğrular
-- `handleUnauthorized()` istemci tarafında 401 alınırsa `/auth/login` yönlendirmesi yapar
-
-### 11.10 Backend hazır değilken frontend nasıl davranır?
-
-`SystemStatusSync`, health query'si üzerinden uygulama açılışında ve query invalidation sonrası `/health` endpoint'ini çağırır. `SystemGate`:
-
-- backend erişilemiyorsa hata paneli gösterir,
-- migration eksikse kurulum ekranı gösterir,
-- seed eksikse kullanıcıyı bilgilendirir,
-- sistem hazır olana kadar ana uygulama UI'ını bloklar.
-
-Bu davranış, ilk kurulum ve demo senaryoları için önemlidir.
-
-### 11.11 Admin ekranlarının veri kaynakları
-
-#### Dashboard
-
-- `useDashboardOverview()`
-- günlük toplam gelir
-- toplam sipariş
-- pending/processing iş yükü
-- shipped/delivered metrikleri
-- son 7 günlük performans grafiği
-
-#### Ürünler
-
-- `useProducts()`
-- `useProduct()`
-- `useCreateProduct()`
-- `useUpdateProduct()`
-- `useDeleteProduct()`
-
-#### Siparişler
-
-- `useOrders()`
-- `useOrder()`
-- `useUpdateOrderStatus()`
-
-#### Envanter
-
-- `useInventory()`
-- `useLowStock()`
-- `useUpdateStock()`
-
-#### Kargolar
-
-- `useShipments()`
-- `useShipment()`
-- `useCreateShipment()`
-- `useRefreshShipment()`
-- `useDelayedShipments()`
-
-#### Bildirimler
-
-- `useNotifications()`
-- `useUnreadNotifications()`
-- `useDailySummary()`
-- `useNotificationStream()`
-- `useMarkNotificationRead()`
-- `useMarkAllNotificationsRead()`
-
-### 11.12 Customer akışları
-
-#### Ürün inceleme ve sipariş oluşturma
-
-- customer ürün listesinden ürün seçer
-- detay sayfasında `OrderCreateSheet` açılır
-- sipariş tek adımlı direct checkout olarak oluşturulur
-- ayrı cart / sepet akışı yoktur
-
-Sipariş oluşturma sırasında gönderim adresi order içine snapshot olarak yazılır; bu yapı kullanıcı profilindeki varsayılan adresten bağımsızdır.
-
-#### Sipariş takibi
-
-- `/orders/my`
-- `/orders/my/[id]`
-
-#### Profil
-
-- `ProfileForm`
-- `AddressForm`
-
-### 11.13 Chat/support ekranı
-
-#### Tam sayfa chat
-
-`@repo/ui-web/components/chat/ChatWindow.tsx`:
-
-- session id yönetir
-- geçmişi yükler
-- mesaj gönderir
-- optimistic render yapar
-- gönderim sonrası history query invalidate edilir
-
-#### Global AI paneli
-
-`GlobalAiAssistant`:
-
-- authenticated layout'larda görünür
-- `/chat` sayfasında gizlenir
-- ayrı provider ile izole store kullanır
-
-### 11.14 Notifications canlı akışı
-
-Frontend notifications katmanı SSE kullanır:
-
-- `/api/notifications/stream` ile `EventSource` bağlantısı açılır
-- reconnect/backoff mantığı vardır
-- event geldikçe notification query'leri invalidate edilir
-
-### 11.15 Public support tarafı hakkında önemli not
-
-Frontend domain katmanında `customer` support hook'ları (`useOrderLookup`, `useStockQuery`, `useCargoTracking`) tanımlıdır. Ancak mevcut `apps/web` route yapısında bu endpoint'leri kullanan ayrı bir public destek sayfası görünmemektedir. Yani backend destek API'leri hazırdır; frontend wiring bu bölümde henüz tamamlanmamış görünür.
-
-## 12. Veri Modeli ve Domain İlişkileri
-
-### Ana modeller
-
-| Model | Amaç |
-| --- | --- |
-| `User` | auth kimliği ve sistem kullanıcısı |
-| `UserAddress` | kullanıcının varsayılan adresi |
-| `Customer` | destek / konuşma / kontakt odaklı müşteri varlığı |
-| `Product` | ürün katalog kaydı |
-| `Inventory` | ürünün stok kaydı |
-| `InventoryMovement` | stok hareketleri |
-| `Order` | sipariş ana kaydı |
-| `OrderItem` | sipariş satırları |
-| `OrderStatusHistory` | sipariş statü geçiş geçmişi |
-| `Shipment` | siparişe bağlı kargo kaydı |
-| `ShipmentEvent` | kargo olay zaman çizelgesi |
-| `Notification` | operasyon bildirimleri |
-| `Conversation` | konuşma metadata kaydı |
-| `AuditLog` | değişiklik/audit kaydı |
-| `SeedRun` | seed sürüm takibi |
-
-### İlişki haritası
-
-```text
-User
- ├── UserAddress (1-1)
- ├── Orders (1-N)
- ├── OrderStatusHistory (1-N)
- ├── InventoryMovements (1-N)
- └── AuditLogs (1-N)
-
-Product
- ├── Inventory (1-1)
- ├── OrderItems (1-N)
- └── InventoryMovements (1-N)
-
-Order
- ├── OrderItems (1-N)
- ├── Shipment (1-1)
- ├── OrderStatusHistory (1-N)
- └── InventoryMovements (1-N)
-
-Shipment
- └── ShipmentEvents (1-N)
-
-Customer
- └── Conversations (1-N)
-```
-
-### Önemli model notları
-
-#### `User` ve `Customer` ayrımı
-
-Bu kod tabanında `User` ile `Customer` aynı şey değildir:
-
-- `User`: auth yapan gerçek uygulama kullanıcısıdır
-- `Customer`: destek, iletişim kanalı ve conversation metadata için ayrı bir domaindir
-
-En kritik fark:
-
-- `Order.customer_id` artık **`users.id`** alanına bağlıdır
-- `Customer` modeli sipariş sahibi olmaktan çok destek/iletişim tarafında kullanılır
-
-#### `Order`
-
-`Order` modeli:
-
-- `customer_id` ile `User`'a bağlıdır
-- shipping alanlarını snapshot olarak kendi üzerinde tutar
-- `shipment` ile birebir ilişkilidir
-
-#### `Inventory`
-
-- `quantity`
-- `reserved_quantity`
-- `low_stock_threshold`
-- `available_quantity` property
-
-Mevcut order akışında rezervasyon yerine doğrudan stok düşümü kullanılır; `reserved_quantity` alanı ileri akışlara açık bir altyapı sunar.
-
-#### `Notification`
-
-Notification modeli artık context'i doğrudan foreign key yerine ağırlıklı olarak `payload` JSONB alanında taşır. Bu, bildirim tiplerini esnek genişletmek için seçilmiş görünür.
-
-#### `Conversation`
-
-`Conversation` tablosu tam chat transcript saklamaz. Mesaj geçmişi Redis'te tutulur; SQL tarafta session metadata vardır.
-
-## 13. Database, Migration ve Seed Sistemi
-
-### 13.1 PostgreSQL kullanımı
-
-Varsayılan veritabanı PostgreSQL'dir.
-
-- container içi port: `5432`
-- host port: `5433`
-
-Docker içinde backend, DB'ye `db:5432` üzerinden bağlanır. Dışarıdan bağlanmak için `localhost:5433` kullanılır.
-
-### 13.2 Alembic migration akışı
-
-Migration dosyaları `backend/alembic/versions/` altındadır. Önemli migration başlıkları:
-
-- initial schema
-- notification foundation refactor
-- orders/customer direct checkout dönüşümü
-- user default address yapısı
-- seed metadata tablosu
-- legacy role normalization
-
-### 13.3 Seed sistemi
-
-`backend/scripts/seed_all.py`:
-
-- idempotent çalışır
-- `seed_runs` tablosu üzerinden versiyon takibi yapar
-- aynı seed versiyonu tekrar çalıştırıldığında duplicate veri üretmez
-
-Seed; demo kullanıcılar, adresler, ürünler, stoklar, siparişler, kargolar, shipment event'leri, inventory movement kayıtları, bildirimler, conversation metadata, Redis chat history ve audit log kayıtları üretir.
-
-### 13.4 Demo kullanıcıları
-
-Mevcut seed dosyasında öne çıkan girişler:
-
-| Rol | Email | Şifre |
-| --- | --- | --- |
-| Admin | `admin@kobi.local` | `Admin123!` |
-| Admin / işletme sahibi | `isletme@kobi.local` | `Demo12345!` |
-| Demo customer | `demo@kobi.local` | `Demo12345!` |
-
-Not:
-
-- Eski README'deki `operasyon@kobi.local` hesabı mevcut seed gerçeğiyle uyumlu görünmüyor.
-- Bu README'de yalnızca seed script'te doğrulanabilen hesaplar listelenmiştir.
-
-### 13.5 Uygulama ilk açılışta ne yapar?
-
-Container başlangıcında:
-
-1. PostgreSQL bağlantısı beklenir
-2. Alembic bootstrap kontrolü yapılır
-3. migration head uygulanır
-4. merkezi seed script çalışır
-5. app ayağa kalkar
-
-`seed_all.py` her restart'ta güvenle tetiklenebilir:
-
-- aynı seed daha önce başarıyla çalıştıysa duplicate üretmeden skip edilir
-- seed metadata yok ama mevcut iş verisi varsa demo veri enjekte etmemek için otomatik skip edilir
-- boş veya daha önce yarım kalmış demo DB'de idempotent upsert mantığıyla çalışır
-
-Frontend ise `/health` üzerinden:
-
-- DB bağlantısı hazır mı?
-- migration tamam mı?
-- seed data var mı?
-
-sorularını kontrol eder.
-
-### 13.6 Veritabanı boşsa sistem nasıl davranır?
-
-- Backend bazı DB hatalarını `DATABASE_NOT_READY` olarak döndürür
-- `/health` `ready=false` döner
-- Frontend `SystemGate` üzerinden kurulum eksik uyarısı verir
-
-Bu davranış demo ortamında önemli bir güvenlik katmanıdır.
-
-## 14. Docker ve Local Development
-
-### 14.1 Gereksinimler
-
-- Docker
-- Docker Compose v2+
-- Python 3.12+
-- Poetry
-- Node.js `>=20`
-- pnpm `>=9`
-
-### 14.2 Portlar
-
-| Bileşen | Container | Host |
-| --- | --- | --- |
-| Backend API | `8000` | `8000` |
-| PostgreSQL | `5432` | `5433` |
-| Redis | `6379` | `6380` |
-| Frontend (Next dev) | `3000` | `3000` varsayılan |
-
-Frontend için compose servisi yoktur; Next.js varsayılan geliştirme portu `3000` kullanılır.
-
-### 14.3 Docker ile hızlı başlangıç
-
-#### Backend env oluştur
+### Alembic Migrations
 
 ```bash
+# Generate a new migration after model changes
+docker compose exec api alembic revision --autogenerate -m "describe_change"
+
+# Apply pending migrations
+docker compose exec api alembic upgrade head
+
+# Downgrade one step
+docker compose exec api alembic downgrade -1
+```
+
+### Seed Sistemi
+
+**Idempotent seed script**, ilk çalıştırmada veritabanını demo verisiyle doldurur:
+
+* Demo admin user
+* Demo customer users
+* Sample products and categories
+* Sample inventory records
+* Sample orders and shipments
+* Sample notifications
+
+Seed tekrar çalıştırmaya güvenlidir — kayıt eklemeden önce mevcut kayıtları kontrol eder. Demo credential’ları environment variable’lar üzerinden yapılandırılabilir. Bkz. `.env.example`.
+
+### Health Readiness
+
+`/health` endpoint’i sağlıklı durum döndürmeden önce PostgreSQL ve Redis bağlantısını doğrular. Frontend system readiness gate, başlangıç sırasında bu endpoint’i poll eder.
+
+---
+
+## Yerel Kurulum
+
+### Gereksinimler
+
+* Docker & Docker Compose
+* Node.js 20+ ve pnpm (frontend için)
+* Git
+
+### 1. Clone ve Configure
+
+```bash
+git clone https://github.com/your-org/kobiai.git
+cd kobiai
+
+# Copy backend environment config
 cp backend/.env.example backend/.env
+
+# Copy frontend environment config
+cp frontend/apps/web/.env.example frontend/apps/web/.env.local
 ```
 
-#### Stack'i ayağa kaldır
+`backend/.env` dosyasını düzenleyin ve **Google Gemini API key** ile diğer gerekli değerleri girin.
+
+### 2. Backend’i Başlatma (Docker Compose)
 
 ```bash
+# Build and start all services (API, PostgreSQL, Redis)
 docker compose up --build -d
-```
 
-Bu akışta `api` container'ı sırasıyla PostgreSQL'i bekler, migration çalıştırır, seed yükler ve en son FastAPI'yi başlatır. Manuel `alembic upgrade` veya `python scripts/seed_all.py` çalıştırmak gerekmez.
-
-#### Log kontrolü
-
-```bash
+# Watch logs
 docker compose logs -f api
+
+# Check health
+curl http://localhost:8000/health
 ```
 
-#### Durdur
+Backend şunları yapar:
 
-```bash
-docker compose down
-```
+1. PostgreSQL ve Redis hazır olana kadar bekler.
+2. Alembic migration’ları otomatik çalıştırır.
+3. Demo verisi oluşturmak için seed script’ini çalıştırır.
+4. **8000 portunda** hizmet vermeye başlar.
 
-#### Temiz veritabanı ile yeniden kur
+### 3. Servisleri Doğrulama
 
-```bash
-docker compose down -v
-docker compose up --build -d
-```
+| Servis                 | URL / Port                   |
+| ---------------------- | ---------------------------- |
+| **FastAPI backend**    | `http://localhost:8000`      |
+| **API docs (Swagger)** | `http://localhost:8000/docs` |
+| **PostgreSQL**         | `localhost:5432`             |
+| **Redis**              | `localhost:6379`             |
 
-### 14.4 Frontend local başlatma
-
-Örnek frontend env değerleri `frontend/apps/.env.example` altında tutuluyor. Next.js uygulaması için pratik yaklaşım, bu içeriği `frontend/apps/web/.env.local` dosyasına taşımaktır.
+### 4. Frontend’i Başlatma
 
 ```bash
 cd frontend
+
+# Install dependencies
 pnpm install
+
+# Start development server
 pnpm dev
 ```
 
-Bu komut `turbo run dev` ile workspace'i çalıştırır; mevcut repo yapısında ana UI uygulaması `apps/web`'dir.
+Frontend **`http://localhost:3000`** adresinde kullanılabilir olur.
 
-### 14.5 Backend'i Docker dışında çalıştırma
-
-Docker içindeki `backend/.env.example` varsayılan olarak:
-
-- `DATABASE_URL=...@db:5432/...`
-- `REDIS_URL=redis://redis:6379/0`
-
-kullanır. Backend'i host makinede Docker dışından çalıştıracaksanız bu değerleri host portlarına göre uyarlamanız gerekir:
-
-```env
-DATABASE_URL=postgresql+asyncpg://kobi_user:kobi_pass@localhost:5433/kobi_db
-REDIS_URL=redis://localhost:6380/0
-```
-
-### 14.6 Cookie tabanlı local geliştirme notu
-
-Cookie auth nedeniyle `localhost` ve `127.0.0.1` karışık kullanıldığında session davranışı şaşabilir. Frontend ve backend'e erişirken mümkün olduğunca tek host adıyla tutarlı kalın.
-
-## 15. Ortam Değişkenleri
-
-Tam örnekler için:
-
-- `backend/.env.example`
-- `frontend/apps/.env.example`
-
-incelenmelidir. Aşağıdaki tablolar ana değişkenleri özetler.
-
-### 15.1 Backend env değişkenleri
-
-| Variable | Required | Açıklama | Örnek |
-| --- | --- | --- | --- |
-| `APP_NAME` | Hayır | uygulama adı | `KOBİ Agent` |
-| `ENVIRONMENT` | Hayır | `development/staging/production` | `development` |
-| `DEBUG` | Hayır | debug mod | `true` |
-| `API_PREFIX` | Hayır | API prefix | `/api` |
-| `CORS_ORIGINS` | Hayır | izinli origin listesi | `["http://localhost:3000"]` |
-| `DATABASE_URL` | Evet | async PostgreSQL bağlantısı | `postgresql+asyncpg://...@db:5432/kobi_db` |
-| `REDIS_URL` | Evet | Redis bağlantısı | `redis://redis:6379/0` |
-| `SECRET_KEY` | Evet | JWT imzalama anahtarı, min 32 karakter | `dev-only-secret-key-...` |
-| `JWT_ALGORITHM` | Hayır | JWT algoritması | `HS256` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Hayır | access token süresi | `1440` |
-| `REFRESH_TOKEN_EXPIRE_MINUTES` | Hayır | refresh token süresi | `10080` |
-| `AUTH_ACCESS_COOKIE_NAME` | Hayır | access cookie adı | `access_token` |
-| `AUTH_REFRESH_COOKIE_NAME` | Hayır | refresh cookie adı | `refresh_token` |
-| `AUTH_COOKIE_PATH` | Hayır | cookie path | `/` |
-| `AUTH_COOKIE_SECURE` | Hayır | secure cookie | `false` |
-| `AUTH_COOKIE_SAMESITE` | Hayır | same-site politikası | `lax` |
-| `GEMINI_API_KEY` | AI için evet | aktif AI sağlayıcı anahtarı | `your-key` |
-| `LLM_PROVIDER` | Hayır | provider niyeti | `gemini` |
-| `LLM_MODEL` | Hayır | model adı | `gemini-2.5-flash` |
-| `USE_MOCK_CARGO` | Hayır | mock cargo provider kullanımı | `true` |
-| `CARGO_API_KEY` | Hayır | gelecekte gerçek cargo entegrasyonu için | boş bırakılabilir |
-| `SEED_ADMIN_EMAIL` | Hayır | seed admin email override | `admin@kobi.local` |
-| `SEED_ADMIN_PASSWORD` | Hayır | seed admin şifresi | `Admin123!` |
-| `SEED_OWNER_EMAIL` | Hayır | seed owner email | `isletme@kobi.local` |
-| `SEED_DEMO_EMAIL` | Hayır | demo customer email | `demo@kobi.local` |
-| `SEED_DEMO_PASSWORD` | Hayır | demo customer şifresi | `Demo12345!` |
-
-### 15.2 Frontend env değişkenleri
-
-| Variable | Required | Açıklama | Örnek |
-| --- | --- | --- | --- |
-| `NEXT_PUBLIC_API_BASE_URL` | Evet | backend ana host'u | `http://localhost:8000` |
-| `NEXT_PUBLIC_AUTH_API_URL` | Hayır | auth base path | `/api/auth` |
-| `NEXT_PUBLIC_CHAT_API_URL` | Hayır | chat base path | `/api/chat` |
-| `NEXT_PUBLIC_PRODUCTS_API_URL` | Hayır | products base path | `/api/products` |
-| `NEXT_PUBLIC_ORDERS_API_URL` | Hayır | orders base path | `/api/orders` |
-| `NEXT_PUBLIC_INVENTORY_API_URL` | Hayır | inventory base path | `/api/inventory` |
-| `NEXT_PUBLIC_SHIPMENTS_API_URL` | Hayır | shipments base path | `/api/shipments` |
-| `NEXT_PUBLIC_NOTIFICATIONS_API_URL` | Hayır | notifications base path | `/api/notifications` |
-| `NEXT_PUBLIC_HEALTH_API_URL` | Hayır | health endpoint'i | `/health` |
-| `NEXT_PUBLIC_AI_API_URL` | Hayır | örnek env'de var, fakat mevcut aktif client akışında kullanılmıyor | `/api/ai` |
-
-### 15.3 Frontend kodunda desteklenip env example'da görünmeyen opsiyonel değişkenler
-
-Kodda default fallback ile kullanılan ek değişkenler:
-
-- `NEXT_PUBLIC_USER_API_URL` → varsayılan `/api/user`
-- `NEXT_PUBLIC_CUSTOMER_SUPPORT_API_URL` → varsayılan `/api/support`
-
-Bu iki değişken örnek env dosyasında yer almıyor, ancak client kodu bunları destekliyor.
-
-## 16. Çalıştırma Komutları
-
-### 16.1 Docker
+### Kullanışlı Docker Komutları
 
 ```bash
-docker compose up --build
-docker compose up -d
-docker compose ps
-docker compose logs -f api
+# Stop all services
 docker compose down
+
+# Reset database (drops volumes)
 docker compose down -v
+
+# Rebuild without cache
+docker compose build --no-cache
+
+# Run migrations manually
+docker compose exec api alembic upgrade head
+
+# Run seed manually
+docker compose exec api python scripts/seed.py
+
+# Open a shell in the API container
+docker compose exec api bash
 ```
 
-### 16.2 Backend bağımlılık kurulumu
+---
 
-```bash
-cd backend
-poetry install
+## Ortam Değişkenleri
+
+### Backend (`backend/.env`)
+
+| Değişken                      | Açıklama                                           |
+| ----------------------------- | -------------------------------------------------- |
+| `DATABASE_URL`                | PostgreSQL async connection string                 |
+| `REDIS_URL`                   | Redis connection string                            |
+| `SECRET_KEY`                  | JWT signing secret; güçlü rastgele değer üretin    |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Access token TTL in minutes                        |
+| `REFRESH_TOKEN_EXPIRE_DAYS`   | Refresh token TTL in days                          |
+| `GEMINI_API_KEY`              | Google Gemini API key                              |
+| `GEMINI_MODEL`                | Gemini model name, örn. `gemini-1.5-pro`           |
+| `CORS_ORIGINS`                | Allowed CORS origins, örn. `http://localhost:3000` |
+| `SEED_ADMIN_EMAIL`            | Demo admin account email                           |
+| `SEED_ADMIN_PASSWORD`         | Demo admin account password                        |
+| `ENVIRONMENT`                 | `development` veya `production`                    |
+
+### Frontend (`frontend/apps/web/.env.local`)
+
+| Değişken                   | Açıklama                                           |
+| -------------------------- | -------------------------------------------------- |
+| `NEXT_PUBLIC_API_BASE_URL` | Backend API base URL, örn. `http://localhost:8000` |
+| `NEXT_PUBLIC_APP_ENV`      | App environment label                              |
+
+> **Güvenlik notu:** Gerçek secret değerlerini asla version control’e commit etmeyin. `.env.example` dosyaları yalnızca placeholder değerler içerir.
+
+---
+
+## Demo Akışı
+
+### Admin Demo
+
+1. Seed edilmiş admin credential’ları ile `http://localhost:3000` adresinden **giriş yapın**.
+2. **Dashboard** — genel bakış kartlarını inceleyin: bugünün siparişleri, aktif kargolar, düşük stok sayısı, okunmamış bildirimler. Haftalık performans grafiğini kontrol edin.
+3. **AI Summary** — yapay zekâ asistan panelini açın. Şunu sorun: *“Give me a summary of today's operational status.”* Yapay zekâ envanter, sipariş ve bildirim araçlarını çağırıp bir yanıt sentezler.
+4. **Inventory** — Inventory bölümüne gidin. Düşük stok veya kritik olarak işaretlenen ürünleri gözlemleyin. Yapay zekâya şunu sorun: *“Which products are critically low and what should I do?”*
+5. **AI Action** — yapay zekâ bekleyen bir aksiyon önerebilir; örneğin yeniden sipariş eşiğini güncellemek. Önerilen değişikliği inceleyin ve onaylayın veya reddedin.
+6. **Orders** — Orders bölümüne gidin. Pending durumuna göre filtreleyin. Bir sipariş durumunu güncelleyin. Yapay zekâya şunu sorun: *“Which orders need urgent attention?”*
+7. **Shipments** — Shipments bölümüne gidin. Geciken kargoları inceleyin. Yapay zekâdan shipment risk report isteyin.
+8. **Notifications** — bildirim merkezini açın. Uyarıları inceleyin. Bildirimleri okundu olarak işaretleyin.
+9. **AI Chat (free-form)** — herhangi bir şey sorun: *“What are the top three things I should focus on today?”*
+
+### Müşteri Demo
+
+1. Yeni müşteri hesabı **oluşturun** veya seed edilmiş müşteri hesabıyla giriş yapın.
+2. **Browse Products** — ürün kataloğunu keşfedin. Ürün detay sayfalarında uygunluğu kontrol edin.
+3. **Create Order** — bir veya daha fazla ürün için sipariş oluşturun.
+4. **My Orders** — My Orders bölümüne gidin. Yeni siparişi ve mevcut durumunu görüntüleyin.
+5. **AI Chat** — şunu sorun: *“Where is my last order?”* veya *“Is [product name] in stock?”* Yapay zekâ canlı veriyi kullanarak yanıtlar.
+6. **Profile & Address** — profil bilgilerini güncelleyin. Teslimat adresi ekleyin.
+
+---
+
+## Mevcut Sınırlamalar
+
+Aşağıdakiler platformun demo/MVP olarak mevcut durumuna dair dürüst değerlendirmelerdir:
+
+* **Kargo sağlayıcı entegrasyonu mock’tur.** Kargo takip entegrasyonu gerçek bir kargo API’siyle genişletilecek şekilde tasarlanmıştır; örneğin Türkiye’de Aras, Yurtiçi, PTT Kargo. Ancak şu anda simüle edilmiş takip yanıtları kullanır.
+* **Background worker’lar mevcut fakat varsayılan olarak aktif değildir.** Worker altyapısı, örneğin RabbitMQ tabanlı background task’lar, genişletilebilirlik için kod tabanında bulunur ancak varsayılan `docker compose up` stack’inin parçası değildir.
+* **Ödeme veya sepet sistemi yoktur.** KobiAI şu anda ödeme altyapısı, shopping cart veya refund flow implement etmez. Siparişler doğrudan oluşturulur.
+* **Test coverage sınırlıdır.** Mimari test edilebilirlik için tasarlanmıştır: katmanlı ve dependency-injected. Ancak kapsamlı unit ve integration test suite’leri henüz mevcut değildir.
+* **Public support UI minimaldir.** Deterministik destek endpoint’leri backend’de implement edilmiştir; özel bir public-facing support widget UI kısmi olabilir veya bulunmayabilir.
+* **Yapay zekâ yazma aksiyonları açık admin onayı gerektirir** — bu tasarım gereğidir, ancak AI’ın açıkça faydalı olsa bile değişiklikleri otonom olarak uygulayamayacağı anlamına gelir.
+* **Tahminleme modelleri sezgiseldir.** Weekly demand forecast ve stock health analysis, ML-trained modeller yerine yakın dönem sipariş geçmişi ve yapılandırılabilir kurallar kullanır.
+* **Single-tenant mimari.** Mevcut veri modeli tek bir işletme instance’ını destekler. Multi-tenancy için schema ve auth değişiklikleri gerekir.
+
+---
+
+## Yol Haritası
+
+Bu platform için gerçekçi sonraki geliştirmeler:
+
+* [ ] **Gerçek kargo sağlayıcı entegrasyonu** — canlı takip verisi için gerçek carrier API’lerine bağlanma.
+* [ ] **Ödeme ve iade akışı** — sipariş yaşam döngüsü yönetimiyle bir ödeme altyapısı entegre etme: Stripe, iyzico vb.
+* [ ] **Shopping cart** — session persistence ile sipariş öncesi cart state.
+* [ ] **Gelişmiş rol ve yetki sistemi** — admin rolü içinde granular permissions; örneğin yalnızca envanter yetkisi veya full admin.
+* [ ] **Tedarikçi yönetimi** — ürün bazlı supplier takibi, supplier’lara yeniden sipariş önerilerini otomatikleştirme.
+* [ ] **Çok kanallı müşteri mesajlaşması** — sipariş durumu güncellemeleri için WhatsApp, email veya SMS bildirimleri.
+* [ ] **Geliştirilmiş tahminleme** — geçmiş sipariş verilerini kullanan ML-based demand forecasting.
+* [ ] **Kapsamlı test suite** — services/repositories için unit test’ler, API endpoint’leri için integration test’ler.
+* [ ] **Observability** — structured logging, distributed tracing (OpenTelemetry) ve metrics (Prometheus/Grafana).
+* [ ] **Production deployment pipeline** — otomatik migrations, health checks ve rollback destekli CI/CD.
+* [ ] **Multi-tenant support** — SaaS deployment için schema-level veya row-level tenant isolation.
+* [ ] **Webhook system** — harici sistemlerle entegrasyon için order event’leri üzerinde outbound webhooks.
+* [ ] **AI model configurability** — Gemini dışında birden fazla LLM backend desteği.
+
+---
+
+## Proje Yapısı
+
+```txt
+kobiai/
+├── backend/
+│   ├── app/
+│   │   ├── agent/          # AI orchestrator, tools, memory, prompts
+│   │   ├── api/
+│   │   │   ├── v1/         # API route handlers
+│   │   │   └── deps/       # FastAPI dependencies
+│   │   ├── core/           # Config, security, response builder
+│   │   ├── db/             # Async DB engine and session
+│   │   ├── integrations/   # External API adapters
+│   │   ├── models/         # SQLAlchemy ORM models
+│   │   ├── repositories/   # Async DB query layer
+│   │   ├── schemas/        # Pydantic v2 schemas
+│   │   ├── services/       # Business logic layer
+│   │   └── workers/        # Background task workers (optional)
+│   ├── alembic/            # Migration scripts
+│   ├── scripts/            # Seed and utility scripts
+│   ├── pyproject.toml
+│   ├── Dockerfile
+│   └── .env.example
+│
+├── frontend/
+│   ├── apps/
+│   │   └── web/
+│   │       ├── app/
+│   │       │   ├── (admin)/     # Admin route group
+│   │       │   ├── (customer)/  # Customer route group
+│   │       │   └── (public)/    # Public/auth route group
+│   │       ├── components/      # App-level components
+│   │       └── .env.example
+│   ├── packages/
+│   │   ├── core/            # API client and base utilities
+│   │   ├── domain/          # Domain hooks (useOrders, useInventory…)
+│   │   ├── state/           # Zustand stores
+│   │   ├── theme/           # Tailwind config and design tokens
+│   │   ├── ui-web/          # UI component library
+│   │   ├── ui-contracts/    # Component interface types
+│   │   └── i18n/            # Internationalization
+│   ├── package.json
+│   └── turbo.json
+│
+├── docker-compose.yml
+└── README.md
 ```
 
-### 16.3 Backend development server
+---
 
-```bash
-cd backend
-poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
+## Geliştirme Standartları
 
-### 16.4 Migration komutları
+### Backend
 
-```bash
-cd backend
-poetry run alembic upgrade head
-poetry run alembic revision --autogenerate -m "your_message"
-```
+* **Katmanlı mimari** — endpoint → service → repository → model. Endpoint’lerden repository çağrısı yapılmaz; service katmanında HTTP concern bulunmaz.
+* **Standart `ApiResponse`** — her endpoint aynı envelope yapısını döndürür. Consumer’lar tutarlı bir shape’e güvenebilir.
+* **Async-first** — tüm I/O işlemleri async çalışır: DB, Redis, external HTTP. Request path içinde blocking call bulunmaz.
+* **Pydantic v2 schema’ları** — request body’leri ve response model’leri tamamen typed ve validated durumdadır. Katmanlar arasında raw dict aktarılmaz.
+* **Dependency injection** — auth context, DB session ve Redis her request için enjekte edilir; business logic içinde global singleton kullanılmaz.
 
-### 16.5 Seed komutları
+### Frontend
 
-Container startup'ında seed otomatik çalışır. Manuel çalıştırmak yalnızca gerektiğinde kullanılır:
+* **Domain hook’ları** — tüm data fetching, `packages/domain` paketi içindeki domain hook’larında kapsüllenir. Page component’leri API client’ı doğrudan import etmez.
+* **Server state ve UI state ayrımı** — TanStack Query server-derived data’nın tamamına sahiptir. Zustand UI state’e sahiptir: panel open/close, selected items, auth session. Bunlar asla karıştırılmaz.
+* **TypeScript strict mode** — tüm frontend strict checks ile TypeScript’tir. API response tipleri `ui-contracts` paketi üzerinden paylaşılır.
+* **Cookie-based auth** — localStorage veya sessionStorage içinde asla token tutulmaz. Auth state browser’dan değil backend’den türetilir.
+* **Component composability** — `ui-web` içindeki UI component’leri Radix UI primitive’leri üzerine kurulur ve iyi tiplendirilmiş prop’lar alır. Uygulamaya özel logic, UI component’lerinde değil page component’lerinde ve domain hook’larında yer alır.
 
-```bash
-cd backend
-poetry run python scripts/seed_all.py
-```
+---
 
-Container içinde:
+## Dokümantasyon Notları
 
-```bash
-docker compose exec api python scripts/seed_all.py
-```
+Bu README, yazıldığı anda mevcut olan repository yapısı, environment configuration dosyaları ve proje spesifikasyonları temel alınarak hazırlanmıştır. Kod tabanının mevcut durumunu yansıtır ve implement edilmiş özellikler ile planlanan işlevler konusunda doğru ve dürüst olmayı amaçlar.
 
-### 16.6 Backend kalite komutları
+Proje geliştikçe bu README şu konuları yansıtacak şekilde güncellenmelidir:
 
-```bash
-cd backend
-poetry run ruff check .
-poetry run pytest
-```
+* Yeni özellikler ve endpoint’ler eklendikçe.
+* Teknoloji yığınındaki değişiklikler.
+* Portlar, komutlar veya Docker configuration değişirse güncellenmiş setup talimatları.
+* Sınırlamalar çözüldükçe revize edilmiş sınırlamalar.
+* Seed sistemi kesinleştiğinde doğru demo credential’ları.
 
-Not: `pytest` yapılandırması mevcut olsa da repoda görünür test kapsamı sınırlıdır.
-
-### 16.7 Frontend bağımlılık kurulumu
-
-```bash
-cd frontend
-pnpm install
-```
-
-### 16.8 Frontend development
-
-```bash
-cd frontend
-pnpm dev
-```
-
-Sadece web app için:
-
-```bash
-cd frontend
-pnpm --filter @repo/web dev
-```
-
-### 16.9 Frontend kalite komutları
-
-```bash
-cd frontend
-pnpm lint
-pnpm typecheck
-pnpm --filter @repo/web type-check
-pnpm build
-```
-
-## 17. Response Formatı ve Hata Yönetimi
-
-### 17.1 Standart response formatı
-
-Backend şu şemayı standartlaştırır:
-
-```json
-{
-  "statusCode": 200,
-  "key": "SUCCESS",
-  "message": "İşlem başarıyla tamamlandı.",
-  "data": null,
-  "errors": null
-}
-```
-
-Alanların anlamı:
-
-- `statusCode`: uygulama seviyesi durum kodu
-- `key`: makinece okunabilir sonuç anahtarı
-- `message`: kullanıcıya gösterilebilir mesaj
-- `data`: asıl payload
-- `errors`: field-level veya detay hata listesi
-
-### 17.2 Frontend bunu nasıl parse eder?
-
-`ApiClient`:
-
-- ham HTTP response'u okur
-- `ApiResponse<T>` formatını parse eder
-- response `ok` değilse veya `statusCode >= 400` ise `ApiError` fırlatır
-
-Bu sayede tüm domain hook'lar tek tip hata nesnesi ile çalışır.
-
-### 17.3 Validasyon hataları
-
-Validation hataları:
-
-- `422`
-- `VALIDATION_ERROR`
-- `errors` listesi içinde `field` + `message`
-
-şeklinde döner.
-
-### 17.4 Sistem readiness / sağlık kontrolleri
-
-`/health` response'u aşağıdaki gibi alanlar döndürür:
-
-- `ready`
-- `databaseReady`
-- `migrationsReady`
-- `seedReady`
-- `missingTables`
-- `message`
-
-Frontend bu payload'u doğrudan sistem kapısı olarak kullanır.
-
-## 18. Demo Akışı
-
-### Admin demo akışı
-
-1. `admin@kobi.local` veya `isletme@kobi.local` ile giriş yapın
-2. `/dashboard` üzerinden toplam gelir, sipariş ve haftalık performansı inceleyin
-3. `/dashboard/products` altında ürünleri görüntüleyin
-4. `/inventory` ekranında düşük stokları ve kritik ürünleri kontrol edin
-5. `/orders` ekranında siparişleri açın ve status değiştirin
-6. `/shipments` ekranında kargo oluşturun veya geciken kargoları filtreleyin
-7. `/notifications` ekranında canlı bildirim akışını inceleyin
-8. `/chat` veya global AI panelinden stok/sipariş/kargo soruları sorun
-
-### Customer demo akışı
-
-1. `demo@kobi.local / Demo12345!` ile giriş yapın
-2. `/products` üzerinden katalogu inceleyin
-3. Bir ürün detayına girip doğrudan sipariş oluşturun
-4. `/orders/my` üzerinden kendi siparişlerinizi kontrol edin
-5. `/chat` ekranında AI asistanına sipariş veya ürün sorusu sorun
-6. `/profile` üzerinden profil ve adres bilgilerinizi güncelleyin
-
-## 19. Geliştirme Standartları
-
-### 19.1 Yeni backend endpoint ekleme standardı
-
-1. `schemas/` altında request/response şeması tanımlayın
-2. `repositories/` katmanına veri erişimini ekleyin
-3. `services/` katmanında business logic yazın
-4. `api/endpoints/` altında route tanımlayın
-5. `api/router.py` içine router'ı bağlayın
-6. `success_response()` / standart hata modeli kullanın
-
-### 19.2 Yeni frontend sayfası ekleme standardı
-
-1. `apps/web/app/` altında route oluşturun
-2. gerekli API çağrılarını `packages/domain/<domain>` içine ekleyin
-3. server state için TanStack Query hook'u yazın
-4. UI bileşenlerini `packages/ui-web` veya app-level component olarak yerleştirin
-5. gerekiyorsa access policy ve navigation listelerini güncelleyin
-
-### 19.3 Yeni AI tool ekleme standardı
-
-1. `backend/app/agent/tools/` altında yeni tool sınıfı oluşturun
-2. tool'un veri kaynağını bir service üzerinden çağırın
-3. `ToolResult` dönecek şekilde contract'ı uygulayın
-4. `AgentOrchestrator._build_registry()` içine tool'u register edin
-5. gerekiyorsa `prompts.py` içindeki system prompt yönergelerini güncelleyin
-
-### 19.4 Yeni model / migration ekleme standardı
-
-1. ORM modeli `models/` altında tanımlayın
-2. ilgili schema/repository/service alanlarını güncelleyin
-3. Alembic migration üretin
-4. seed gerekiyorsa `scripts/seed_all.py` içine idempotent şekilde ekleyin
-5. `/health` readiness ve demo akışına etkisini düşünün
-
-### 19.5 Auth protected route ekleme standardı
-
-1. backend'de uygun dependency (`get_current_user`, `get_admin_user`) ekleyin
-2. frontend'de `packages/domain/auth/access/policy.ts` dosyasını güncelleyin
-3. gerekirse navigation listelerini düzenleyin
-4. 401/403 davranışının UI tarafında bozulmadığını kontrol edin
-
-### 19.6 Response format standardı
-
-Yeni endpoint'ler:
-
-- ham dict dönmemeli,
-- mümkün olduğunca `success_response()` kullanmalı,
-- hata durumlarında `AppException` türevleri tercih edilmeli,
-- frontend `ApiClient` ile uyumlu `ApiResponse` yapısını korumalıdır.
-
-## 20. Bilinen Sınırlamalar ve Gelecek Geliştirmeler
-
-Kod tabanından görülen mevcut sınırlamalar:
-
-- rol sistemi şu anda sadece `admin` / `customer` düzeyindedir
-- frontend compose akışına dahil değildir
-- AI orchestration read-only ve sınırlı tool seti ile çalışıyor
-- aktif provider implementasyonu fiilen Gemini'ye bağlı
-- gerçek kargo entegrasyonu henüz mock provider seviyesinde
-- payment / iade / iptal gibi transaction akışları yok
-- cart/sepet akışı yok, checkout doğrudan tek adım
-- forecast endpoint'i var ama buna bağlı belirgin bir frontend ekranı yok
-- public support hook'ları frontend route seviyesinde tam bağlanmış görünmüyor
-- test kapsamı sınırlı
-- `reserved_quantity` ve bazı ileri operasyon alanları geleceğe dönük hazırlık niteliğinde
-
-Gerçekçi sonraki adımlar:
-
-- daha ayrıntılı role/permission sistemi
-- AI tool orchestration'ın write-safe aksiyonlara genişletilmesi
-- gerçek cargo provider entegrasyonu
-- ödeme ve iade süreçleri
-- gelişmiş analytics / forecasting ekranları
-- production monitoring / tracing
-- daha yüksek test coverage
-- admin kullanıcı yönetimi
-- çok kanallı müşteri bildirimleri
-
-## 21. Hızlı Başlangıç Dosya Rehberi
-
-Projeyi devralan bir geliştirici veya AI agent için ilk bakılması gereken dosyalar:
-
-| Amaç | Dosya |
-| --- | --- |
-| Backend giriş noktası | `backend/app/main.py` |
-| API router ağacı | `backend/app/api/router.py` |
-| Auth endpoint'leri | `backend/app/api/endpoints/auth.py` |
-| Order domain | `backend/app/api/endpoints/orders.py`, `backend/app/services/order_service.py` |
-| Inventory domain | `backend/app/api/endpoints/inventory.py`, `backend/app/services/inventory_service.py` |
-| Shipment domain | `backend/app/api/endpoints/shipments.py`, `backend/app/services/shipment_service.py` |
-| AI orchestrator | `backend/app/agent/orchestrator.py` |
-| AI prompt | `backend/app/agent/prompts.py` |
-| AI tools | `backend/app/agent/tools/` |
-| Notification akışı | `backend/app/api/endpoints/notifications.py`, `backend/app/services/notification_service.py` |
-| Migration sistemi | `backend/alembic/env.py`, `backend/alembic/versions/` |
-| Seed sistemi | `backend/scripts/seed_all.py` |
-| Frontend layout / provider ağacı | `frontend/apps/web/app/layout.tsx`, `frontend/apps/web/components/providers/index.tsx` |
-| Frontend route guard | `frontend/apps/web/middleware.ts`, `frontend/packages/domain/auth/access/policy.ts` |
-| Frontend API client | `frontend/packages/core/client/client.ts` |
-| Domain hook yapısı | `frontend/packages/domain/` |
-| Global state | `frontend/packages/state/` |
-| Reusable UI | `frontend/packages/ui-web/` |
-
-## 22. Ek Notlar
-
-- Swagger / OpenAPI dokümantasyonu debug modunda `http://localhost:8000/docs` altında erişilebilir.
-- `frontend/service_info.md`, `frontend/User-settings.md` ve bazı `backend/md/*.md` dosyaları yardımcı referanslar içerir; ancak bu README ve çalışan kod daha güncel kaynak olarak değerlendirilmelidir.
-- Bu README, mevcut repo durumu üzerinden hazırlanmıştır. Kod ilerledikçe özellikle env example'lar ve frontend support sayfalarının tekrar eşlenmesi gerekir.
+**Katkıda bulunanlar için:** Yeni bir service module, AI tool veya büyük frontend package eklerseniz, lütfen ilgili README bölümünü aynı pull request içinde güncelleyin.
