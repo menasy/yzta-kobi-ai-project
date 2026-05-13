@@ -11,3 +11,4 @@ loguru
 sqlalchemy
 asyncpg
 email-validator
+pandas

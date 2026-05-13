@@ -1,15 +1,37 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
-from sqlalchemy.sql import func
-from app.core.database import Base
+# models/user.py
+from datetime import datetime
+from typing import TYPE_CHECKING
 
-class User(Base):
+from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.db.base import Base
+
+from .base_model import IDMixin, TimestampMixin
+
+if TYPE_CHECKING:
+    from .audit_log import AuditLog
+    from .inventory_movement import InventoryMovement
+    from .order import Order
+    from .order_status_history import OrderStatusHistory
+    from .user_address import UserAddress
+
+
+class User(Base, IDMixin, TimestampMixin):
+    """Sisteme giriş yapan admin/operatör kullanıcılar."""
+
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    role = Column(String(20), server_default="admin")
-    is_active = Column(Boolean, default=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    full_name: Mapped[str | None] = mapped_column(String(255))
+    role: Mapped[str] = mapped_column(String(50), server_default="customer")
+    is_active: Mapped[bool] = mapped_column(Boolean, server_default="true")
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    # İlişkiler
+    audit_logs: Mapped[list["AuditLog"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    inventory_movements: Mapped[list["InventoryMovement"]] = relationship(back_populates="created_by_user")
+    orders: Mapped[list["Order"]] = relationship(back_populates="customer")
+    order_status_history: Mapped[list["OrderStatusHistory"]] = relationship(back_populates="changed_by_user")
+    addresses: Mapped[list["UserAddress"]] = relationship(back_populates="user", cascade="all, delete-orphan")
