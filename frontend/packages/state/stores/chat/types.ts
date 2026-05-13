@@ -1,4 +1,55 @@
-export type ChatMessageRole = "user" | "assistant";
+export type ChatMessageRole = "user" | "assistant" | "system";
+type OptimisticActionType =
+  | "product_price_bulk_update"
+  | "order_status_update"
+  | "inventory_threshold_update"
+  | "inventory_quantity_update"
+  | "shipment_refresh"
+  | "notification_mark_read";
+type OptimisticActionStatus =
+  | "pending"
+  | "executed"
+  | "cancelled"
+  | "expired";
+type OptimisticActionSafetyLevel = "low" | "medium" | "high";
+
+interface OptimisticActionAffectedResource {
+  resourceType: string;
+  resourceId: string;
+  label?: string | null;
+}
+
+interface OptimisticActionPreviewItem {
+  resourceType: string;
+  resourceId: string;
+  label?: string | null;
+  before: Record<string, unknown>;
+  after: Record<string, unknown>;
+  warning?: string | null;
+}
+
+interface OptimisticPendingActionPreview {
+  actionId: string;
+  actionType: OptimisticActionType;
+  title: string;
+  summary: string;
+  status: OptimisticActionStatus;
+  requiresConfirmation: boolean;
+  safetyLevel: OptimisticActionSafetyLevel;
+  affectedResources: OptimisticActionAffectedResource[];
+  preview: OptimisticActionPreviewItem[];
+  reason: string;
+  expiresAt?: string | null;
+}
+
+interface OptimisticActionExecutionResult {
+  actionId: string;
+  actionType: OptimisticActionType;
+  status: Extract<OptimisticActionStatus, "executed" | "cancelled" | "expired">;
+  affectedCount?: number;
+  message?: string | null;
+  results?: readonly Record<string, unknown>[];
+}
 
 export interface OptimisticChatMessage {
   id: string;
@@ -6,12 +57,16 @@ export interface OptimisticChatMessage {
   content: string;
   createdAt: string;
   isOptimistic: boolean;
+  pendingAction?: OptimisticPendingActionPreview | null;
+  actionExecution?: OptimisticActionExecutionResult | null;
 }
 
 export interface AssistantMessageInput {
   id: string;
   content: string;
   createdAt?: string;
+  pendingAction?: OptimisticPendingActionPreview | null;
+  actionExecution?: OptimisticActionExecutionResult | null;
 }
 
 export interface ChatState {

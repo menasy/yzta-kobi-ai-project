@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import type { ChatMessageListProps } from "@repo/ui-contracts";
+
 import { ChatMessage } from "./ChatMessage";
 import { TypingIndicator } from "./TypingIndicator";
 
@@ -9,6 +10,8 @@ export function ChatMessageList({
   messages,
   isTyping,
   bottomRef,
+  surface = "page",
+  onActionMessage,
 }: ChatMessageListProps) {
   useEffect(() => {
     if (bottomRef.current) {
@@ -29,6 +32,8 @@ export function ChatMessageList({
               key={key}
               message={message}
               isOptimistic={isOptimistic}
+              surface={surface}
+              onActionMessage={onActionMessage}
             />
           );
         })}

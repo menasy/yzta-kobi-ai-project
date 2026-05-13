@@ -1242,7 +1242,7 @@ async def _seed_notifications(
             "İnsan desteğine aktarıldı",
             "İade talebi operasyon kullanıcısına atandı.",
             "warning",
-            {"queue": "support"},
+            {"category": "support"},
         ),
         (
             "DAILY_SUMMARY",

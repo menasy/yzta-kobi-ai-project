@@ -1,4 +1,4 @@
-import type { ChatMessage } from "@repo/domain/chat/types/chat.types";
+import type { ChatRenderableMessage } from "@repo/domain/chat/types/chat.types";
 import type { OptimisticChatMessage } from "@repo/state/stores/chat/types";
 
 /* ── Panel Container ──────────────────────────────────────────── */
@@ -26,7 +26,7 @@ export interface AiAssistantHeaderProps {
 /* ── Message List ─────────────────────────────────────────────── */
 
 export interface AiAssistantMessageListProps {
-  messages: (ChatMessage | OptimisticChatMessage)[];
+  messages: (ChatRenderableMessage | OptimisticChatMessage)[];
   isTyping: boolean;
   bottomRef: React.RefObject<HTMLDivElement | null>;
 }
@@ -34,7 +34,7 @@ export interface AiAssistantMessageListProps {
 /* ── Single Message ───────────────────────────────────────────── */
 
 export interface AiAssistantMessageProps {
-  message: ChatMessage | OptimisticChatMessage;
+  message: ChatRenderableMessage | OptimisticChatMessage;
   isOptimistic?: boolean;
 }
 

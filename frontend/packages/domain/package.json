@@ -10,6 +10,8 @@
     "./auth/*": "./auth/*",
     "./chat": "./chat/index.ts",
     "./chat/*": "./chat/*",
+    "./ai-actions": "./ai-actions/index.ts",
+    "./ai-actions/*": "./ai-actions/*",
     "./orders": "./orders/index.ts",
     "./orders/*": "./orders/*",
     "./products": "./products/index.ts",

@@ -34,13 +34,10 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) =>
     ...defaultChatState,
     ...initialState,
     setSessionId: (sessionId) => {
-      // Runtime guard against objects or invalid session IDs
       if (typeof sessionId !== "string" && sessionId !== null) {
-        console.warn("Invalid sessionId ignored:", sessionId);
         return;
       }
       if (sessionId === "[object Object]") {
-        console.warn("Detected [object Object] as sessionId, ignoring.");
         return;
       }
       set({ sessionId });
@@ -82,6 +79,8 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) =>
             content: message.content,
             createdAt: message.createdAt ?? new Date().toISOString(),
             isOptimistic: false,
+            pendingAction: message.pendingAction ?? null,
+            actionExecution: message.actionExecution ?? null,
           },
         ],
       })),

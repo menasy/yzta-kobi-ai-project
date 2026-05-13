@@ -130,7 +130,6 @@ Aşağıdaki maddeler doğrudan mevcut koddan türetilmiştir; kodda olmayan öz
 | pandas | Kullanılıyor | basit forecast hesapları |
 | google-genai | Aktif | mevcut orchestrator Gemini kullanıyor |
 | anthropic | Bağımlılık var | fakat aktif orchestrator akışına bağlı değil |
-| RabbitMQ / aio-pika | Kısmen var | worker kodları var, default compose akışında yok |
 | Docker | Kullanılıyor | backend container, db, redis |
 
 ### Frontend
@@ -199,7 +198,6 @@ backend/
 │   ├── repositories/
 │   ├── schemas/
 │   ├── services/
-│   └── workers/
 ├── alembic/
 ├── scripts/
 ├── Dockerfile
@@ -220,7 +218,6 @@ backend/
 - `app/services/`: iş kuralları ve uygulama servisleri.
 - `app/agent/`: AI orchestrator, prompt, tool registry, Redis memory.
 - `app/integrations/cargo/`: mock kargo provider ve provider abstraction.
-- `app/workers/`: opsiyonel / manuel çalıştırılan worker script'leri.
 - `alembic/`: migration dosyaları.
 - `scripts/`: seed ve bootstrap script'leri.
 
@@ -295,9 +292,6 @@ FastAPI API
 - `db`: PostgreSQL
 - `redis`: Redis
 
-### Kod tabanında olup varsayılan compose akışına dahil olmayan bileşenler
-
-- RabbitMQ tabanlı worker / consumer script'leri
 - gerçek kargo provider entegrasyonu
 - frontend container servisi
 
@@ -458,19 +452,6 @@ Bu yapı, endpoint içinde tekrarlı `try/except` ihtiyacını büyük ölçüde
 - `ForecastingService`: pandas ile basit haftalık tahmin
 - `StockAnalysisService`: stok sağlık analizi, dashboard özeti, simülasyon
 
-### 7.10 Background/worker yapısı
-
-Kod tabanında üç worker bulunur:
-
-- `app/workers/inventory_worker.py`: düşük stok kayıtlarını RabbitMQ kuyruğuna yayınlar
-- `app/workers/ai_consumer.py`: RabbitMQ kuyruğundaki stok uyarılarını Gemini ile kısa tavsiyeye çevirir
-- `app/workers/cargo_worker.py`: aktif kargoları periyodik izler ve gecikme bildirimleri üretir
-
-Önemli gerçek durum:
-
-- `docker-compose.yml` içinde RabbitMQ servisi yoktur.
-- Bu worker'lar default local demo akışının aktif parçası değildir.
-- `cargo_worker.py` ve notification akışları mimaride genişlemeye açık bir zemin sunar.
 
 ## 8. API Domainleri ve Endpoint Yapısı
 
@@ -838,18 +819,7 @@ Kısmen destekli / sınırlı senaryolar:
 - stok tahminleri (`get_stock_prediction`) mümkün, ancak tool ürün adı değil `product_id` bekler
 - doğal dilden çok karmaşık operasyon komutları için orchestration henüz sınırlıdır
 
-### 10.13 Queue / worker durumu
-
-AI ile ilişkili iki ek yapı daha vardır:
-
-- `inventory_worker.py`: düşük stokları RabbitMQ kuyruğuna yollar
-- `ai_consumer.py`: bu kuyruktaki mesajları Gemini ile kısa tavsiyeye dönüştürür
-
-Ancak:
-
-- bu akış default compose'ta çalışmaz,
-- RabbitMQ servis tanımı eksiktir,
-- `ai_consumer.py` aktif orchestrator'dan ayrı, daha deneysel/yardımcı bir script görünümündedir.
+- AI orchestration read-only ve sınırlı tool seti ile çalışıyor
 
 ### 10.14 AI mimarisi hakkında dürüst notlar
 
@@ -1411,7 +1381,6 @@ incelenmelidir. Aşağıdaki tablolar ana değişkenleri özetler.
 | `LLM_MODEL` | Hayır | model adı | `gemini-2.5-flash` |
 | `USE_MOCK_CARGO` | Hayır | mock cargo provider kullanımı | `true` |
 | `CARGO_API_KEY` | Hayır | gelecekte gerçek cargo entegrasyonu için | boş bırakılabilir |
-| `RABBITMQ_URL` | Hayır | opsiyonel worker akışı | `amqp://guest:guest@localhost:5672/` |
 | `SEED_ADMIN_EMAIL` | Hayır | seed admin email override | `admin@kobi.local` |
 | `SEED_ADMIN_PASSWORD` | Hayır | seed admin şifresi | `Admin123!` |
 | `SEED_OWNER_EMAIL` | Hayır | seed owner email | `isletme@kobi.local` |
@@ -1500,7 +1469,7 @@ poetry run ruff check .
 poetry run pytest
 ```
 
-Not: `pytest` yapılandırması mevcut olsa da repoda görünür test kapsamı sınırlıdır; `backend/test_kobi.py` bir RabbitMQ/AI akışı deneme script'i niteliğindedir, klasik test suite karşılığı değildir.
+Not: `pytest` yapılandırması mevcut olsa da repoda görünür test kapsamı sınırlıdır.
 
 ### 16.7 Frontend bağımlılık kurulumu
 
@@ -1669,7 +1638,6 @@ Kod tabanından görülen mevcut sınırlamalar:
 
 - rol sistemi şu anda sadece `admin` / `customer` düzeyindedir
 - frontend compose akışına dahil değildir
-- RabbitMQ worker akışı kodda var ama default ortamda çalışmıyor
 - AI orchestration read-only ve sınırlı tool seti ile çalışıyor
 - aktif provider implementasyonu fiilen Gemini'ye bağlı
 - gerçek kargo entegrasyonu henüz mock provider seviyesinde
@@ -1721,4 +1689,4 @@ Projeyi devralan bir geliştirici veya AI agent için ilk bakılması gereken do
 
 - Swagger / OpenAPI dokümantasyonu debug modunda `http://localhost:8000/docs` altında erişilebilir.
 - `frontend/service_info.md`, `frontend/User-settings.md` ve bazı `backend/md/*.md` dosyaları yardımcı referanslar içerir; ancak bu README ve çalışan kod daha güncel kaynak olarak değerlendirilmelidir.
-- Bu README, mevcut repo durumu üzerinden hazırlanmıştır. Kod ilerledikçe özellikle env example'lar, frontend support sayfaları ve worker entegrasyonlarının tekrar eşlenmesi gerekir.
+- Bu README, mevcut repo durumu üzerinden hazırlanmıştır. Kod ilerledikçe özellikle env example'lar ve frontend support sayfalarının tekrar eşlenmesi gerekir.

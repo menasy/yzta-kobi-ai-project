@@ -2,7 +2,7 @@
 
 import { cn } from "@repo/core";
 import type { AiAssistantHeaderProps } from "@repo/ui-contracts";
-import { Bot, X, Trash2 } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 
 import Image from "next/image";
 import { Button } from "../shadcn/button";
@@ -24,23 +24,21 @@ export function AiAssistantHeader({
         "bg-gradient-to-r from-background via-background/95 to-primary/5 backdrop-blur-xl",
       )}
     >
-      {/* AI icon + title */}
-      <div className="flex items-center gap-3.5 flex-1 min-w-0">
+      <div className="flex min-w-0 flex-1 items-center gap-3.5">
         <div className="relative flex-shrink-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 shadow-sm overflow-hidden">
-            <Image 
-              src="/next-assets/logo-icon.svg" 
-              alt="KOBİ Logo" 
-              width={24} 
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl border border-primary/20 bg-primary/10 shadow-sm">
+            <Image
+              src="/next-assets/logo-icon.svg"
+              alt="KOBİ Logo"
+              width={24}
               height={24}
               className="object-contain"
             />
           </div>
-          {/* Status Dot */}
           <span className="absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 border-background bg-success ring-1 ring-success/20 animate-pulse" />
         </div>
-        
-        <div className="flex flex-col min-w-0">
+
+        <div className="flex min-w-0 flex-col">
           <div className="flex items-center gap-1.5">
             <span className="text-[15px] font-bold text-foreground tracking-tight">
               AI Asistan
@@ -60,8 +58,7 @@ export function AiAssistantHeader({
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-1.5 flex-shrink-0">
+      <div className="flex flex-shrink-0 items-center gap-1.5">
         <Button
           variant="ghost"
           size="icon"

@@ -9,6 +9,8 @@
 export * from "./auth/index";
 // Chat domain
 export * from "./chat/index";
+// AI actions domain
+export * from "./ai-actions/index";
 
 // Orders domain
 export * from "./orders/index";

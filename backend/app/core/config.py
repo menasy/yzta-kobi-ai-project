@@ -46,7 +46,6 @@ class Settings(BaseSettings):
     AI_PENDING_ACTION_TTL_SECONDS: int = 1200  # 20 dakika
     RATE_LIMIT_CHAT_MAX_REQUESTS: int = 20
     RATE_LIMIT_CHAT_WINDOW_SECONDS: int = 60
-    RABBITMQ_URL: str = "amqp://guest:guest@localhost:5672/"
 
     # ── Güvenlik ──────────────────────────────────────────
     SECRET_KEY: str  # JWT imzalama anahtarı — .env'den okunur

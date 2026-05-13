@@ -1,9 +1,13 @@
-import type { ChatMessage, MessageRole } from "@repo/domain/chat/types/chat.types";
+import type { ChatRenderableMessage } from "@repo/domain/chat/types/chat.types";
 import type { OptimisticChatMessage } from "@repo/state/stores/chat/types";
 
+export type ChatMessageSurface = "page" | "panel";
+
 export interface ChatMessageProps {
-  message: ChatMessage | OptimisticChatMessage;
+  message: ChatRenderableMessage | OptimisticChatMessage;
   isOptimistic?: boolean;
+  surface?: ChatMessageSurface;
+  onActionMessage?: (content: string) => Promise<unknown>;
 }
 
 export interface ChatInputProps {
@@ -13,9 +17,11 @@ export interface ChatInputProps {
 }
 
 export interface ChatMessageListProps {
-  messages: (ChatMessage | OptimisticChatMessage)[];
+  messages: (ChatRenderableMessage | OptimisticChatMessage)[];
   isTyping: boolean;
   bottomRef: React.RefObject<HTMLDivElement | null>;
+  surface?: ChatMessageSurface;
+  onActionMessage?: (content: string) => Promise<unknown>;
 }
 
 export interface ChatWindowProps {
