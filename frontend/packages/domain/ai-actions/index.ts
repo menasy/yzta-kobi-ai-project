@@ -9,6 +9,8 @@ export type {
   AiPageContext,
   AiPendingActionPreview,
   AiQuickAction,
+  AiInsight,
+  AiPendingActionGroup,
 } from "./types/ai-actions.types";
 
 export { useAiActionConfirmation } from "./hooks/useAiActionConfirmation";

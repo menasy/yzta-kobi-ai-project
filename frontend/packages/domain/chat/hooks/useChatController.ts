@@ -151,7 +151,7 @@ export function useChatController({
           error: metadata.error,
         });
 
-        if (metadata.actionExecution) {
+        if (metadata.actionExecution && metadata.actionExecution.actionType) {
           await invalidateAiActionQueries(
             queryClient,
             metadata.actionExecution.actionType,

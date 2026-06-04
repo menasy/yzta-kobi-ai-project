@@ -14,6 +14,7 @@ interface AdminAiQuickActionsProps {
   onSelectPrompt: (prompt: string) => Promise<unknown>;
   isPending?: boolean;
   className?: string;
+  role?: string | null;
 }
 
 export function AdminAiQuickActions({
@@ -21,12 +22,13 @@ export function AdminAiQuickActions({
   onSelectPrompt,
   isPending = false,
   className,
+  role,
 }: AdminAiQuickActionsProps) {
   if (!pageContext || pageContext.page === "chat") {
     return null;
   }
 
-  const quickActions = getAiQuickActionsForPage(pageContext.page);
+  const quickActions = getAiQuickActionsForPage(pageContext.page, role);
   if (quickActions.length === 0) {
     return null;
   }

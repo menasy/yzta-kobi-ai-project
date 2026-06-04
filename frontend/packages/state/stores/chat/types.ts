@@ -43,9 +43,9 @@ interface OptimisticPendingActionPreview {
 }
 
 interface OptimisticActionExecutionResult {
-  actionId: string;
-  actionType: OptimisticActionType;
-  status: Extract<OptimisticActionStatus, "executed" | "cancelled" | "expired">;
+  actionId?: string;
+  actionType?: OptimisticActionType;
+  status?: Extract<OptimisticActionStatus, "executed" | "cancelled" | "expired">;
   affectedCount?: number;
   message?: string | null;
   results?: readonly Record<string, unknown>[];
@@ -58,7 +58,10 @@ export interface OptimisticChatMessage {
   createdAt: string;
   isOptimistic: boolean;
   pendingAction?: OptimisticPendingActionPreview | null;
+  pendingActionGroup?: any | null;
   actionExecution?: OptimisticActionExecutionResult | null;
+  insight?: any | null;
+  error?: any | null;
 }
 
 export interface AssistantMessageInput {
@@ -66,7 +69,10 @@ export interface AssistantMessageInput {
   content: string;
   createdAt?: string;
   pendingAction?: OptimisticPendingActionPreview | null;
+  pendingActionGroup?: any | null;
   actionExecution?: OptimisticActionExecutionResult | null;
+  insight?: any | null;
+  error?: any | null;
 }
 
 export interface ChatState {

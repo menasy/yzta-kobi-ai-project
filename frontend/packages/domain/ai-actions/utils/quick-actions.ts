@@ -106,6 +106,45 @@ const QUICK_ACTIONS_BY_PAGE: Record<AiPage, readonly AiQuickAction[]> = {
   chat: [],
 };
 
-export function getAiQuickActionsForPage(page: AiPage): readonly AiQuickAction[] {
-  return QUICK_ACTIONS_BY_PAGE[page];
+const CUSTOMER_QUICK_ACTIONS_BY_PAGE: Record<AiPage, readonly AiQuickAction[]> = {
+  dashboard: [],
+  products: [
+    {
+      id: "products-order-create",
+      label: "Sipariş oluştur",
+      prompt: "sipariş oluştur",
+    },
+  ],
+  orders: [
+    {
+      id: "orders-status-query",
+      label: "Sipariş durumunu sorgula",
+      prompt: "sipariş durumunu sorgula",
+    },
+    {
+      id: "orders-list-active",
+      label: "Aktif siparişlerimi listele",
+      prompt: "aktif siparişlerimi listele",
+    },
+  ],
+  inventory: [],
+  shipments: [
+    {
+      id: "shipments-status-query",
+      label: "Kargo durumumu sorgula",
+      prompt: "kargo durumumu sorgula",
+    },
+  ],
+  notifications: [],
+  chat: [],
+};
+
+export function getAiQuickActionsForPage(
+  page: AiPage,
+  role?: string | null,
+): readonly AiQuickAction[] {
+  if (role === "customer") {
+    return CUSTOMER_QUICK_ACTIONS_BY_PAGE[page] || [];
+  }
+  return QUICK_ACTIONS_BY_PAGE[page] || [];
 }

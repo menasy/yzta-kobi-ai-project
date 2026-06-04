@@ -47,8 +47,8 @@ from app.models import (
 )
 
 SEED_NAME = "kobi_demo_seed"
-SEED_VERSION = "2026-05-13.light.1"
-SEED_CHECKSUM = "kobi-demo-light-seed-v1"
+SEED_VERSION = "2026-06-03.updated.2"
+SEED_CHECKSUM = "kobi-demo-updated-seed-v3"
 DEFAULT_PASSWORD = os.getenv("SEED_DEMO_PASSWORD", "Demo12345!")
 ADMIN_EMAIL = os.getenv("SEED_ADMIN_EMAIL", "admin@kobi.local")
 ADMIN_PASSWORD = os.getenv("SEED_ADMIN_PASSWORD", "Admin123!")
@@ -102,87 +102,60 @@ class OrderSeed:
 
 
 PRODUCTS: tuple[ProductSeed, ...] = (
-    # 8 product types only: enough to cover critical stock, low stock, normal stock,
-    # fast-selling, dead-stock, high-ticket/B2B and shipment/order demo scenarios.
+    # Zeytin Yağı (1 Variety)
     ProductSeed(
         "Soğuk Sıkım Zeytinyağı 750 ml",
         "GDA-ZYT-750",
-        "Ege zeytinlerinden düşük asitli, cam şişede naturel sızma zeytinyağı.",
+        "Ege zeytinlerinden elde edilen, düşük asitli naturel sızma soğuk sıkım zeytinyağı.",
         Decimal("432.00"),
         "Gıda",
         "/product/zeytin-yagi.jpg",
         0,
         6,
     ),
+    # Kuru Nane (1 Variety)
     ProductSeed(
-        "Acı Pul Biber 250 g",
-        "GDA-PUL-250",
-        "Güneşte kurutulmuş biberlerden üretilen yoğun aromalı pul biber.",
-        Decimal("203.00"),
+        "Kurutulmuş Nane Yaprağı 100 g",
+        "GDA-NAN-100",
+        "Geleneksel yöntemlerle kurutulmuş, elenmiş mis kokulu kuru nane.",
+        Decimal("85.00"),
         "Gıda",
-        "/product/pulbiber.webp",
-        4,
-        10,
+        "/product/nane.webp",
+        48,
+        15,
     ),
+    # Reçel (1 Variety)
     ProductSeed(
-        "Çilek Reçeli 460 g",
+        "Ev Tipi Çilek Reçeli 460 g",
         "GDA-REC-460",
-        "Küçük parti üretim, parça meyveli ev tipi çilek reçeli.",
+        "Geleneksel yöntemlerle, pancar şekeri ile üretilmiş bol çilekli ev reçeli.",
         Decimal("187.50"),
         "Gıda",
         "/product/recel.webp",
         22,
         8,
     ),
+    # Pekmez (1 Variety)
     ProductSeed(
-        "Filtre Kahve Harmanı 250 g",
-        "KHV-FLT-250",
-        "Orta kavrum, dengeli gövdeli butik kahve harmanı.",
-        Decimal("285.00"),
-        "Kahve",
+        "Harnup (Keçiboynuzu) Pekmezi 350 g",
+        "GDA-PKM-350",
+        "Soğuk pres yöntemiyle katkısız üretilmiş besleyici harnup pekmezi.",
+        Decimal("220.00"),
+        "Gıda",
         "/product/pekmez.webp",
         36,
         12,
     ),
+    # Pul Biber (1 Variety)
     ProductSeed(
-        "Seramik Kahve Kupası",
-        "ELI-KUP-001",
-        "El yapımı, reaktif sırlı seramik kahve kupası.",
-        Decimal("275.00"),
-        "El Yapımı",
-        "/product/pekmez.webp",
-        34,
-        8,
-    ),
-    ProductSeed(
-        "Keten Bez Çanta",
-        "TEK-BEZ-001",
-        "Pamuk astarlı, günlük kullanıma uygun el dikimi bez çanta.",
-        Decimal("249.00"),
-        "Tekstil",
-        "/product/recel.webp",
-        18,
-        8,
-    ),
-    ProductSeed(
-        "Lavanta Sabunu 90 g",
-        "KZM-SBN-090",
-        "Soğuk proses lavanta sabunu, hassas ciltler için nazik formül.",
-        Decimal("89.00"),
-        "Kozmetik",
-        "/product/nane.webp",
-        48,
-        15,
-    ),
-    ProductSeed(
-        "B2B Kahvaltılık Paket",
-        "B2B-KAH-010",
-        "Kafe ve butik oteller için 10'lu yöresel kahvaltılık paket.",
-        Decimal("1850.00"),
-        "B2B Paket",
-        "/product/zeytin-yagi.jpg",
-        9,
+        "Acı Pul Biber 250 g",
+        "GDA-PUL-250",
+        "Güneşte kurutulmuş yerli acı kırmızı biberlerden çekilmiş pul biber.",
+        Decimal("203.00"),
+        "Gıda",
+        "/product/pulbiber.webp",
         4,
+        10,
     ),
 )
 
@@ -274,11 +247,12 @@ async def _seed_already_completed(session: AsyncSession) -> bool:
             SELECT 1
             FROM seed_runs
             WHERE seed_name = :seed_name
+              AND checksum = :checksum
               AND status = 'success'
             LIMIT 1
             """
         ),
-        {"seed_name": SEED_NAME},
+        {"seed_name": SEED_NAME, "checksum": SEED_CHECKSUM},
     )
     return result.scalar_one_or_none() is not None
 
@@ -488,7 +462,7 @@ def _order_seeds() -> list[OrderSeed]:
             status="processing",
             days_ago=0,
             hour=11,
-            item_skus=("KHV-FLT-250", "KZM-SBN-090"),
+            item_skus=("GDA-PKM-350", "GDA-NAN-100"),
             quantities=(2, 3),
             notes="Operasyon ekibi tarafından hazırlanan sipariş.",
         ),
@@ -498,7 +472,7 @@ def _order_seeds() -> list[OrderSeed]:
             status="shipped",
             days_ago=1,
             hour=13,
-            item_skus=("TEK-BEZ-001",),
+            item_skus=("GDA-ZYT-750",),
             quantities=(1,),
             notes="Kargoda ilerleyen normal sipariş.",
         ),
@@ -508,8 +482,8 @@ def _order_seeds() -> list[OrderSeed]:
             status="delivered",
             days_ago=3,
             hour=10,
-            item_skus=("B2B-KAH-010",),
-            quantities=(1,),
+            item_skus=("GDA-ZYT-750", "GDA-PKM-350"),
+            quantities=(2, 2),
             notes="Başarıyla teslim edilen B2B sipariş.",
         ),
         OrderSeed(
@@ -528,7 +502,7 @@ def _order_seeds() -> list[OrderSeed]:
             status="shipped",
             days_ago=4,
             hour=16,
-            item_skus=("ELI-KUP-001",),
+            item_skus=("GDA-PUL-250",),
             quantities=(1,),
             notes="Dağıtımda sorun yaşanan teslimat senaryosu.",
         ),
@@ -869,7 +843,7 @@ async def _seed_inventory_movements(
             )
             count += 1
 
-    manual_adjustments = ("GDA-PUL-250", "GDA-ZYT-750", "ELI-KUP-001")
+    manual_adjustments = ("GDA-PUL-250", "GDA-ZYT-750", "GDA-NAN-100")
     for sku in manual_adjustments:
         product = products[sku]
         previous = quantities[product.id]
@@ -892,7 +866,7 @@ async def _seed_inventory_movements(
         )
         count += 1
 
-    for sku in ("KZM-SBN-090", "KHV-FLT-250"):
+    for sku in ("GDA-REC-460", "GDA-PKM-350"):
         product = products[sku]
         previous = quantities[product.id]
         new_quantity = previous + 6

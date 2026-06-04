@@ -106,8 +106,10 @@ export function ProductTable({
                           alt={product.name} 
                           className="h-full w-full object-cover transition-transform duration-500 group-hover/row:scale-110"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                            (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                            const target = e.currentTarget;
+                            target.onerror = null;
+                            target.style.display = 'none';
+                            target.nextElementSibling?.classList.remove('hidden');
                           }}
                         />
                       ) : null}

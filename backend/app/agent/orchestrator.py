@@ -49,7 +49,7 @@ from .tools.order_action_tools import (
     CreatePendingOrderStatusUpdateTool,
     GetOrderPriorityReportTool,
 )
-from .tools.order_tools import GetOrderStatusTool, GetOrdersByPhoneTool
+from .tools.order_tools import GetOrderStatusTool, GetOrdersByPhoneTool, CreateCustomerOrderTool
 from .tools.product_action_tools import CreatePendingProductPriceUpdateTool
 from .tools.shipment_action_tools import (
     CreatePendingShipmentRefreshTool,
@@ -92,6 +92,7 @@ class AgentOrchestrator:
         registry.register(GetOrderStatusTool(self._db))
         registry.register(GetCargoStatusTool(self._db))
         registry.register(CheckProductStockTool(self._db))
+        registry.register(CreateCustomerOrderTool(self._db))
 
         # Sadece Admin'in erişebildiği operasyonel araçlar
         if context.role == "admin":

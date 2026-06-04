@@ -28,6 +28,17 @@ const nextConfig: NextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },
+
+  // Dev Indicator / DevTools ayarları
+  devIndicators:
+    process.env.NEXT_PUBLIC_ENABLE_DEVTOOLS === "true" ||
+    (process.env.NEXT_PUBLIC_ENABLE_DEVTOOLS !== "false" &&
+      process.env.NODE_ENV === "development")
+      ? {
+          appIsrStatus: true,
+          buildActivity: true,
+        }
+      : false,
 };
 
 export default nextConfig;

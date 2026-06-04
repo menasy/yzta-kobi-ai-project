@@ -18,17 +18,20 @@ export function mapPathnameToAiPageContext(
   const normalizedPathname = normalizePathname(pathname);
 
   const productDetailMatch = normalizedPathname.match(
-    /^\/dashboard\/products\/([^/]+)$/,
+    /^\/(dashboard\/)?products\/([^/]+)$/,
   );
   if (productDetailMatch) {
     return {
       page: "products",
       pathname: normalizedPathname,
-      selectedProductId: decodeURIComponent(productDetailMatch[1]),
+      selectedProductId: decodeURIComponent(productDetailMatch[2]),
     };
   }
 
-  if (normalizedPathname === "/dashboard/products") {
+  if (
+    normalizedPathname === "/products" ||
+    normalizedPathname === "/dashboard/products"
+  ) {
     return {
       page: "products",
       pathname: normalizedPathname,

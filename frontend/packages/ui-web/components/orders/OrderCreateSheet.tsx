@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@repo/core";
 import { useCreateOrder } from "@repo/domain/orders";
+import { useUserAddress } from "@repo/domain/user";
 import type { Product } from "@repo/domain/products";
 import type { OrderShipping } from "@repo/domain/orders";
 import { useUser } from "@repo/state/stores";
 import { useApiMessageActions } from "@repo/state/stores";
 import { formatCurrency } from "@repo/core";
-import { Package, Loader2, MapPin, User, Phone, FileText, ChevronRight } from "lucide-react";
+import { Package, Loader2, MapPin, User, Phone, FileText, ChevronRight, Minus, Plus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@repo/state/query";
 
@@ -40,7 +41,20 @@ interface OrderCreateSheetProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const QUANTITY_OPTIONS = Array.from({ length: 10 }, (_, i) => i + 1);
+const formatPhoneNumber = (value: string) => {
+  const numbers = value.replace(/\D/g, "");
+  if (numbers.length === 0) return "";
+  if (numbers.length <= 4) {
+    return numbers;
+  }
+  if (numbers.length <= 7) {
+    return `${numbers.slice(0, 4)} ${numbers.slice(4)}`;
+  }
+  if (numbers.length <= 9) {
+    return `${numbers.slice(0, 4)} ${numbers.slice(4, 7)} ${numbers.slice(7)}`;
+  }
+  return `${numbers.slice(0, 4)} ${numbers.slice(4, 7)} ${numbers.slice(7, 9)} ${numbers.slice(9, 11)}`;
+};
 
 interface ShippingFormState {
   full_name: string;
@@ -96,15 +110,17 @@ export function OrderCreateSheet({
   const { showApiSuccess, showApiError } = useApiMessageActions();
   const queryClient = useQueryClient();
 
+  const { data: addressData } = useUserAddress();
+
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
-  const [shippingForm, setShippingForm] = useState<ShippingFormState>(() => ({
+  const [shippingForm, setShippingForm] = useState<ShippingFormState>({
     full_name: user?.full_name ?? "",
     phone: "",
     address: "",
     city: "",
     district: "",
-  }));
+  });
   const [formErrors, setFormErrors] = useState<FormErrors>({});
 
   const { createOrder, isPending, reset } = useCreateOrder({
@@ -124,15 +140,28 @@ export function OrderCreateSheet({
     setQuantity(1);
     setNotes("");
     setShippingForm({
-      full_name: user?.full_name ?? "",
-      phone: "",
-      address: "",
-      city: "",
-      district: "",
+      full_name: addressData?.data?.full_name || user?.full_name || "",
+      phone: addressData?.data?.phone ? formatPhoneNumber(addressData.data.phone) : "",
+      address: addressData?.data?.address || "",
+      city: addressData?.data?.city || "",
+      district: addressData?.data?.district || "",
     });
     setFormErrors({});
     reset();
-  }, [user?.full_name, reset]);
+  }, [user?.full_name, addressData, reset]);
+
+  // Set the address when loaded or sheet opens
+  useEffect(() => {
+    if (open && addressData?.data) {
+      setShippingForm({
+        full_name: addressData.data.full_name || user?.full_name || "",
+        phone: addressData.data.phone ? formatPhoneNumber(addressData.data.phone) : "",
+        address: addressData.data.address || "",
+        city: addressData.data.city || "",
+        district: addressData.data.district || "",
+      });
+    }
+  }, [open, addressData, user?.full_name]);
 
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
@@ -147,7 +176,11 @@ export function OrderCreateSheet({
 
   const updateField = useCallback(
     (field: keyof ShippingFormState, value: string) => {
-      setShippingForm((prev) => ({ ...prev, [field]: value }));
+      let formattedValue = value;
+      if (field === "phone") {
+        formattedValue = formatPhoneNumber(value);
+      }
+      setShippingForm((prev) => ({ ...prev, [field]: formattedValue }));
       setFormErrors((prev) => {
         const next = { ...prev };
         delete next[field];
@@ -196,53 +229,72 @@ export function OrderCreateSheet({
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Product Summary */}
-          <section className="space-y-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <Package className="h-4 w-4" />
+          <section className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-2">
+              <Package className="h-4 w-4 text-primary" />
               Ürün Özeti
             </h4>
-            <div className="rounded-xl border border-border/50 bg-muted/20 p-4 shadow-sm">
-              <div className="flex items-start gap-4">
-                <div className="h-18 w-18 shrink-0 overflow-hidden rounded-lg bg-muted/30 border border-border/30">
-                  {product.image_url ? (
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">
-                      <Package className="h-7 w-7" />
-                    </div>
-                  )}
+            <div className="rounded-xl border border-border bg-muted/20 p-4 shadow-sm">
+              <div className="flex items-center justify-between gap-4">
+                {/* Left side: Image and details */}
+                <div className="flex items-center gap-4 min-w-0 flex-1">
+                  <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-muted/30 border border-border/50 shadow-sm">
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          target.onerror = null;
+                          target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='18' height='18' x='3' y='3' rx='2' ry='2'/%3E%3Ccircle cx='9' cy='9' r='2'/%3E%3Cpath d='m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21'/%3E%3C/svg%3E";
+                        }}
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">
+                        <Package className="h-8 w-8" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-lg leading-tight truncate text-foreground">{product.name}</h4>
+                    <p className="mt-1.5 text-xs text-muted-foreground font-semibold uppercase tracking-wider">{product.sku}</p>
+                    <p className="mt-2 text-xl font-extrabold text-primary">
+                      {formatCurrency(product.price)}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-lg leading-tight truncate">{product.name}</h4>
-                  <p className="mt-1 text-xs text-muted-foreground font-medium">{product.sku}</p>
-                  <p className="mt-2 text-xl font-black text-primary">
-                    {formatCurrency(product.price)}
-                  </p>
+
+                {/* Right side: Quantity Selector */}
+                <div className="flex flex-col items-center gap-1.5 shrink-0 pl-4 border-l border-border/50">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 select-none">Adet</span>
+                  <div className="flex items-center gap-1 bg-background border border-border rounded-lg p-1 shadow-sm">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                      onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                      disabled={quantity <= 1 || isPending}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="w-10 text-center font-bold text-sm select-none text-foreground">
+                      {quantity}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                      onClick={() => setQuantity((prev) => Math.min(100, prev + 1))}
+                      disabled={quantity >= 100 || isPending}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="order-quantity" className="text-sm font-semibold">Adet Seçimi</Label>
-              <Select
-                value={String(quantity)}
-                onValueChange={(val) => setQuantity(Number(val))}
-              >
-                <SelectTrigger id="order-quantity" className="h-11 w-full rounded-xl border-border/50">
-                  <SelectValue placeholder="Adet seçin" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {QUANTITY_OPTIONS.map((qty) => (
-                    <SelectItem key={qty} value={String(qty)} className="rounded-lg">
-                      {qty} Adet
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </section>
 
@@ -250,15 +302,15 @@ export function OrderCreateSheet({
 
           {/* Shipping Form */}
           <section className="space-y-5">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-primary" />
               Teslimat Bilgileri
             </h4>
 
             <div className="grid gap-4">
               {/* Full Name */}
               <div className="space-y-2">
-                <Label htmlFor="shipping-fullname" className="text-sm font-semibold flex items-center gap-1.5">
+                <Label htmlFor="shipping-fullname" className="text-sm font-semibold flex items-center gap-1.5 text-foreground">
                   <User className="h-4 w-4 text-primary/70" />
                   Alıcı Ad Soyad
                 </Label>
@@ -267,7 +319,7 @@ export function OrderCreateSheet({
                   placeholder="Ad Soyad"
                   value={shippingForm.full_name}
                   onChange={(e) => updateField("full_name", e.target.value)}
-                  className={cn("h-11 rounded-xl border-border/50 focus:ring-primary/20", formErrors.full_name && "border-destructive")}
+                  className={cn("h-11 rounded-xl border-border focus:ring-primary/20", formErrors.full_name && "border-destructive")}
                   disabled={isPending}
                 />
                 {formErrors.full_name && (
@@ -277,7 +329,7 @@ export function OrderCreateSheet({
 
               {/* Phone */}
               <div className="space-y-2">
-                <Label htmlFor="shipping-phone" className="text-sm font-semibold flex items-center gap-1.5">
+                <Label htmlFor="shipping-phone" className="text-sm font-semibold flex items-center gap-1.5 text-foreground">
                   <Phone className="h-4 w-4 text-primary/70" />
                   Telefon Numarası
                 </Label>
@@ -286,7 +338,7 @@ export function OrderCreateSheet({
                   placeholder="05XX XXX XX XX"
                   value={shippingForm.phone}
                   onChange={(e) => updateField("phone", e.target.value)}
-                  className={cn("h-11 rounded-xl border-border/50 focus:ring-primary/20", formErrors.phone && "border-destructive")}
+                  className={cn("h-11 rounded-xl border-border focus:ring-primary/20", formErrors.phone && "border-destructive")}
                   disabled={isPending}
                 />
                 {formErrors.phone && (
@@ -297,13 +349,16 @@ export function OrderCreateSheet({
               {/* City & District */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="shipping-city" className="text-sm font-semibold">Şehir</Label>
+                  <Label htmlFor="shipping-city" className="text-sm font-semibold flex items-center gap-1.5 text-foreground">
+                    <MapPin className="h-4 w-4 text-primary/70" />
+                    Şehir
+                  </Label>
                   <Input
                     id="shipping-city"
                     placeholder="İstanbul"
                     value={shippingForm.city}
                     onChange={(e) => updateField("city", e.target.value)}
-                    className={cn("h-11 rounded-xl border-border/50 focus:ring-primary/20", formErrors.city && "border-destructive")}
+                    className={cn("h-11 rounded-xl border-border focus:ring-primary/20", formErrors.city && "border-destructive")}
                     disabled={isPending}
                   />
                   {formErrors.city && (
@@ -311,13 +366,16 @@ export function OrderCreateSheet({
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="shipping-district" className="text-sm font-semibold">İlçe</Label>
+                  <Label htmlFor="shipping-district" className="text-sm font-semibold flex items-center gap-1.5 text-foreground">
+                    <MapPin className="h-4 w-4 text-primary/70" />
+                    İlçe
+                  </Label>
                   <Input
                     id="shipping-district"
                     placeholder="Kadıköy"
                     value={shippingForm.district}
                     onChange={(e) => updateField("district", e.target.value)}
-                    className={cn("h-11 rounded-xl border-border/50 focus:ring-primary/20", formErrors.district && "border-destructive")}
+                    className={cn("h-11 rounded-xl border-border focus:ring-primary/20", formErrors.district && "border-destructive")}
                     disabled={isPending}
                   />
                   {formErrors.district && (
@@ -328,14 +386,17 @@ export function OrderCreateSheet({
 
               {/* Address */}
               <div className="space-y-2">
-                <Label htmlFor="shipping-address" className="text-sm font-semibold">Açık Adres</Label>
+                <Label htmlFor="shipping-address" className="text-sm font-semibold flex items-center gap-1.5 text-foreground">
+                  <MapPin className="h-4 w-4 text-primary/70" />
+                  Açık Adres
+                </Label>
                 <Textarea
                   id="shipping-address"
                   placeholder="Mahalle, sokak, bina no, daire no..."
                   value={shippingForm.address}
                   onChange={(e) => updateField("address", e.target.value)}
                   className={cn(
-                    "min-h-[80px] rounded-xl border-border/50 focus:ring-primary/20 resize-none",
+                    "min-h-[80px] rounded-xl border-border focus:ring-primary/20 resize-none",
                     formErrors.address && "border-destructive",
                   )}
                   disabled={isPending}

@@ -95,11 +95,12 @@ export function AiAssistantWindow({ isOpen, onClose }: AiAssistantWindowProps) {
         isClearPending={isClearPending}
         contextBadge={contextBadge}
       />
-      {user?.role === "admin" ? (
+      {user?.role === "admin" || user?.role === "customer" ? (
         <AdminAiQuickActions
           pageContext={pageContext}
           onSelectPrompt={handleQuickAction}
           isPending={isTyping}
+          role={user.role}
         />
       ) : null}
       <ChatMessageList

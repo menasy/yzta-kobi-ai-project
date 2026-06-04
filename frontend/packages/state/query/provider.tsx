@@ -37,7 +37,12 @@ export function QueryProvider({ children }: QueryProviderProps) {
   useEffect(() => {
     let isMounted = true;
 
-    if (process.env.NODE_ENV === "development") {
+    const showDevtools =
+      process.env.NEXT_PUBLIC_ENABLE_DEVTOOLS === "true" ||
+      (process.env.NEXT_PUBLIC_ENABLE_DEVTOOLS !== "false" &&
+        process.env.NODE_ENV === "development");
+
+    if (showDevtools) {
       void (
         // @ts-expect-error App package provides this optional dev-only dependency.
         import("@tanstack/react-query-devtools") as Promise<unknown>
