@@ -1,11 +1,11 @@
 <table border="0">
   <tr>
-    <td width="65%" border="0">
+    <td width="55%" border="0">
       <h1>KobiAI — KOBİ AI Agent</h1>
       <p><strong>Küçük ve Orta Ölçekli İşletmeler için Yapay Zekâ Destekli Operasyon Otomasyonu</strong></p>
       <p>KobiAI, KOBİ’ler ve kooperatifler için geliştirilmiş tam kapsamlı, yapay zekâ destekli bir operasyon platformudur. Ürün yönetimi, envanter takibi, sipariş izleme, kargo gözetimi ve müşteri iletişimini tek bir birleşik panelde toplar — iş verilerinizi anlayan ve bu veriler üzerinden aksiyon almanıza yardımcı olabilen konuşma tabanlı bir yapay zekâ ajanı ile birlikte çalışır.</p>
     </td>
-    <td width="35%" border="0">
+    <td width="45%" border="0">
       <img src="assets/logo-opengraph-image.png" alt="KobiAI Logo" width="100%">
     </td>
   </tr>
@@ -20,7 +20,14 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square\&logo=typescript\&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square\&logo=python\&logoColor=white)
 
+<br>
+
+<p align="center">
+  <img src="https://github.com/menasy/Project_icons/blob/main/KobiAi/kobiai-summary.png?raw=true" alt="KobiAI Summary" width="100%">
+</p>
+
 ---
+
 
 ## İçindekiler
 
@@ -101,11 +108,35 @@ KobiAI, yapılandırılmış bir operasyon dashboard’unu, verilerinizi bilen v
 * **Stok sağlığı metrikleri**, kritik envanter seviyelerini operasyonel engellere dönüşmeden önce tespit eder.
 * **Geciken kargo takibi**, beklenen teslimat süresini aşan gönderileri öne çıkarır.
 
+<details>
+  <summary>📸 Yönetici Paneli & Dashboard Ekran Görüntüleri</summary>
+  <br>
+  <p align="center">
+    <strong>Yönetici Paneli Genel Bakış (Overview):</strong><br>
+    <img src="https://github.com/menasy/Project_icons/blob/main/KobiAi/0-admin-overview.png?raw=true" alt="Admin Overview" width="100%">
+  </p>
+  <br>
+  <p align="center">
+    <strong>Yönetici Arayüzü Detayı (Panel):</strong><br>
+    <img src="https://github.com/menasy/Project_icons/blob/main/KobiAi/1-admin-panel.png?raw=true" alt="Admin Panel" width="100%">
+  </p>
+</details>
+
+
 #### Ürün Yönetimi
 
 * Ad, SKU, kategori, fiyat, açıklama ve görseller dahil ürünler için tam CRUD.
 * Arama ve filtreleme destekli ürün listeleme.
 * Ürün detay ve düzenleme görünümleri.
+
+<details>
+  <summary>📸 Ürün Yönetimi Ekran Görüntüsü</summary>
+  <br>
+  <p align="center">
+    <img src="https://github.com/menasy/Project_icons/blob/main/KobiAi/2-admin-product.png?raw=true" alt="Admin Product Management" width="100%">
+  </p>
+</details>
+
 
 #### Envanter Yönetimi
 
@@ -114,12 +145,41 @@ KobiAI, yapılandırılmış bir operasyon dashboard’unu, verilerinizi bilen v
 * Admin panelinden envanter güncelleme.
 * Yapay zekâ ajanı araçları üzerinden yapay zekâ destekli envanter eşik önerileri.
 
+<details>
+  <summary>📸 Envanter Yönetimi Ekran Görüntüleri</summary>
+  <br>
+  <p align="center">
+    <strong>Envanter Durum Takibi:</strong><br>
+    <img src="https://github.com/menasy/Project_icons/blob/main/KobiAi/4-admin-inventory.png?raw=true" alt="Admin Inventory Overview" width="100%">
+  </p>
+  <br>
+  <p align="center">
+    <strong>Yeniden Sipariş Eşiği Ayarları:</strong><br>
+    <img src="https://github.com/menasy/Project_icons/blob/main/KobiAi/5-admin-inventory.png?raw=true" alt="Admin Inventory Detail" width="100%">
+  </p>
+  <br>
+  <p align="center">
+    <strong>Kritik Stok Uyarıları:</strong><br>
+    <img src="https://github.com/menasy/Project_icons/blob/main/KobiAi/6-admin-inventory.png?raw=true" alt="Admin Inventory Status" width="100%">
+  </p>
+</details>
+
+
 #### Sipariş Yönetimi
 
 * Durum filtreleriyle tam sipariş listeleme.
 * Ürün kalemleri, müşteri ve adres bilgilerini gösteren sipariş detay görünümü.
 * Admin panelinden doğrudan **sipariş durumu güncelleme**.
 * Yapay zekâ ajanı tarafından öne çıkarılan sipariş öncelik içgörüleri.
+
+<details>
+  <summary>📸 Sipariş Yönetimi Ekran Görüntüsü</summary>
+  <br>
+  <p align="center">
+    <img src="https://github.com/menasy/Project_icons/blob/main/KobiAi/3-admin-order.png?raw=true" alt="Admin Order Management" width="100%">
+  </p>
+</details>
+
 
 #### Kargo Yönetimi
 
@@ -128,12 +188,36 @@ KobiAI, yapılandırılmış bir operasyon dashboard’unu, verilerinizi bilen v
 * Otomatik işaretleme ile **geciken kargo takibi**.
 * Kargo durumu yenileme; şu anda gerçek kargo API’leriyle genişletilecek şekilde tasarlanmıştır.
 
+<details>
+  <summary>📸 Kargo Yönetimi Ekran Görüntüleri</summary>
+  <br>
+  <p align="center">
+    <strong>Kargo Listesi & Genel Durum:</strong><br>
+    <img src="https://github.com/menasy/Project_icons/blob/main/KobiAi/7-admin-cargo.png?raw=true" alt="Admin Cargo Overview" width="100%">
+  </p>
+  <br>
+  <p align="center">
+    <strong>Kargo Detayı & Takip Bilgileri:</strong><br>
+    <img src="https://github.com/menasy/Project_icons/blob/main/KobiAi/8-admin-cargo.png?raw=true" alt="Admin Cargo Details" width="100%">
+  </p>
+</details>
+
+
 #### Bildirim Merkezi
 
 * Operasyonel olaylar için merkezi bildirim akışı: düşük stok, kargo gecikmeleri, yeni siparişler.
 * Okunmamış bildirim sayısı ve okundu olarak işaretleme işlemleri.
 * Bildirim akışında oluşturulan ve gösterilen **günlük operasyonel gecikme özeti**.
 * SSE tabanlı gerçek zamanlı bildirim iletimi. Bkz. [Bildirimler ve Gerçek Zamanlı Özellikler](#bildirimler-ve-gerçek-zamanlı-özellikler).
+
+<details>
+  <summary>📸 Bildirim Merkezi Ekran Görüntüsü</summary>
+  <br>
+  <p align="center">
+    <img src="https://github.com/menasy/Project_icons/blob/main/KobiAi/8-natification.png?raw=true" alt="Notification Center" width="100%">
+  </p>
+</details>
+
 
 #### AI Chat Paneli (Global)
 
@@ -142,9 +226,26 @@ KobiAI, yapılandırılmış bir operasyon dashboard’unu, verilerinizi bilen v
 * Talep üzerine sorgular için (“Kaç sipariş beklemede?”, “Hangi ürünler kritik seviyede düşük?”) veya proaktif öneriler için kullanılabilir.
 * Güvenli yazma işlemleri için **AI Action Co-Pilot** iş akışını destekler. Bkz. [Yapay Zekâ Destekli Özellikler](#yapay-zekâ-destekli-özellikler).
 
+<details>
+  <summary>📸 Yapay Zekâ Asistan Paneli Ekran Görüntüsü</summary>
+  <br>
+  <p align="center">
+    <img src="https://github.com/menasy/Project_icons/blob/main/KobiAi/9-chat.png?raw=true" alt="AI Chat Panel" width="100%">
+  </p>
+</details>
+
+
 ---
 
 ### Müşteri Özellikleri
+
+<details>
+  <summary>📸 Müşteri Paneli Genel Bakış Ekran Görüntüsü</summary>
+  <br>
+  <p align="center">
+    <img src="https://github.com/menasy/Project_icons/blob/main/KobiAi/1-costumer-overview.png?raw=true" alt="Customer Overview" width="100%">
+  </p>
+</details>
 
 #### Hesap ve Kimlik Doğrulama
 
@@ -164,6 +265,15 @@ KobiAI, yapılandırılmış bir operasyon dashboard’unu, verilerinizi bilen v
 * Tüm geçmiş ve aktif siparişleri listeleyen “Siparişlerim” sayfası.
 * Ürün kalemleri, durum ve kargo takip bilgilerini gösteren sipariş detay görünümü.
 * Kimliği doğrulanmış yapay zekâ sohbeti üzerinden doğal dilde sipariş durumu sorguları.
+
+<details>
+  <summary>📸 Müşteri Sipariş Detayı Ekran Görüntüsü</summary>
+  <br>
+  <p align="center">
+    <img src="https://github.com/menasy/Project_icons/blob/main/KobiAi/2-costumer-order-.png?raw=true" alt="Customer Order Tracking" width="100%">
+  </p>
+</details>
+
 
 #### Müşteri AI Chat
 
